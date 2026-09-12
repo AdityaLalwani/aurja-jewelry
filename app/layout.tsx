@@ -18,13 +18,14 @@ export const metadata: Metadata = {
     default: `${site.name} — ${site.tagline}`,
     template: `%s`,
   },
-  description: `${site.name} — ${site.tagline}. Handcrafted jewellery, made to be treasured.`,
+  description: `${site.name} — ${site.tagline}. Crafted jewellery, made to be treasured.`,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      translate="no"
       className={`${playfair.variable} ${jost.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
