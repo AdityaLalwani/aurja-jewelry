@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* AURJA brand theme — dark, with gold accents; consistent for every visitor. */
+/* AURJA brand theme — light editorial: ivory ground, charcoal type, gold accents. */
 :root {
-  --background: #0a0908;
-  --foreground: #f5f0e8;
+  --background: #faf7f2;
+  --foreground: #1c1917;
 }
 
 @theme inline {
@@ -13,8 +13,71 @@
   --font-display: var(--font-playfair);
 }
 
+@theme {
+  --animate-fade-up: fade-up 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-flip-in: flip-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-halo-pulse: halo-pulse 4s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes flip-in {
+    0% {
+      opacity: 0;
+      transform: rotateX(-90deg) translateY(10px);
+      -webkit-transform: rotateX(-90deg) translateY(10px);
+      transform-origin: center center;
+      -webkit-transform-origin: center center;
+      filter: blur(1px);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    100% {
+      opacity: 1;
+      transform: rotateX(0deg) translateY(0);
+      -webkit-transform: rotateX(0deg) translateY(0);
+      transform-origin: center center;
+      -webkit-transform-origin: center center;
+      filter: blur(0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+  }
+
+  @keyframes halo-pulse {
+    0%,
+    100% {
+      opacity: 0.45;
+      transform: scale(0.92);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.08);
+    }
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
