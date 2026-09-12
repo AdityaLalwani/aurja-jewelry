@@ -91,8 +91,8 @@ export function allProfileSlugs(): string[] {
  * one render warm gradient placeholders (see MediaTile) keyed by `variant`.
  *
  * The site is pre-launch: category tiles are previews (not shop links) and
- * the launch signup captures interest with a mailto fallback until
- * `launchSignup.endpoint` is configured.
+ * the launch signup posts to /api/subscribe, which forwards emails to the
+ * Google Sheets webhook (see docs/google-sheets-subscriptions.md).
  * ---------------------------------------------------------------------- */
 
 export type NavLink = {
@@ -137,11 +137,8 @@ export type HomeConfig = {
     phrases: string[];
     finale: string;
     srText: string;
-    subtitle: string;
     primaryCta: NavLink;
     secondaryCta: NavLink;
-    /** Optional: hero background photo path in /public. */
-    image?: string;
   };
   nav: NavLink[];
   categories: {
@@ -175,13 +172,6 @@ export type HomeConfig = {
     instagramNote: string;
   };
   launchSignup: {
-    /**
-     * POST endpoint that receives `{ email }` as JSON. While empty, the form
-     * falls back to opening a prefilled email to site.contact.email.
-     */
-    endpoint: string;
-    /** Prefilled subject line for the mailto fallback. */
-    subject: string;
     successMessage: string;
     placeholder: string;
     buttonLabel: string;
@@ -217,8 +207,6 @@ export const home: HomeConfig = {
     finale: "Launching soon.",
     srText:
       "Fine Crafted jewellery for everyday moments, big beginnings and everything in between — launching soon.",
-    subtitle:
-      "Crafted in small batches at our Surat atelier — verified metals, certified diamonds, and no middlemen.",
     primaryCta: { label: "Get Launch Updates", href: "#launch" },
     secondaryCta: { label: "Read Our Story", href: "/story" },
   },
@@ -334,8 +322,6 @@ export const home: HomeConfig = {
     instagramNote: "Follow the making on Instagram",
   },
   launchSignup: {
-    endpoint: "",
-    subject: "Notify me when AURJA launches",
     successMessage:
       "You're on the list — we'll be in touch the moment we launch.",
     placeholder: "Your email address",

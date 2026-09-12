@@ -64,7 +64,7 @@ export function ValuesSection() {
               >
                 <div className="flex items-start justify-between gap-5">
                   <span className="font-display text-4xl leading-none text-stone-700 transition-colors duration-500 group-hover:text-amber-300/70">
-                    {String(values.items.indexOf(item) + 1).padStart(2, "0")}
+                    {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-700 text-amber-300 transition-transform duration-500 group-hover:rotate-12 group-hover:border-amber-300/60">
                     <Icon className="h-4 w-4" />

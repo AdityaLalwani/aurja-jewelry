@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { home } from "@/lib/site";
+import { site, home } from "@/lib/site";
 import { ChevronDownIcon } from "../icons";
 
 export function Hero() {
@@ -61,7 +61,7 @@ export function Hero() {
           <div className="relative flex h-20 w-20 items-center justify-center sm:h-24 sm:w-24">
             <span aria-hidden className="absolute inset-3 rounded-full bg-amber-100/80 blur-lg" />
             <Image
-              src="/logo.jpeg"
+              src={site.logo}
               alt="AURJA logo"
               width={96}
               height={96}
@@ -71,7 +71,7 @@ export function Hero() {
           </div>
 
           <div className="mt-6 flex w-full flex-col items-center justify-center text-center">
-            <h1 className="w-full text-center font-display text-5xl font-medium leading-none tracking-[0.12em] text-stone-900 sm:text-6xl sm:tracking-[0.18em] lg:text-7xl">
+            <h1 className="w-full pl-2 text-center font-display text-5xl font-medium leading-none tracking-[0.12em] text-stone-900 sm:text-6xl sm:tracking-[0.18em] lg:pl-4 lg:text-7xl">
               AURJA
             </h1>
             <p className="mt-3 w-full text-center text-[0.58rem] font-medium uppercase tracking-[0.22em] text-amber-700 sm:text-[0.7rem] sm:tracking-[0.34em]">
