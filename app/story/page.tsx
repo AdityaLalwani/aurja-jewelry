@@ -11,7 +11,7 @@ import { SiteFooter } from "../components/homepage/SiteFooter";
 export const metadata: Metadata = {
   title: "Our Story — AURJA",
   description:
-    "Why AURJA exists, what we believe, and how every piece will be made — BIS-hallmarked gold, IGI & GIA certified diamonds, small-batch handcraft at our Surat Diamond Bourse atelier. First collection launching soon.",
+    "Why AURJA exists, what we believe, and how every piece will be made — Certified gold and diamonds, small-batch crafted in Surat. First collection launching soon.",
 };
 
 const founder = profiles["akshat-modi"];

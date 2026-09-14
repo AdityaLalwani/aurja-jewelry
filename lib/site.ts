@@ -35,7 +35,7 @@ export type Profile = {
   company: string;
   /** Initials shown in the avatar until a photo is added. */
   initials: string;
-  /** Optional: path or URL to a profile photo (e.g. "/team/akshat.jpg"). */
+  /** Optional: path or URL to a profile photo (e.g. "/team/akshat.png"). */
   photo?: string;
   /** Short bio line shown under the designation. */
   bio: string;
@@ -64,7 +64,7 @@ export const profiles: Record<string, Profile> = {
     designation: "Founder & Director",
     company: site.name,
     initials: "AM",
-    photo: "/team/akshat.jpeg",
+    photo: "/team/akshat.png",
     bio: "Curating timeless jewellery at AURJA.",
     whatsapp: "917485922448",
     phoneDisplay: "+91 74859 22448",
@@ -276,8 +276,8 @@ export const home: HomeConfig = {
     eyebrow: "Our Story",
     title: "Crafted in Surat, worn everywhere",
     paragraphs: [
-      "AURJA began with a simple belief — that jewellery should be made slowly, by hand, and meant to last generations. Every piece is cast, set and polished in our atelier at the Surat Diamond Bourse by artisans who have spent decades perfecting their craft.",
-      "We work only in Verified gold/silver and IGI certified diamonds, and every design is finished, weighed and checked in-house before it leaves us. No middlemen, no shortcuts — just honest craftsmanship at a fair price.",
+      "AURJA began with a simple belief — that jewellery should be made slowly, by hand, and meant to last generations. Every piece is cast, set and polished in Surat by artisans who have spent decades perfecting their craft.",
+      "We work only in Verified gold/silver and certified diamonds, and every design is finished, weighed and checked in-house before it leaves us. No shortcuts, no compromises — just pure dedication to honest craftsmanship.",
     ],
     ctaLabel: "Read Our Full Story",
     ctaHref: "/story",
@@ -290,15 +290,15 @@ export const home: HomeConfig = {
     items: [
       {
         icon: "diamond",
-        title: "Straight from the atelier",
+        title: "Direct from our hands",
         description:
-          "No middlemen. Every piece is crafted in our atelier at Surat Diamond Bourse and priced without the layers in between.",
+          "From initial sketch to final polish, each creation is crafted, inspected, and finished to ensure it meets our exacting standards.",
       },
       {
         icon: "shield",
         title: "Certified, always",
         description:
-          "Verified gold/silver and IGI certified diamonds. Every stone documented, every claim verifiable.",
+          "Verified gold/silver and certified diamonds. Every stone documented, every claim verifiable.",
       },
       {
         icon: "sparkles",
@@ -308,9 +308,9 @@ export const home: HomeConfig = {
       },
       {
         icon: "truck",
-        title: "Care for a lifetime",
+        title: "Built to endure",
         description:
-          "Lifetime care for every piece we make, plus complimentary insured shipping across India.",
+          "We stand behind the enduring quality of our jewellery and complimentary insured shipping across India.",
       },
     ],
   },
