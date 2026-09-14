@@ -11,7 +11,7 @@ import { VisitTeaser } from "./components/homepage/VisitTeaser";
 import { SiteFooter } from "./components/homepage/SiteFooter";
 
 export const metadata: Metadata = {
-  description: `${site.name} — ${site.tagline}. BIS-hallmarked gold, IGI & GIA certified diamonds, Crafted in small batches at our Surat Diamond Bourse atelier. Our first collection is in the making — launching soon.`,
+  description: `${site.name} — ${site.tagline}. Certified gold and diamonds, Crafted in small batches at our Surat Diamond Bourse atelier. Our first collection is in the making — launching soon.`,
 };
 
 export default function HomePage() {
