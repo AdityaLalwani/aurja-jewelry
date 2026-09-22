@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { profiles, storyPage } from "@/lib/site";
 import { ArrowRightIcon } from "../components/icons";
-import { SiteHeader } from "../components/homepage/SiteHeader";
 import { ValuesSection } from "../components/homepage/ValuesSection";
 import { LaunchSection } from "../components/homepage/LaunchSection";
 import { SiteFooter } from "../components/homepage/SiteFooter";
@@ -24,7 +23,6 @@ const founder = profiles["akshat-modi"];
 export default function StoryPage() {
   return (
     <>
-      <SiteHeader />
       <main className="flex-1">
         <section className="relative overflow-hidden border-b border-stone-200 bg-[#f6f0e8]">
           <div

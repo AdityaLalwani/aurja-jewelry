@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { site } from "@/lib/site";
-import { SiteHeader } from "./components/homepage/SiteHeader";
 import { Hero } from "./components/homepage/Hero";
 import { CategoryGrid } from "./components/homepage/CategoryGrid";
 import { EditorialBlock } from "./components/homepage/EditorialBlock";
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      <SiteHeader />
       <main className="flex-1">
         <Hero />
         <CategoryGrid />

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { blogs } from "@/lib/blogs";
-import { SiteHeader } from "../components/homepage/SiteHeader";
 import { SiteFooter } from "../components/homepage/SiteFooter";
 import { BlogGrid } from "./BlogGrid";
 
@@ -13,7 +12,6 @@ export const metadata: Metadata = {
 export default function BlogsPage() {
   return (
     <>
-      <SiteHeader />
       <main className="flex-1">
         <section className="relative overflow-hidden border-b border-stone-200 bg-[#f6f0e8]">
           <div

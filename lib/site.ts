@@ -211,6 +211,7 @@ export const home: HomeConfig = {
     secondaryCta: { label: "Read Our Story", href: "/story" },
   },
   nav: [
+    { label: "Collection", href: "/products" },
     { label: "Our Story", href: "/story" },
     { label: "Blogs", href: "/blogs" },
     { label: "Contact", href: "/#visit" },
