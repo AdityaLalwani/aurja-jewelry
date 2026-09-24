@@ -71,6 +71,12 @@ body {
   font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 }
 
+.story-progress {
+  height: calc(100% - 8rem);
+  transform-origin: top;
+  transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -79,5 +85,9 @@ body {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .story-progress {
+    transition: none;
   }
 }

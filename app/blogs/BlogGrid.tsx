@@ -115,7 +115,7 @@ export function BlogGrid({ posts }: { posts: BlogPost[] }) {
             <div className="mt-8 space-y-5 text-base leading-relaxed text-stone-600 sm:text-lg">
               {selectedPost.paragraphs.map((paragraph, index) => {
                 const isJournalInvite =
-                  selectedPost.number === "07" &&
+                  selectedPost.number === "06" &&
                   index === selectedPost.paragraphs.length - 1;
 
                 if (isJournalInvite) {

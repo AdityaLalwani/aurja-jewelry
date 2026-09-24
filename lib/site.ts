@@ -152,7 +152,7 @@ export type HomeConfig = {
   story: {
     eyebrow: string;
     title: string;
-    paragraphs: [string, string];
+    paragraphs: string[];
     ctaLabel: string;
     ctaHref: string;
     variant: TileVariant;
@@ -200,8 +200,8 @@ export const home: HomeConfig = {
     tagline: "Shaped for Stories",
     constantWord: "Jewellery",
     phrases: [
-      "For everyday moments.",
-      "For big beginnings.",
+      "For every moment,",
+      "For every milestone,",
       "For everything in between.",
     ],
     finale: "Launching soon.",
@@ -274,15 +274,20 @@ export const home: HomeConfig = {
   },
   story: {
     eyebrow: "Our Story",
-    title: "Crafted in Surat, worn everywhere",
+    title: "Some stories begin with a moment, Ours began with a feeling.",
     paragraphs: [
-      "AURJA began with a simple belief — that jewellery should be made slowly, by hand, and meant to last generations. Every piece is cast, set and polished in Surat by artisans who have spent decades perfecting their craft.",
-      "We work only in Verified gold/silver and certified diamonds, and every design is finished, weighed and checked in-house before it leaves us. No shortcuts, no compromises — just pure dedication to honest craftsmanship.",
+      "A feeling that beauty and responsibility need not exist apart.",
+      "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewellery house creating pieces with intention.",
+      "We believe in relationships before transactions — choosing trusted sources, working closely with our partners, and continually moving towards more conscious ways of creating.",
+      "Our inspiration comes from the world around us: the quiet forms of nature, the character of distant places, unexpected colours, and the movement found in everything living.",
+      "These inspirations become shapes, textures and details — translated into jewellery that feels modern, effortless and personal. We don't believe in creating simply for the sake of more.",
+      "We create pieces with the hope that, over time, they become part of something bigger — your moments, your milestones, your memories.",
+      "This is Aurja, Shaped for Stories.",
     ],
     ctaLabel: "Read Our Full Story",
     ctaHref: "/story",
     variant: "honey",
-    image: "/StoneSetting.webp",
+    image: "/intro.webp",
   },
   values: {
     eyebrow: "The AURJA Way",
@@ -296,13 +301,13 @@ export const home: HomeConfig = {
       },
       {
         icon: "shield",
-        title: "Certified, always",
+        title: "Trusted, always",
         description:
           "Verified gold/silver and certified diamonds. Every stone documented, every claim verifiable.",
       },
       {
         icon: "sparkles",
-        title: "Slow, small-batch craft",
+        title: "Sustainable Processes",
         description:
           "Made by hand in small, considered batches. Never mass-produced, never rushed.",
       },
@@ -310,7 +315,7 @@ export const home: HomeConfig = {
         icon: "truck",
         title: "Built to endure",
         description:
-          "We stand behind the enduring quality of our jewellery and complimentary insured shipping across India.",
+          "We stand behind the enduring quality of our jewellery and complimentary insured shipping across World.",
       },
     ],
   },
