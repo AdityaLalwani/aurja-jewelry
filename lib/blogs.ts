@@ -9,21 +9,14 @@ export type BlogPost = {
 export const blogs: BlogPost[] = [
   {
     number: "01",
-    title: "Why do we wear jewellery?",
-    intro: "Before jewellery was fashion, it was expression.",
+    title: "Why jewellery?",
+    intro: "Because some things are meant to be felt, not just seen.",
     paragraphs: [
       "Long before trends and seasons, jewellery was a way to tell the world something without saying a word.",
       "Across centuries and cultures, people have worn jewellery to express identity, love, belonging, achievement, celebration and belief. A ring could mark a promise. A pendant could carry meaning. A cherished piece could become a memory passed from one generation to another.",
       "Perhaps that is why jewellery has never truly gone out of style.",
       "We do not simply wear jewellery. We give meaning to what we wear.",
       "At Aurja, we believe that tradition of expression deserves to live in the present, through pieces that feel personal, effortless and distinctly your own.",
-    ],
-  },
-  {
-    number: "02",
-    title: "Why wear jewellery?",
-    intro: "Because some things are meant to be felt, not just seen.",
-    paragraphs: [
       "Jewellery has a quiet way of becoming part of us.",
       "It can mark a beginning, celebrate a milestone, hold a memory or simply remind us of who we are becoming.",
       "Sometimes, there does not need to be an occasion.",
@@ -32,8 +25,8 @@ export const blogs: BlogPost[] = [
     ],
   },
   {
-    number: "03",
-    title: "Why should jewellery be for everyone?",
+    number: "02",
+    title: "Can jewellery be for every moment?",
     intro: "Luxury should feel personal, not distant.",
     paragraphs: [
       "For centuries, jewellery has often been associated with grand occasions, something brought out for celebrations and carefully put away afterwards.",
@@ -43,8 +36,8 @@ export const blogs: BlogPost[] = [
     ],
   },
   {
-    number: "04",
-    title: "Why should precious jewellery be worn every day?",
+    number: "03",
+    title: "How can precious jewellery be for every day?",
     intro: "The beautiful things should not spend their lives in a box.",
     paragraphs: [
       "We often reserve our most precious pieces for the moments we consider important. But perhaps we have been looking at it backwards.",
@@ -55,7 +48,7 @@ export const blogs: BlogPost[] = [
     ],
   },
   {
-    number: "05",
+    number: "04",
     title: "Gold & Silver",
     intro: "Two metals. Endless stories.",
     paragraphs: [
@@ -67,7 +60,7 @@ export const blogs: BlogPost[] = [
     ],
   },
   {
-    number: "06",
+    number: "05",
     title: "Jewellery Care",
     intro: "Wear it often. Care for it thoughtfully.",
     paragraphs: [
@@ -82,7 +75,7 @@ export const blogs: BlogPost[] = [
     ],
   },
   {
-    number: "07",
+    number: "06",
     title: "Get Aurja Journal Updates",
     intro: "There is more to jewellery than what meets the eye.",
     paragraphs: [

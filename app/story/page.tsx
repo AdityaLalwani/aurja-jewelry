@@ -7,6 +7,7 @@ import { SiteHeader } from "../components/homepage/SiteHeader";
 import { ValuesSection } from "../components/homepage/ValuesSection";
 import { LaunchSection } from "../components/homepage/LaunchSection";
 import { SiteFooter } from "../components/homepage/SiteFooter";
+import { StoryNarrative } from "./StoryNarrative";
 
 export const metadata: Metadata = {
   title: "Our Story — AURJA",
@@ -58,52 +59,7 @@ export default function StoryPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 pb-20 pt-16 sm:px-8 sm:pb-28 sm:pt-24">
-          <div className="mb-10 flex items-end justify-between gap-6 sm:mb-14">
-            <p className="max-w-sm text-sm leading-relaxed text-stone-500 sm:text-base">
-              A quiet beginning, shaped by intention, craft and the belief that
-              beauty can be responsible too.
-            </p>
-            <span className="hidden text-[0.62rem] font-medium uppercase tracking-[0.28em] text-amber-700 sm:block">
-              The AURJA perspective
-            </span>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 md:gap-5">
-            {storyPage.paragraphs.map((paragraph, index) => (
-              <article
-                key={index}
-                className={`group rounded-[1.5rem] border border-stone-200 bg-white/75 p-6 transition-all duration-500 hover:-translate-y-1 hover:border-amber-300 hover:bg-white hover:shadow-[0_18px_45px_rgba(120,78,24,0.08)] motion-safe:animate-fade-up sm:p-8 ${
-                  index === 0 ? "md:col-span-2" : ""
-                } ${index === 1 ? "[animation-delay:100ms]" : ""} ${
-                  index === 2 ? "[animation-delay:180ms]" : ""
-                } ${index === 3 ? "[animation-delay:260ms]" : ""} ${
-                  index === 4 ? "[animation-delay:340ms]" : ""
-                } ${index === 5 ? "[animation-delay:420ms]" : ""} ${
-                  index === 6 ? "[animation-delay:500ms]" : ""
-                } ${index === 7 ? "[animation-delay:580ms]" : ""}`}
-              >
-                <div className="flex items-start justify-between gap-6">
-                  <p className="text-[0.62rem] font-medium uppercase tracking-[0.28em] text-amber-700">
-                    {index + 1 < 10 ? `0${index + 1}` : index + 1}
-                  </p>
-                  <span
-                    aria-hidden
-                    className="mt-1 h-px w-8 bg-amber-700/40 transition-all duration-500 group-hover:w-14"
-                  />
-                </div>
-                <p
-                  className={`mt-10 leading-relaxed text-stone-600 ${
-                    index === 0
-                      ? "max-w-3xl font-display text-2xl leading-tight text-stone-800 sm:text-3xl"
-                      : "text-base sm:text-lg"
-                  }`}
-                >
-                  {paragraph}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
+        <StoryNarrative paragraphs={storyPage.paragraphs} />
 
         {/* What makes us different — the shared values grid */}
         <ValuesSection />
