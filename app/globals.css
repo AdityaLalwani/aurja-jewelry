@@ -71,6 +71,32 @@ body {
   font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 }
 
+.warranty-embed [class^="zite-embed-popup-button-"] {
+  min-height: 3rem !important;
+  padding: 0 2rem !important;
+  border: 1px solid #d97706 !important;
+  border-radius: 9999px !important;
+  background-color: #d97706 !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.025em !important;
+  line-height: 1.25rem !important;
+  transition: background-color 180ms ease, border-color 180ms ease !important;
+}
+
+.warranty-embed [class^="zite-embed-popup-button-"]:hover {
+  border-color: #b45309 !important;
+  background-color: #b45309 !important;
+}
+
+.warranty-embed [class^="zite-embed-popup-button-"]:focus-visible {
+  outline: 2px solid rgb(217 119 6 / 0.6) !important;
+  outline-offset: 3px;
+}
+
 .story-progress {
   height: calc(100% - 8rem);
   transform-origin: top;
