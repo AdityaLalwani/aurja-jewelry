@@ -12,7 +12,10 @@ export function CategoryGrid() {
   const { categories } = home;
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24">
+    <section
+      id="collection"
+      className="home-categories mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24"
+    >
       <SectionHeading
         eyebrow={categories.eyebrow}
         title={categories.title}
