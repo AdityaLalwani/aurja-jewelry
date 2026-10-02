@@ -14,7 +14,7 @@ export function LaunchSection() {
   return (
     <section
       id="launch"
-      className="relative scroll-mt-24 overflow-hidden border-y border-stone-200 bg-[#f6f0e8] text-stone-900"
+      className="home-launch relative scroll-mt-24 overflow-hidden border-y border-stone-200 bg-[#f6f0e8] text-stone-900"
     >
       <div
         aria-hidden
