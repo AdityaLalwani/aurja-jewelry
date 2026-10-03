@@ -12,7 +12,7 @@ export function EditorialBlock() {
   const { story } = home;
 
   return (
-    <section className="home-story mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24">
+    <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24">
       <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
         <MediaTile
           src={story.image}
