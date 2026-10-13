@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { site } from "@/lib/site";
 import { Hero } from "./components/homepage/Hero";
-import { SiteHeader } from "./components/homepage/SiteHeader";
-import { FrameFilm } from "./components/homepage/FrameFilm";
-import { HomeManifesto } from "./components/homepage/HomeManifesto";
 import { CategoryGrid } from "./components/homepage/CategoryGrid";
 import { EditorialBlock } from "./components/homepage/EditorialBlock";
 import { ValuesSection } from "./components/homepage/ValuesSection";
@@ -18,11 +15,8 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      <SiteHeader />
-      <main className="home-page flex-1">
+      <main className="home-page">
         <Hero />
-        <FrameFilm />
-        <HomeManifesto />
         <CategoryGrid />
         <EditorialBlock />
         <ValuesSection />
