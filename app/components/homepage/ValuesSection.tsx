@@ -22,7 +22,7 @@ export function ValuesSection() {
   const { values } = home;
 
   return (
-    <section className="relative overflow-hidden bg-stone-950 text-stone-50">
+    <section className="home-values relative overflow-hidden bg-stone-950 text-stone-50">
       <div
         aria-hidden
         className="pointer-events-none absolute -right-32 top-20 h-80 w-80 rounded-full border border-amber-300/10 [box-shadow:0_0_0_28px_rgba(217,164,65,0.025),0_0_0_56px_rgba(217,164,65,0.02)]"
