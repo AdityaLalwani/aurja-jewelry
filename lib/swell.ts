@@ -89,10 +89,31 @@ export interface JewelryProduct {
     metal_type: string;
     metal_color: string;
     metal_weight_gms: number;
+    size?: string;
     gemstone_type: string;
     diamond_carat: number;
     diamond_clarity: string;
     price_usd: number;
+    product_story?: string;
+    delivery_text?: string;
+    certificate?: string;
+    collection?: string;
+    stone_shape?: string;
+    setting_type?: string;
+    ring_size?: string;
+    price_breakup?: string;
+    design_code?: string;
+    gross_weight_gms?: string;
+    occasion?: string;
+    gold_purity?: string;
+    gold_weight_gms?: string;
+    gold_color?: string;
+    diamond_count?: string;
+    diamond_cut?: string;
+    diamond_color?: string;
+    shipping_text?: string;
+    exchange_policy?: string;
+    return_policy?: string;
   };
 }
 
@@ -101,8 +122,27 @@ function firstAttributeValue(
   attributes: Record<string, unknown> | undefined,
   keys: string[],
 ): string | undefined {
+  function readPath(path: string): unknown {
+    const literalValue = attributes?.[path];
+    if (literalValue !== undefined) return literalValue;
+
+    return path.split(".").reduce<unknown>((value, segment) => {
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
+        return (value as Record<string, unknown>)[segment];
+      }
+      return undefined;
+    }, attributes);
+  }
+
   for (const key of keys) {
-    const value = attributes?.[key];
+    const value =
+      readPath(key) ??
+      (key.startsWith("content.") ? readPath(key.slice("content.".length)) : undefined) ??
+      readPath(`content.${key}`);
     const firstValue = Array.isArray(value) ? value[0] : value;
     if (typeof firstValue === "string" || typeof firstValue === "number") {
       return String(firstValue);
@@ -112,7 +152,11 @@ function firstAttributeValue(
 }
 
 function mapSwellProduct(product: SwellProduct): JewelryProduct {
-  const attributes = product.attributes;
+  const attributes = {
+    ...product.attributes,
+    ...product.content,
+    content: product.content ?? product.attributes?.content,
+  };
   const priceUsd = product.price ?? 0;
   const metalType = firstAttributeValue(attributes, ["metal_type", "metal"]);
   const gemstoneType = firstAttributeValue(attributes, [
@@ -133,9 +177,10 @@ function mapSwellProduct(product: SwellProduct): JewelryProduct {
       metal_color:
         firstAttributeValue(attributes, ["metal_color", "color"]) ?? "Yellow",
       metal_weight_gms: Number(
-        firstAttributeValue(attributes, ["metal_weight_gms", "gross_weight"]) ??
+        firstAttributeValue(attributes, ["metal_weight_gms", "metal_weight"]) ??
           0,
       ),
+      size: firstAttributeValue(attributes, ["size", "ring_size"]) ?? undefined,
       gemstone_type: gemstoneType ?? "None",
       diamond_carat: Number(
         firstAttributeValue(attributes, ["diamond_carat"]) ?? 0,
@@ -143,6 +188,57 @@ function mapSwellProduct(product: SwellProduct): JewelryProduct {
       diamond_clarity:
         firstAttributeValue(attributes, ["diamond_clarity"]) ?? "N/A",
       price_usd: priceUsd,
+      product_story:
+        firstAttributeValue(attributes, ["product_story", "story"]) ??
+        undefined,
+      delivery_text:
+        firstAttributeValue(attributes, [
+          "delivery_text",
+          "delivery_window",
+          "shipping_message",
+        ]) ?? undefined,
+      certificate:
+        firstAttributeValue(attributes, ["certificate", "certification"]) ??
+        undefined,
+      collection:
+        firstAttributeValue(attributes, ["collection", "collection_name"]) ??
+        undefined,
+      stone_shape:
+        firstAttributeValue(attributes, ["stone_shape", "shape"]) ?? undefined,
+      setting_type:
+        firstAttributeValue(attributes, ["setting_type", "setting"]) ??
+        undefined,
+      ring_size:
+        firstAttributeValue(attributes, ["ring_size", "size"]) ?? undefined,
+      price_breakup:
+        firstAttributeValue(attributes, ["price_breakup"]) ?? undefined,
+      design_code:
+        firstAttributeValue(attributes, ["design_code", "style_code"]) ??
+        undefined,
+      gross_weight_gms:
+        firstAttributeValue(attributes, ["gross_weight_gms", "gross_weight"]) ??
+        undefined,
+      occasion:
+        firstAttributeValue(attributes, ["occasion"]) ?? undefined,
+      gold_purity:
+        firstAttributeValue(attributes, ["gold_purity", "purity"]) ?? undefined,
+      gold_weight_gms:
+        firstAttributeValue(attributes, ["gold_weight_gms"]) ?? undefined,
+      gold_color:
+        firstAttributeValue(attributes, ["gold_color"]) ?? undefined,
+      diamond_count:
+        firstAttributeValue(attributes, ["diamond_count"]) ?? undefined,
+      diamond_cut:
+        firstAttributeValue(attributes, ["diamond_cut", "stone_shape"]) ??
+        undefined,
+      diamond_color:
+        firstAttributeValue(attributes, ["diamond_color"]) ?? undefined,
+      shipping_text:
+        firstAttributeValue(attributes, ["shipping_text"]) ?? undefined,
+      exchange_policy:
+        firstAttributeValue(attributes, ["exchange_policy"]) ?? undefined,
+      return_policy:
+        firstAttributeValue(attributes, ["return_policy"]) ?? undefined,
     },
   };
 }
@@ -748,6 +844,7 @@ export interface SwellProduct {
   currency?: string;
   active?: boolean;
   attributes?: Record<string, unknown>;
+  content?: Record<string, unknown>;
   images?: SwellImage[] | null;
   variable?: boolean;
   variants?: {
