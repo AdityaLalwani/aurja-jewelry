@@ -61,7 +61,7 @@ export function ProductCard({ product }: { product: JewelryProduct }) {
         >
           {product.name}
         </Link>
-        <ul className="space-y-1 text-xs leading-5 text-neutral-500">
+        {/* <ul className="space-y-1 text-xs leading-5 text-neutral-500">
           <li>
             {attributes.metal_color} {attributes.metal_type} ·{" "}
             {attributes.metal_weight_gms} g
@@ -77,7 +77,7 @@ export function ProductCard({ product }: { product: JewelryProduct }) {
             attributes.diamond_carat > 0 && (
               <li>Accent diamonds · {attributes.diamond_carat} ct</li>
             )}
-        </ul>
+        </ul> */}
         <p className="mt-auto pt-2 text-xl font-medium tracking-wide text-neutral-900">
           {formatPrice(product, currency)}
         </p>

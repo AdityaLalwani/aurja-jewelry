@@ -106,6 +106,10 @@ export interface JewelryProduct {
     gross_weight_gms?: string;
     occasion?: string;
     gold_purity?: string;
+    jewellery_type?: string;
+    product_category?: string;
+    shop_for?: string;
+    karatage?: string;
     gold_weight_gms?: string;
     gold_color?: string;
     diamond_count?: string;
@@ -222,6 +226,27 @@ function mapSwellProduct(product: SwellProduct): JewelryProduct {
         firstAttributeValue(attributes, ["occasion"]) ?? undefined,
       gold_purity:
         firstAttributeValue(attributes, ["gold_purity", "purity"]) ?? undefined,
+      jewellery_type:
+        firstAttributeValue(attributes, [
+          "jewellery_type",
+          "jewelry_type",
+          "product_type",
+        ]) ?? undefined,
+      product_category:
+        firstAttributeValue(attributes, [
+          "product_category",
+          "category",
+          "category_name",
+        ]) ?? undefined,
+      shop_for:
+        firstAttributeValue(attributes, [
+          "shop_for",
+          "target_gender",
+          "gender",
+        ]) ?? undefined,
+      karatage:
+        firstAttributeValue(attributes, ["karatage", "gold_purity", "purity"]) ??
+        undefined,
       gold_weight_gms:
         firstAttributeValue(attributes, ["gold_weight_gms"]) ?? undefined,
       gold_color:
