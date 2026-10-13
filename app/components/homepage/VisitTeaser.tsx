@@ -12,7 +12,7 @@ export function VisitTeaser() {
   return (
     <section
       id="visit"
-      className="home-visit mx-auto max-w-7xl scroll-mt-24 px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24"
+      className="mx-auto max-w-7xl scroll-mt-24 px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24"
     >
       <div className="mx-auto max-w-3xl rounded-3xl bg-white p-8 text-center ring-1 ring-stone-200 motion-safe:animate-fade-up sm:p-12">
         <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-700 ring-1 ring-amber-200">
