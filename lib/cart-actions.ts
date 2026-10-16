@@ -5,11 +5,15 @@ import { revalidatePath } from "next/cache";
 import {
   createSwellCart,
   deleteSwellCart,
+  getJewelryProductBySlug,
   findSwellProductBySlug,
+  getJewelryProducts,
   getSwellCart,
   updateSwellCart,
   type SwellCart,
 } from "@/lib/swell";
+import { buildCartView } from "@/lib/cart-view";
+import { getSessionAccountId } from "@/lib/session";
 import {
   clearCartCookie,
   createCartCookie,
@@ -256,20 +260,230 @@ export async function removeCartItemAction(
   return {};
 }
 
+export async function submitProductEnquiryAction(
+  _prevState: CartFormState | undefined,
+  formData: FormData,
+): Promise<CartFormState> {
+  const requestId = readField(formData, "requestId");
+  const slug = readField(formData, "slug");
+  const name = readField(formData, "name");
+  const email = readField(formData, "email").toLowerCase();
+  const phone = readField(formData, "phone");
+  const currency = readField(formData, "currency");
+
+  if (!/^[0-9a-f-]{36}$/i.test(requestId)) {
+    return { error: "Please reopen the form and try again." };
+  }
+  if (!slug || slug.length > 200) {
+    return { error: "This piece is no longer available." };
+  }
+  if (!name || name.length > 120) {
+    return { error: "Please enter your name." };
+  }
+  if (!EMAIL_PATTERN.test(email) || email.length > 254) {
+    return { error: "Please enter a valid email address." };
+  }
+  const phoneDigits = phone.replace(/\D/g, "");
+  if (
+    !/^\+[0-9\s().-]+$/.test(phone) ||
+    phoneDigits.length < 8 ||
+    phoneDigits.length > 15 ||
+    phone.length > 24
+  ) {
+    return {
+      error: "Please enter a phone number with country code, such as +91 98765 43210.",
+    };
+  }
+  if (currency !== "INR" && currency !== "USD") {
+    return { error: "Please refresh the page and try again." };
+  }
+
+  try {
+    const product = await getJewelryProductBySlug(slug);
+    if (!product || product.slug !== slug) {
+      return { error: "This piece is no longer available." };
+    }
+
+    const specifications = [
+      product.attributes.metal_type,
+      product.attributes.metal_color,
+      product.attributes.gold_purity,
+      product.attributes.metal_weight_gms
+        ? `${product.attributes.metal_weight_gms} g`
+        : undefined,
+      product.attributes.ring_size ?? product.attributes.size,
+      product.attributes.gemstone_type,
+      product.attributes.diamond_carat
+        ? `${product.attributes.diamond_carat} ct diamond`
+        : undefined,
+      product.attributes.diamond_clarity,
+    ].filter(
+      (value): value is string =>
+        typeof value === "string" && value.length > 0 && value !== "N/A",
+    );
+    const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
+    const webhookSecret = process.env.GOOGLE_SHEETS_WEBHOOK_SECRET;
+    if (!webhookUrl || !webhookSecret) {
+      console.error("Product enquiry notifications are not configured.");
+      return {
+        error:
+          "We could not send your request to our team right now. Please try again later.",
+      };
+    }
+
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "product-enquiry",
+        requestId,
+        name,
+        email,
+        phone,
+        product: {
+          name: product.name,
+          slug: product.slug,
+          price: currency === "INR"
+            ? product.price_inr
+            : product.attributes.price_usd,
+          currency,
+          image: product.images[0] ?? "",
+          specifications,
+        },
+        secret: webhookSecret,
+      }),
+      cache: "no-store",
+    });
+    const responseText = await response.text();
+    let result: { ok?: boolean; error?: string } | null = null;
+    try {
+      result = JSON.parse(responseText) as { ok?: boolean; error?: string };
+    } catch {
+      // Apps Script can return HTML when its deployment or authorization fails.
+    }
+
+    if (!response.ok || !result?.ok) {
+      const detail =
+        typeof result?.error === "string"
+          ? result.error.slice(0, 200)
+          : `Apps Script returned HTTP ${response.status} without a valid confirmation.`;
+      console.error(
+        `Product enquiry notification failed (HTTP ${response.status}): ${detail}`,
+      );
+
+      if (detail === "Invalid email" || detail === "Invalid source") {
+        return {
+          error:
+            "The deployed enquiry service does not recognize product enquiries. Deploy the latest Code.gs as a new Apps Script web app version, then try again.",
+        };
+      }
+      if (detail === "Unauthorized") {
+        return {
+          error:
+            "The enquiry service rejected its authentication. Check that GOOGLE_SHEETS_WEBHOOK_SECRET matches the Apps Script AURJA_WEBHOOK_SECRET.",
+        };
+      }
+      if (detail === "Invalid contact details") {
+        return {
+          error:
+            "The enquiry service rejected the contact details. Enter a valid phone number with its country code and try again.",
+        };
+      }
+      if (detail === "Invalid product details") {
+        return {
+          error:
+            "The enquiry service rejected this product's details. Please contact Aurja so the team can assist.",
+        };
+      }
+      if (detail.startsWith("Missing or invalid AURJA_SALES_EMAIL")) {
+        return {
+          error:
+            "The sales notification address is missing or invalid. Please contact Aurja so the team can assist.",
+        };
+      }
+      if (detail === "Missing spreadsheet ID") {
+        return {
+          error:
+            "The enquiry service is missing its spreadsheet configuration. Please contact Aurja so the team can assist.",
+        };
+      }
+
+      return {
+        error:
+          `We could not send your request to our team (${detail}). Please try again later or contact Aurja.`,
+      };
+    }
+  } catch (error) {
+    console.error(
+      "Product enquiry submission failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return {
+      error:
+        "We could not send your request to our team right now. Please try again later.",
+    };
+  }
+
+  return {
+    success:
+      "Thank you — our team has received your enquiry and will be in touch soon.",
+  };
+}
+
 export async function submitCartEnquiryAction(
   _prevState: CartFormState | undefined,
   formData: FormData,
 ): Promise<CartFormState> {
+  const requestId = readField(formData, "requestId");
   const name = readField(formData, "name");
   const email = readField(formData, "email").toLowerCase();
   const phone = readField(formData, "phone");
-  const message = readField(formData, "message");
+  const address1 = readField(formData, "address1");
+  const address2 = readField(formData, "address2");
+  const city = readField(formData, "city");
+  const state = readField(formData, "state");
+  const postalCode = readField(formData, "postalCode");
+  const country = readField(formData, "country");
+  const customizationNotes = readField(formData, "customizationNotes");
+  const currency = readField(formData, "currency");
 
-  if (!name) {
+  if (!/^[0-9a-f-]{36}$/i.test(requestId)) {
+    return { error: "Please reopen the form and try again." };
+  }
+  if (!name || name.length > 120) {
     return { error: "Please enter your name." };
   }
-  if (!EMAIL_PATTERN.test(email)) {
+  if (!EMAIL_PATTERN.test(email) || email.length > 254) {
     return { error: "Please enter a valid email address." };
+  }
+  const phoneDigits = phone.replace(/\D/g, "");
+  if (
+    !/^\+[0-9\s().-]+$/.test(phone) ||
+    phoneDigits.length < 8 ||
+    phoneDigits.length > 15
+  ) {
+    return { error: "Please enter a phone number with a country code." };
+  }
+  if (
+    !address1 ||
+    address1.length > 200 ||
+    address2.length > 200 ||
+    !city ||
+    city.length > 100 ||
+    !state ||
+    state.length > 100 ||
+    !postalCode ||
+    postalCode.length > 20 ||
+    !country ||
+    country.length > 100
+  ) {
+    return { error: "Please complete all shipping address fields." };
+  }
+  if (customizationNotes.length > 2000) {
+    return { error: "Customization notes must be 2,000 characters or fewer." };
+  }
+  if (currency !== "INR" && currency !== "USD") {
+    return { error: "Please refresh the page and try again." };
   }
 
   try {
@@ -277,28 +491,163 @@ export async function submitCartEnquiryAction(
     if (!resolved) {
       return { error: "Your cart has expired." };
     }
+    const cartItems = resolved.cart.items ?? [];
+    if (cartItems.length === 0) {
+      return { error: "Your cart is empty." };
+    }
 
-    // The cart is the lead: contact details are stored on the cart's
-    // metadata so the enquiry lands in Swell BM with the items attached.
-    // The cart and cookie are kept — follow-up happens in the BM.
-    await updateSwellCart(resolved.cartId, {
-      metadata: {
-        lead: {
-          name,
-          email,
-          ...(phone ? { phone } : {}),
-          ...(message ? { message } : {}),
-          date: new Date().toISOString(),
-        },
-      },
+    const cartView = buildCartView(resolved.cart, await getJewelryProducts());
+    const items = cartView.items.map((viewItem) => {
+      const cartItem = cartItems.find((item) => item.id === viewItem.id);
+      if (!cartItem) {
+        throw new Error("Cart item details could not be matched.");
+      }
+      const unitPrice =
+        currency === "INR"
+          ? viewItem.priceInr ?? viewItem.price * 83
+          : viewItem.priceUsd ?? viewItem.price;
+      const attributes = viewItem.attributes;
+      const specifications = [
+        attributes?.metal_color,
+        attributes?.metal_type,
+        attributes?.gold_purity,
+        attributes?.metal_weight_gms
+          ? `${attributes.metal_weight_gms} g`
+          : undefined,
+        attributes?.ring_size ?? attributes?.size,
+        attributes?.gemstone_type,
+        attributes?.diamond_carat
+          ? `${attributes.diamond_carat} ct diamond`
+          : undefined,
+      ]
+        .filter((value): value is string => typeof value === "string" && value.length > 0)
+        .concat(
+          (cartItem.options ?? []).map((option) =>
+            option.name ? `${option.name}: ${option.value}` : option.value,
+          ),
+        );
+
+      return {
+        name: viewItem.name,
+        productId: viewItem.productId,
+        ...(cartItem.variant_id ? { variantId: cartItem.variant_id } : {}),
+        specifications,
+        quantity: viewItem.quantity,
+        unitPrice,
+        lineTotal: unitPrice * viewItem.quantity,
+        options: (cartItem.options ?? []).map((option) => ({
+          name: option.name ?? "",
+          value: option.value,
+        })),
+      };
     });
+    const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    const shippingAddress = {
+      name,
+      phone,
+      address1,
+      ...(address2 ? { address2 } : {}),
+      city,
+      state,
+      zip: postalCode,
+      country,
+    };
+    const lead = {
+      status: "Pending Enquiry",
+      requestId,
+      createdAt: new Date().toISOString(),
+      name,
+      email,
+      phone,
+      shippingAddress,
+      customizationNotes,
+      currency,
+      total,
+      items,
+    };
+
+    const accountId = await getSessionAccountId();
+    try {
+      await updateSwellCart(resolved.cartId, {
+        shipping: shippingAddress,
+        ...(accountId ? { account_id: accountId } : {}),
+        metadata: {
+          ...resolved.cart.metadata,
+          lead,
+        },
+      });
+    } catch (error) {
+      console.error("Order enquiry save failed", error);
+      return {
+        error:
+          "We could not save your order request. Please try again, or contact the Aurja atelier if the problem continues.",
+      };
+    }
+
+    const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
+    const webhookSecret = process.env.GOOGLE_SHEETS_WEBHOOK_SECRET;
+    if (!webhookUrl || !webhookSecret) {
+      console.error("Order enquiry notifications are not configured.");
+      return {
+        error:
+          "Your request was saved, but our team notification service is not configured. Please contact the Aurja atelier to confirm your request.",
+      };
+    }
+
+    try {
+      const notificationResponse = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "order-enquiry",
+          ...lead,
+          secret: webhookSecret,
+        }),
+        cache: "no-store",
+      });
+      const responseText = await notificationResponse.text();
+      let notificationResult: { ok?: boolean; error?: string } | null = null;
+      try {
+        notificationResult = JSON.parse(responseText) as {
+          ok?: boolean;
+          error?: string;
+        };
+      } catch {
+        // Apps Script may return an HTML error page when its deployment or
+        // authorization is broken; keep that response out of the UI.
+      }
+
+      if (!notificationResponse.ok || !notificationResult?.ok) {
+        const detail =
+          typeof notificationResult?.error === "string"
+            ? notificationResult.error.slice(0, 200)
+            : `Apps Script returned HTTP ${notificationResponse.status} without a valid confirmation.`;
+        console.error("Order enquiry notification failed", {
+          status: notificationResponse.status,
+          detail,
+        });
+        return {
+          error: `Your request was saved, but the confirmation emails could not be sent (${detail}). Please verify that the Apps Script web app is redeployed and that AURJA_SALES_EMAIL is configured, then contact the Aurja atelier to confirm your request.`,
+        };
+      }
+    } catch (error) {
+      console.error("Order enquiry notification request failed", error);
+      return {
+        error:
+          "Your request was saved, but we could not reach the notification service. Please verify the Apps Script deployment and contact the Aurja atelier to confirm your request.",
+      };
+    }
   } catch (error) {
-    console.error("Swell enquiry save failed", error);
+    console.error("Order enquiry submission failed", error);
     return {
-      error: "We could not send your enquiry right now. Please try again in a moment.",
+      error:
+        "We could not prepare your order request. Please try again, or contact the Aurja atelier if the problem continues.",
     };
   }
 
   revalidatePath("/", "layout");
-  return { success: "Thank you — our atelier will be in touch shortly." };
+  return {
+    success:
+      "Thank you — your order request has been received. An Aurja atelier specialist will reach out within 24 hours.",
+  };
 }

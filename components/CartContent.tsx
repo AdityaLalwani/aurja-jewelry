@@ -3,9 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CartItemControls } from "@/components/CartItemControls";
+import { CartEnquiryForm } from "@/components/CartEnquiryForm";
 import { useStore } from "@/components/StoreProvider";
 import { WishlistButton } from "@/components/WishlistButton";
 import type { CartView } from "@/lib/cart-view";
+
+interface CartContactDetails {
+  name: string;
+  email: string;
+  phone: string;
+}
 
 function formatDisplayAmount(amount: number, currency: "INR" | "USD") {
   return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
@@ -15,7 +22,13 @@ function formatDisplayAmount(amount: number, currency: "INR" | "USD") {
   }).format(amount);
 }
 
-export function CartContent({ view }: { view: CartView }) {
+export function CartContent({
+  view,
+  contactDetails,
+}: {
+  view: CartView;
+  contactDetails: CartContactDetails;
+}) {
   const { currency } = useStore();
 
   if (view.items.length === 0) {
@@ -165,12 +178,7 @@ export function CartContent({ view }: { view: CartView }) {
               {formatDisplayAmount(total, currency)}
             </p>
           </div>
-          <button
-            type="button"
-            className="mt-6 w-full rounded-full bg-gold px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark"
-          >
-            Proceed to Checkout
-          </button>
+          <CartEnquiryForm currency={currency} contactDetails={contactDetails} />
           <p className="mt-4 text-center text-xs leading-5 text-neutral-500">
             Prices shown in {currency === "INR" ? "₹ (INR)" : "$ (USD)"}. Each
             piece is made to order in the Aurja atelier.
