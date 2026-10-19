@@ -1,16 +1,21 @@
 import { ProductGrid } from "@/components/ProductGrid";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
-import { getJewelryProducts } from "@/lib/swell";
+import { getJewelryProductPage } from "@/lib/swell";
 
 type ProductsPageProps = {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; page?: string }>;
 };
 
 export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
-  const { category } = await searchParams;
-  const products = await getJewelryProducts(category);
+  const { category, page: pageParam } = await searchParams;
+  const requestedPage = Number(pageParam ?? "1");
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? Math.min(requestedPage, 1000)
+      : 1;
+  const productPage = await getJewelryProductPage(category, page);
   const title = category
     ? category.replaceAll("-", " ")
     : "The Collection";
@@ -30,7 +35,14 @@ export default async function ProductsPage({
           </p>
         </div>
 
-        <ProductGrid products={products} />
+        <ProductGrid
+          key={`${category ?? "all"}:${page}`}
+          products={productPage.products}
+          total={productPage.total}
+          initialPage={page}
+          hasMore={productPage.hasMore}
+          categorySlug={category}
+        />
       </div>
       <SiteFooter />
     </>

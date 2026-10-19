@@ -115,12 +115,10 @@ function ActiveCategoryNav({ categories }: { categories: StoreCategory[] }) {
 
 export function SiteHeader({
   categories,
-  cartCount,
 }: {
   categories: StoreCategory[];
-  cartCount: number;
 }) {
-  const { currency, setCurrency, wishlistSlugs } = useStore();
+  const { currency, setCurrency, wishlistSlugs, cartCount } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const topLevelCategories = categories.filter(
     (category) => !category.parentId,

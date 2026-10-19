@@ -4,19 +4,9 @@ import "./globals.css";
 import { site } from "@/lib/site";
 import { StoreProvider } from "@/components/StoreProvider";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getCartIdFromCookie } from "@/lib/cart-session";
-import { getSwellCart, getStoreCategories, type StoreCategory } from "@/lib/swell";
-
-async function getCartSnapshot() {
-  const cartId = await getCartIdFromCookie();
-  if (!cartId) return null;
-
-  try {
-    return await getSwellCart(cartId);
-  } catch {
-    return null;
-  }
-}
+import { CartSnapshot } from "./CartSnapshot";
+import { Suspense } from "react";
+import { getStoreCategories, type StoreCategory } from "@/lib/swell";
 
 async function getNavigationCategories(): Promise<StoreCategory[]> {
   const categories = await getStoreCategories();
@@ -51,16 +41,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [categories, cart] = await Promise.all([
-    getNavigationCategories(),
-    getCartSnapshot(),
-  ]);
-  const cartSlugs = (cart?.items ?? [])
-    .map((item) => item.metadata?.slug)
-    .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
-  const cartCount =
-    cart?.item_quantity ??
-    (cart?.items ?? []).reduce((total, item) => total + item.quantity, 0);
+  const categories = await getNavigationCategories();
 
   return (
     <html
@@ -69,8 +50,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${playfair.variable} ${jost.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <StoreProvider initialCartSlugs={cartSlugs}>
-          <SiteHeader categories={categories} cartCount={cartCount} />
+        <StoreProvider>
+          <SiteHeader categories={categories} />
+          <Suspense fallback={null}>
+            <CartSnapshot />
+          </Suspense>
           {children}
         </StoreProvider>
       </body>

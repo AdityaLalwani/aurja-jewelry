@@ -1,12 +1,15 @@
-import type { JewelryProduct, SwellCart, SwellCartItem } from "@/lib/swell";
+import {
+  mapSwellProduct,
+  type JewelryProduct,
+  type SwellCart,
+  type SwellCartItem,
+} from "@/lib/swell";
 
 /* ---------------------------------------------------------------------------
  * Cart view model — the shape the storefront UI renders, decoupled from the
- * raw Swell cart record. Swell cart items reference products by id; the
- * catalog slug is stored on the item's metadata at add time so the UI can
- * join back to the local catalog for images, attributes, and dual-currency
- * pricing. Pure module (type-only imports from swell.ts): safe to import
- * from client components for the types.
+ * raw Swell cart record. Expanded Swell products provide images, attributes,
+ * and dual-currency pricing without loading the entire catalog. The stored
+ * slug remains the product-link fallback. Pure view-model code.
  * ------------------------------------------------------------------------- */
 
 export interface CartItemView {
@@ -65,15 +68,17 @@ function readSlug(item: SwellCartItem): string | null {
 
 function buildCartItemView(
   item: SwellCartItem,
-  products: JewelryProduct[],
 ): CartItemView {
-  const slug = readSlug(item);
-  const product = slug ? products.find((p) => p.slug === slug) : undefined;
+  const expandedProduct = item.product
+    ? mapSwellProduct(item.product)
+    : undefined;
+  const slug = readSlug(item) ?? expandedProduct?.slug ?? null;
+  const product = expandedProduct;
 
   return {
     id: item.id,
     productId: item.product_id,
-    slug: product ? slug : null,
+    slug,
     name: product?.name ?? item.product_name ?? "Piece from the collection",
     image: product?.images[0] ?? null,
     attributes: product?.attributes ?? null,
@@ -86,14 +91,13 @@ function buildCartItemView(
 
 export function buildCartView(
   cart: SwellCart | null,
-  products: JewelryProduct[],
 ): CartView {
   if (!cart) {
     return EMPTY_CART_VIEW;
   }
 
   const items = (cart.items ?? []).map((item) =>
-    buildCartItemView(item, products),
+    buildCartItemView(item),
   );
 
   return {

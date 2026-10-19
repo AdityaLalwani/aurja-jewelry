@@ -27,3 +27,10 @@ The email signup posts to `/api/subscribe`, which forwards to a Google Sheets we
 - `npm run build` — production build
 - `npm run start` — serve the production build
 - `npm run lint` — ESLint
+
+## Storefront performance
+
+- The product listing requests 24 active products at a time. **Load 24 more** appends subsequent pages; sorting and filtering apply to the products currently loaded.
+- Public Swell product and category GET requests are cached for five minutes and one hour respectively. Shopper-specific cart requests remain uncached.
+- Development server logs show the method, status, Swell resource, and elapsed time for each Swell request. Query strings and identifiers are omitted.
+- Compare cold and warm navigation with `npm run build` followed by `npm run start`. Use browser DevTools Network/Performance to compare PLP TTFB, LCP, image bytes, and JavaScript transfer; development timings include compiler overhead.

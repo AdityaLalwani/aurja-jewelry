@@ -1,7 +1,14 @@
+import { cache } from "react";
+
 const SWELL_API_URL = "https://api.swell.store";
+const CATALOG_REVALIDATE_SECONDS = 300;
 
 type SwellRequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
   /**
    * Authenticate with SWELL_SECRET_KEY instead of the public key. Swell
   * rejects the public key on admin/write endpoints (e.g. account, category,
@@ -43,41 +50,53 @@ export async function swellFetch<T>(
   const { useSecretKey = false, body, headers, ...requestOptions } = options;
   const { storeId, apiKey } = getSwellCredentials(useSecretKey);
   const auth = Buffer.from(`${storeId}:${apiKey}`).toString("base64");
+  const startedAt = performance.now();
+  let status = "network-error";
 
-  const response = await fetch(`${SWELL_API_URL}${path}`, {
-    ...requestOptions,
-    headers: {
-      Accept: "application/json",
-      Authorization: `Basic ${auth}`,
-      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-      ...headers,
-    },
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-  });
+  try {
+    const response = await fetch(`${SWELL_API_URL}${path}`, {
+      ...requestOptions,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Basic ${auth}`,
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...headers,
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+    status = String(response.status);
 
-  const responseText = await response.text();
-  let responseData: unknown = null;
+    const responseText = await response.text();
+    let responseData: unknown = null;
 
-  if (responseText) {
-    try {
-      responseData = JSON.parse(responseText);
-    } catch {
-      responseData = responseText;
+    if (responseText) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = responseText;
+      }
+    }
+
+    if (!response.ok) {
+      const error = new Error(
+        `Swell API request failed with status ${response.status}.`,
+      );
+      Object.assign(error, {
+        status: response.status,
+        data: responseData,
+      });
+      throw error;
+    }
+
+    return responseData as T;
+  } finally {
+    if (process.env.NODE_ENV !== "production") {
+      const resource = new URL(path, SWELL_API_URL).pathname.split("/")[1] || "/";
+      console.info(
+        `[Swell] ${requestOptions.method ?? "GET"} ${status} ${resource} ${Math.round(performance.now() - startedAt)}ms`,
+      );
     }
   }
-
-  if (!response.ok) {
-    const error = new Error(
-      `Swell API request failed with status ${response.status}.`,
-    );
-    Object.assign(error, {
-      status: response.status,
-      data: responseData,
-    });
-    throw error;
-  }
-
-  return responseData as T;
 }
 
 export interface JewelryProduct {
@@ -155,7 +174,10 @@ function firstAttributeValue(
   return undefined;
 }
 
-function mapSwellProduct(product: SwellProduct): JewelryProduct {
+export function mapSwellProduct(
+  product: SwellProduct,
+  imageLimit = 6,
+): JewelryProduct {
   const attributes = {
     ...product.attributes,
     ...product.content,
@@ -169,7 +191,8 @@ function mapSwellProduct(product: SwellProduct): JewelryProduct {
   ]);
   const images = (product.images ?? [])
     .map((image) => image.file?.url)
-    .filter((url): url is string => Boolean(url));
+    .filter((url): url is string => Boolean(url))
+    .slice(0, imageLimit);
 
   return {
     name: product.name ?? product.slug ?? "Untitled product",
@@ -268,15 +291,25 @@ function mapSwellProduct(product: SwellProduct): JewelryProduct {
   };
 }
 
-/** Fetch active Swell products, optionally narrowed to a category slug. */
-export async function getJewelryProducts(
-  categorySlug?: string,
-): Promise<JewelryProduct[]> {
+async function fetchJewelryProductPage(
+  categorySlug: string | undefined,
+  page: number,
+  limit: number,
+  compact = false,
+): Promise<{
+  products: JewelryProduct[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}> {
   let categoryId: string | undefined;
   if (categorySlug) {
     const categories = await swellFetch<SwellCategoryListResult>(
       "/categories?limit=100",
-      { useSecretKey: true },
+      {
+        useSecretKey: true,
+        next: { revalidate: 3600, tags: ["swell-categories"] },
+      },
     );
     categoryId = categories.results.find(
       (category) => category.slug === categorySlug,
@@ -284,7 +317,8 @@ export async function getJewelryProducts(
   }
 
   const params = new URLSearchParams({
-    limit: "100",
+    limit: String(limit),
+    page: String(page),
     where: JSON.stringify({ active: true }),
   });
   if (categoryId) {
@@ -293,9 +327,72 @@ export async function getJewelryProducts(
 
   const result = await swellFetch<SwellProductListResult>(
     `/products?${params.toString()}`,
-    { useSecretKey: true },
+    {
+      useSecretKey: true,
+      next: {
+        revalidate: CATALOG_REVALIDATE_SECONDS,
+        tags: ["swell-products"],
+      },
+    },
   );
-  return result.results.map(mapSwellProduct);
+  const mappedProducts = result.results.map((product) =>
+    mapSwellProduct(product, 1),
+  );
+  const products =
+    compact
+      ? mappedProducts.map((product) => ({
+          ...product,
+          attributes: {
+            metal_type: product.attributes.metal_type,
+            metal_color: product.attributes.metal_color,
+            metal_weight_gms: product.attributes.metal_weight_gms,
+            size: product.attributes.size,
+            gemstone_type: product.attributes.gemstone_type,
+            diamond_carat: product.attributes.diamond_carat,
+            diamond_clarity: product.attributes.diamond_clarity,
+            price_usd: product.attributes.price_usd,
+            ring_size: product.attributes.ring_size,
+            jewellery_type: product.attributes.jewellery_type,
+            product_category: product.attributes.product_category,
+            shop_for: product.attributes.shop_for,
+            karatage: product.attributes.karatage,
+            gold_purity: product.attributes.gold_purity,
+          },
+        }))
+      : mappedProducts;
+  return {
+    products,
+    total: result.count,
+    page,
+    hasMore: page * limit < result.count,
+  };
+}
+
+/** Fetch one page of active Swell products for the storefront PLP. */
+export async function getJewelryProductPage(
+  categorySlug: string | undefined,
+  page = 1,
+  limit = 24,
+): Promise<{
+  products: JewelryProduct[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}> {
+  return fetchJewelryProductPage(
+    categorySlug,
+    Math.max(1, Math.floor(page)),
+    Math.min(100, Math.max(1, Math.floor(limit))),
+    true,
+  );
+}
+
+/** Fetch the complete active catalog for existing search and wishlist views. */
+export async function getJewelryProducts(
+  categorySlug?: string,
+): Promise<JewelryProduct[]> {
+  const result = await fetchJewelryProductPage(categorySlug, 1, 100);
+  return result.products;
 }
 
 /** Category shape consumed by the storefront header navigation. */
@@ -317,6 +414,7 @@ export async function getStoreCategories(): Promise<StoreCategory[]> {
       "/categories?limit=100",
       {
         useSecretKey: true,
+        next: { revalidate: 3600, tags: ["swell-categories"] },
       },
     );
     return result.results
@@ -918,29 +1016,37 @@ export async function createSwellProduct(
 export async function findSwellProductBySlug(
   slug: string,
 ): Promise<SwellProduct | null> {
-  const params = new URLSearchParams({ search: slug, limit: "100" });
-  const result = await swellFetch<SwellProductListResult>(
-    `/products?${params.toString()}`,
-    { useSecretKey: true },
-  );
-  const product = result.results.find((item) => item.slug === slug);
-  if (!product) {
-    return null;
+  try {
+    const product = await swellFetch<SwellProduct>(
+      `/products/${encodeURIComponent(slug)}?expand=variants:100`,
+      {
+        useSecretKey: true,
+        next: {
+          revalidate: CATALOG_REVALIDATE_SECONDS,
+          tags: ["swell-products"],
+        },
+      },
+    );
+    return product.active === false ? null : product;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      (error as Error & { status?: number }).status === 404
+    ) {
+      return null;
+    }
+    throw error;
   }
-
-  return swellFetch<SwellProduct>(
-    `/products/${encodeURIComponent(product.id)}?expand=variants:100`,
-    { useSecretKey: true },
-  );
 }
 
 /** Retrieve and normalize one live Swell product for the storefront PDP. */
-export async function getJewelryProductBySlug(
-  slug: string,
-): Promise<JewelryProduct | null> {
+export const getJewelryProductBySlug = cache(
+  async (slug: string): Promise<JewelryProduct | null> => {
   const product = await findSwellProductBySlug(slug);
   return product ? mapSwellProduct(product) : null;
-}
+  },
+);
 
 /* ---------------------------------------------------------------------------
  * Carts — https://developers.swell.is/backend-api/carts
@@ -1001,6 +1107,8 @@ export interface SwellCartItem {
   shipment_weight?: number;
   options?: SwellCartItemOption[];
   product_name?: string;
+  /** Expanded product record when requested with `items.product`. */
+  product?: SwellProduct;
   bundle_items?: SwellCartItem[];
   metadata?: Record<string, unknown>;
 }
@@ -1201,7 +1309,7 @@ export async function getSwellCart(
   const query = buildSwellQuery(options);
   const cart = await swellFetch<SwellCart | null>(
     `/carts/${encodeURIComponent(cartId)}${query}`,
-    { useSecretKey: true },
+    { useSecretKey: true, cache: "no-store" },
   );
   return cart ?? null;
 }

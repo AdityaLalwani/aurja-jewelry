@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
+import { loadMoreJewelryProducts } from "@/lib/product-actions";
 import type { JewelryProduct } from "@/lib/swell";
 
 type FacetKey =
@@ -67,7 +68,24 @@ function getFacetOptions(products: JewelryProduct[], key: FacetKey) {
   );
 }
 
-export function ProductGrid({ products }: { products: JewelryProduct[] }) {
+export function ProductGrid({
+  products: initialProducts,
+  total,
+  initialPage,
+  hasMore: initialHasMore,
+  categorySlug,
+}: {
+  products: JewelryProduct[];
+  total: number;
+  initialPage: number;
+  hasMore: boolean;
+  categorySlug?: string;
+}) {
+  const [products, setProducts] = useState(initialProducts);
+  const [page, setPage] = useState(initialPage);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFacets, setSelectedFacets] = useState<
     Record<FacetKey, string[]>
@@ -151,6 +169,24 @@ export function ProductGrid({ products }: { products: JewelryProduct[] }) {
     setSortOrder("featured");
   }
 
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    setLoadError("");
+    try {
+      const nextPage = await loadMoreJewelryProducts(categorySlug, page + 1);
+      setProducts((current) => [...current, ...nextPage.products]);
+      setPage(nextPage.page);
+      setHasMore(nextPage.hasMore);
+    } catch (error) {
+      console.error("Could not load more products", error);
+      setLoadError("We could not load more pieces. Please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   const priceRange =
     products.length > 0
       ? {
@@ -194,8 +230,12 @@ export function ProductGrid({ products }: { products: JewelryProduct[] }) {
 
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.slug} product={product} />
+          {filteredProducts.map((product, index) => (
+            <ProductCard
+              key={product.slug}
+              product={product}
+              priority={index === 0}
+            />
           ))}
         </div>
       ) : (
@@ -210,6 +250,27 @@ export function ProductGrid({ products }: { products: JewelryProduct[] }) {
           >
             Clear filters
           </button>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="mt-10 flex flex-col items-center gap-3">
+          <p className="text-xs text-neutral-500">
+            Showing {products.length} of {total} pieces
+          </p>
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full border border-neutral-900 px-8 py-3 text-xs font-medium uppercase tracking-[0.14em] text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white disabled:cursor-wait disabled:opacity-60"
+          >
+            {loadingMore ? "Loading pieces…" : "Load 24 more"}
+          </button>
+          {loadError ? (
+            <p role="alert" className="text-sm text-red-600">
+              {loadError}
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -272,6 +333,13 @@ export function ProductGrid({ products }: { products: JewelryProduct[] }) {
                   <option value="name">Name: A to Z</option>
                 </select>
               </div>
+
+              {hasMore ? (
+                <p className="border-b border-neutral-200 py-4 text-xs leading-5 text-neutral-500">
+                  Filters apply to loaded pieces. Load more products to widen
+                  your selection.
+                </p>
+              ) : null}
 
               <fieldset className="border-b border-neutral-200 py-5">
                 <legend className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-800">

@@ -22,6 +22,8 @@ type StoreContextValue = {
   isWishlisted: (slug: string) => boolean;
   toggleWishlist: (slug: string) => void;
   isInCart: (slug: string) => boolean;
+  cartCount: number;
+  setCartSnapshot: (slugs: string[], count: number) => void;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -48,7 +50,8 @@ export function StoreProvider({
   const [enquiredSlugs, setEnquiredSlugs] = useState<string[]>([]);
   const [wishlistSlugs, setWishlistSlugs] = useState<string[]>([]);
   const [wishlistHydrated, setWishlistHydrated] = useState(false);
-  const [cartSlugs] = useState(initialCartSlugs);
+  const [cartSlugs, setCartSlugs] = useState(initialCartSlugs);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
@@ -99,7 +102,14 @@ export function StoreProvider({
     [wishlistSlugs],
   );
 
-  const isInCart = useCallback((slug: string) => cartSlugs.includes(slug), [cartSlugs]);
+  const isInCart = useCallback(
+    (slug: string) => cartSlugs.includes(slug),
+    [cartSlugs],
+  );
+  const setCartSnapshot = useCallback((slugs: string[], count: number) => {
+    setCartSlugs(slugs);
+    setCartCount(count);
+  }, []);
 
   const value = useMemo<StoreContextValue>(
     () => ({
@@ -111,8 +121,20 @@ export function StoreProvider({
       isWishlisted,
       toggleWishlist,
       isInCart,
+      cartCount,
+      setCartSnapshot,
     }),
-    [currency, enquiredSlugs, isInCart, isWishlisted, markEnquired, toggleWishlist, wishlistSlugs],
+    [
+      currency,
+      enquiredSlugs,
+      isInCart,
+      isWishlisted,
+      markEnquired,
+      toggleWishlist,
+      wishlistSlugs,
+      cartCount,
+      setCartSnapshot,
+    ],
   );
 
   return (
