@@ -458,17 +458,33 @@ export interface SwellAccount {
   date_updated?: string;
 }
 
+export function isSwellDuplicateEmailError(error: unknown): boolean {
+  if (!(error instanceof Error) || !("status" in error) || error.status !== 400) {
+    return false;
+  }
+
+  const serialized = JSON.stringify(
+    "data" in error ? (error.data ?? {}) : {},
+  ).toLowerCase();
+  return (
+    serialized.includes("email") &&
+    (serialized.includes("exist") ||
+      serialized.includes("already") ||
+      serialized.includes("duplicate") ||
+      serialized.includes("taken"))
+  );
+}
+
 export type SwellAccountInput = {
   email: string;
-  password?: string;
   first_name?: string;
   last_name?: string;
   phone?: string;
 };
 
 /**
- * Create an account in the Swell store. Swell bcrypt-encrypts the password
- * before storing it. Server-only: this call requires the store credentials.
+ * Create an account in the Swell store. Server-only: this call requires the
+ * store credentials.
  */
 export async function createSwellAccount(
   input: SwellAccountInput,
@@ -481,24 +497,29 @@ export async function createSwellAccount(
 }
 
 /**
- * Verify credentials against the Swell store. `:login` is a literal
- * pseudo-id path segment on the accounts endpoint, with the email and
- * password passed as query params. Returns the account record on a match,
- * or null when the credentials do not belong to any account.
- *
- * Swell does not issue a session token — the app is responsible for
- * keeping the user logged in (see src/lib/session.ts).
+ * Find a Swell customer by email. The result is checked against the exact
+ * normalized email before it is returned.
  */
-export async function loginSwellAccount(
+export async function getSwellAccountByEmail(
   email: string,
-  password: string,
 ): Promise<SwellAccount | null> {
-  const query = new URLSearchParams({ email, password });
-  const account = await swellFetch<SwellAccount | null>(
-    `/accounts/:login?${query.toString()}`,
-    { useSecretKey: true },
+  const normalizedEmail = email.toLowerCase();
+  const query = new URLSearchParams({
+    limit: "1",
+    where: JSON.stringify({ email: normalizedEmail }),
+  });
+  const result = await swellFetch<{ results: SwellAccount[] }>(
+    `/accounts?${query.toString()}`,
+    {
+      useSecretKey: true,
+      cache: "no-store",
+    },
   );
-  return account ?? null;
+  return (
+    result.results.find(
+      (account) => account.email.toLowerCase() === normalizedEmail,
+    ) ?? null
+  );
 }
 
 /**
@@ -516,12 +537,12 @@ export async function getSwellAccount(
 }
 
 /**
- * Update an account by id (same writable fields as creation, minus the
- * password rules). Server-only: this call requires the store credentials.
+ * Update an account's profile fields by id. Server-only: this call requires
+ * the store credentials.
  */
 export async function updateSwellAccount(
   accountId: string,
-  input: Partial<Omit<SwellAccountInput, "password">>,
+  input: Partial<SwellAccountInput>,
 ): Promise<SwellAccount> {
   return swellFetch<SwellAccount>(
     `/accounts/${encodeURIComponent(accountId)}`,

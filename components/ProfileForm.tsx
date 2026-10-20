@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { signOut } from "@firebase/auth";
+import { useActionState, useState } from "react";
 import {
   logoutAction,
   updateProfileAction,
 } from "@/lib/auth-actions";
+import { firebaseAuth } from "@/lib/firebase-client";
 
 const inputClasses =
   "w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-gold focus:outline-none";
@@ -25,10 +27,22 @@ export function ProfileForm({
   lastName,
   phone,
 }: ProfileFormProps) {
+  const [logoutError, setLogoutError] = useState("");
   const [state, formAction, pending] = useActionState(
     updateProfileAction,
     undefined,
   );
+
+  async function handleSignOut() {
+    setLogoutError("");
+    try {
+      await signOut(firebaseAuth);
+    } catch {
+      setLogoutError("We could not sign you out. Please try again.");
+      return;
+    }
+    await logoutAction();
+  }
 
   return (
     <section className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-sm sm:p-8">
@@ -118,14 +132,20 @@ export function ProfileForm({
         </button>
       </form>
 
-      <form action={logoutAction} className="mt-8 border-t border-neutral-200/80 pt-6">
+      <div className="mt-8 border-t border-neutral-200/80 pt-6">
+        {logoutError ? (
+          <p role="alert" className="mb-3 text-sm text-red-600">
+            {logoutError}
+          </p>
+        ) : null}
         <button
-          type="submit"
+          type="button"
+          onClick={handleSignOut}
           className="text-xs font-medium tracking-wide text-neutral-400 underline underline-offset-4 transition-colors hover:text-neutral-900"
         >
           Sign out
         </button>
-      </form>
+      </div>
     </section>
   );
 }
