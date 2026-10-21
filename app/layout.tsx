@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Jost, Playfair_Display } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { site } from "@/lib/site";
 import { StoreProvider } from "@/components/StoreProvider";
@@ -32,6 +33,12 @@ const jost = Jost({
   subsets: ["latin"],
 });
 
+const cinzel = localFont({
+  src: "../public/fonts/cinzel-latin-variable.woff2",
+  variable: "--font-cinzel",
+  weight: "400 900",
+});
+
 export const metadata: Metadata = {
   title: {
     default: `${site.name} — ${site.tagline}`,
@@ -47,7 +54,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       translate="no"
-      className={`${playfair.variable} ${jost.variable} h-full antialiased`}
+      className={`${playfair.variable} ${jost.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <StoreProvider>

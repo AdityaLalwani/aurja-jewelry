@@ -74,7 +74,7 @@ export function SiteHeader() {
               height={28}
               className="h-7 w-7 rounded-full object-cover ring-1 ring-stone-200"
             />
-            <span className="font-display text-sm font-medium tracking-[0.35em] text-stone-900">
+            <span className="font-logo text-sm font-medium tracking-[0.35em] text-kajal">
               {site.name}
             </span>
           </Link>
@@ -115,7 +115,7 @@ export function SiteHeader() {
         <div className="flex h-full flex-col px-5 pb-10 pt-2 sm:px-8">
           {/* Overlay header */}
           <div className="flex h-16 items-center justify-between">
-            <span className="font-display text-sm font-medium tracking-[0.35em] text-stone-900">
+            <span className="font-logo text-sm font-medium tracking-[0.35em] text-kajal">
               {site.name}
             </span>
             <button

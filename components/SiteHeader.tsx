@@ -166,7 +166,7 @@ export function SiteHeader({
 
         {/* Logo */}
         <Link href="/" className="shrink-0 leading-tight">
-          <p className="font-display text-2xl tracking-[0.35em] text-neutral-900">
+          <p className="font-logo text-2xl tracking-[0.35em] text-kajal">
             AURJA
           </p>
           <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500">
