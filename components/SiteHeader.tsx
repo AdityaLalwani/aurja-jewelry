@@ -2,9 +2,10 @@
 
 import { Suspense } from "react";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useStore, type Currency } from "@/components/StoreProvider";
+import { useStore } from "@/components/StoreProvider";
 import type { StoreCategory } from "@/lib/swell";
 
 const ICON_LINK_CLASS =
@@ -118,7 +119,7 @@ export function SiteHeader({
 }: {
   categories: StoreCategory[];
 }) {
-  const { currency, setCurrency, wishlistSlugs, cartCount } = useStore();
+  const { wishlistSlugs, cartCount } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const topLevelCategories = categories.filter(
     (category) => !category.parentId,
@@ -164,14 +165,27 @@ export function SiteHeader({
             </svg>
           </button>
 
-        {/* Logo */}
-        <Link href="/" className="shrink-0 leading-tight">
-          <p className="font-logo text-2xl tracking-[0.35em] text-kajal">
-            AURJA
-          </p>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500">
-            Fine Jewelry
-          </p>
+        <Link
+          href="/"
+          aria-label="AURJA — home"
+          className="flex shrink-0 items-center gap-2 leading-tight"
+        >
+          <Image
+            src="/11.png"
+            alt=""
+            width={44}
+            height={44}
+            priority
+            className="h-11 w-11 object-contain"
+          />
+          <span>
+            <span className="block font-logo text-xl tracking-[0.25em] text-kajal">
+              AURJA
+            </span>
+            <span className="block text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+              Fine Jewelry
+            </span>
+          </span>
         </Link>
 
           {/* Categories — fetched from the Swell API on the server */}
@@ -181,7 +195,7 @@ export function SiteHeader({
             </Suspense>
           </div>
 
-        {/* Icon menu: search, profile, wishlist, cart + currency */}
+        {/* Icon menu: search, profile, wishlist, cart */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Link href="/search" aria-label="Search" className={ICON_LINK_CLASS}>
             <svg
@@ -258,25 +272,6 @@ export function SiteHeader({
             )}
           </Link>
 
-          <div className="ml-1 hidden items-center gap-1 rounded-full border border-neutral-300 bg-white p-1 sm:flex">
-            {(["INR", "USD"] as Currency[]).map((code) => (
-              <button
-                key={code}
-                type="button"
-                onClick={() => setCurrency(code)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium tracking-wide transition-colors sm:px-4 ${
-                  currency === code
-                    ? "bg-gold text-white"
-                    : "text-neutral-600 hover:text-neutral-900"
-                }`}
-              >
-                <span className="hidden sm:inline">
-                  {code} {code === "INR" ? "(₹)" : "($)"}
-                </span>
-                <span className="sm:hidden">{code === "INR" ? "₹" : "$"}</span>
-              </button>
-            ))}
-          </div>
         </div>
         </div>
       </header>
@@ -363,23 +358,6 @@ export function SiteHeader({
               <Link href="/wishlist" onClick={() => setMobileMenuOpen(false)}>
                 Wishlist ({wishlistSlugs.length})
               </Link>
-            </div>
-            <div className="flex items-center gap-1 rounded-full border border-neutral-300 bg-white p-1">
-              {(["INR", "USD"] as Currency[]).map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setCurrency(code)}
-                  aria-pressed={currency === code}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium tracking-wide transition-colors ${
-                    currency === code
-                      ? "bg-gold text-white"
-                      : "text-neutral-600 hover:text-neutral-900"
-                  }`}
-                >
-                  {code}
-                </button>
-              ))}
             </div>
           </div>
         </div>

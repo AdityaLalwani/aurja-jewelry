@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CurrencySelector } from "@/components/CurrencySelector";
 import { site, home } from "@/lib/site";
 import { InstagramIcon, MailIcon, WhatsAppIcon } from "../icons";
 import { LaunchSignup } from "./LaunchSignup";
@@ -120,7 +121,10 @@ export function SiteFooter() {
           <p>
             © {year} {site.name} · {site.tagline}
           </p>
-          <p className="uppercase tracking-[0.2em]">Crafted in India</p>
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
+            <CurrencySelector />
+            <p className="uppercase tracking-[0.2em]">Crafted in India</p>
+          </div>
         </div>
       </div>
     </footer>

@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { CartSnapshot } from "./CartSnapshot";
 import { Suspense } from "react";
 import { getStoreCategories, type StoreCategory } from "@/lib/swell";
+import { headers } from "next/headers";
 
 async function getNavigationCategories(): Promise<StoreCategory[]> {
   const categories = await getStoreCategories();
@@ -48,7 +49,15 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const categories = await getNavigationCategories();
+  const [categories, requestHeaders] = await Promise.all([
+    getNavigationCategories(),
+    headers(),
+  ]);
+  const country =
+    requestHeaders.get("x-vercel-ip-country") ??
+    requestHeaders.get("cf-ipcountry") ??
+    requestHeaders.get("cloudfront-viewer-country");
+  const initialCurrency = country?.toUpperCase() === "IN" ? "INR" : "USD";
 
   return (
     <html
@@ -57,7 +66,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${playfair.variable} ${jost.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <StoreProvider>
+        <StoreProvider
+          initialCurrency={initialCurrency}
+          detectCurrencyFromBrowser={!country}
+        >
           <SiteHeader categories={categories} />
           <Suspense fallback={null}>
             <CartSnapshot />

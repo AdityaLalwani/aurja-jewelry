@@ -42,16 +42,34 @@ export function formatPrice(
 export function StoreProvider({
   children,
   initialCartSlugs = [],
+  initialCurrency = "USD",
+  detectCurrencyFromBrowser = false,
 }: {
   children: ReactNode;
   initialCartSlugs?: string[];
+  initialCurrency?: Currency;
+  detectCurrencyFromBrowser?: boolean;
 }) {
-  const [currency, setCurrency] = useState<Currency>("INR");
+  const [currency, setCurrency] = useState<Currency>(initialCurrency);
   const [enquiredSlugs, setEnquiredSlugs] = useState<string[]>([]);
   const [wishlistSlugs, setWishlistSlugs] = useState<string[]>([]);
   const [wishlistHydrated, setWishlistHydrated] = useState(false);
   const [cartSlugs, setCartSlugs] = useState(initialCartSlugs);
   const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    if (!detectCurrencyFromBrowser) return;
+
+    const { language } = window.navigator;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setCurrency(
+      language.toUpperCase().endsWith("-IN") ||
+        timeZone === "Asia/Kolkata" ||
+        timeZone === "Asia/Calcutta"
+        ? "INR"
+        : "USD",
+    );
+  }, [detectCurrencyFromBrowser]);
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
