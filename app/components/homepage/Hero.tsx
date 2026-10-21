@@ -16,7 +16,6 @@ export function Hero() {
         loop
         playsInline
         preload="metadata"
-        poster="/intro.webp"
         aria-hidden="true"
         className="absolute inset-0 hidden h-full w-full object-cover md:block"
       >
@@ -28,7 +27,6 @@ export function Hero() {
         loop
         playsInline
         preload="metadata"
-        poster="/intro.webp"
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover md:hidden"
       >

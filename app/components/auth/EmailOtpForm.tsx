@@ -113,14 +113,46 @@ export default function EmailOtpForm({
     };
   }, [captchaWidgetKey]);
 
-  async function readResponse(response: Response): Promise<ApiResponse> {
+  async function readResponse(
+    response: Response,
+    service: string,
+  ): Promise<ApiResponse> {
+    let payload: unknown;
     try {
-      return (await response.json()) as ApiResponse;
+      payload = await response.json();
     } catch {
+      console.error(`${service} returned a non-JSON response`, {
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+      });
       throw new OtpRequestError(
-        "The verification service returned an invalid response.",
+        `${service} returned an invalid response (HTTP ${response.status}).`,
       );
     }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      console.error(`${service} returned an invalid JSON response`, {
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+      });
+      throw new OtpRequestError(
+        `${service} returned an invalid response (HTTP ${response.status}).`,
+      );
+    }
+
+    return {
+      ...("message" in payload && typeof payload.message === "string"
+        ? { message: payload.message }
+        : {}),
+      ...("customToken" in payload && typeof payload.customToken === "string"
+        ? { customToken: payload.customToken }
+        : {}),
+      ...("redirectTo" in payload && typeof payload.redirectTo === "string"
+        ? { redirectTo: payload.redirectTo }
+        : {}),
+      ...("error" in payload && typeof payload.error === "string"
+        ? { error: payload.error }
+        : {}),
+    };
   }
 
   async function requestCode(event: FormEvent<HTMLFormElement>) {
@@ -142,7 +174,7 @@ export default function EmailOtpForm({
           captchaToken,
         }),
       });
-      const result = await readResponse(response);
+      const result = await readResponse(response, "Email code request");
       if (!response.ok) {
         throw new OtpRequestError(
           result.error ?? "We could not send a code. Please try again.",
@@ -188,7 +220,7 @@ export default function EmailOtpForm({
           code,
         }),
       });
-      const result = await readResponse(response);
+      const result = await readResponse(response, "Email code verification");
       if (!response.ok || !result.customToken) {
         throw new OtpRequestError(
           result.error ?? "We could not verify the code. Please try again.",
@@ -225,7 +257,7 @@ export default function EmailOtpForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken: token }),
     });
-    const sessionResult = await readResponse(sessionResponse);
+    const sessionResult = await readResponse(sessionResponse, "Sign-in session");
     if (!sessionResponse.ok || typeof sessionResult.redirectTo !== "string") {
       throw new OtpRequestError(
         sessionResult.error ?? "We could not finish signing you in.",

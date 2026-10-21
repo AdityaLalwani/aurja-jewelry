@@ -81,3 +81,10 @@ the verified email and any profile name provided by Google. Later
 authentications reuse the matching Swell account. Existing Swell profile
 details are not overwritten. The profile sign-out action clears both the
 Firebase client session and the Aurja session cookie.
+
+If an auth step receives a non-JSON response, the page reports which step
+failed and its HTTP status. The browser console also records the response
+content type. Use the failing request in the browser Network panel and the
+matching deployment/server logs to identify whether the response came from
+the app route or an upstream host; response bodies are intentionally not
+logged.
