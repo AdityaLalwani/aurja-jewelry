@@ -1,9 +1,7 @@
 /**
  * Central site configuration for AURJA.
  *
- * Edit the values below to update the whole site. Copy is drafted for the
- * pre-launch phase — when the shop goes live, start with `home.nav`,
- * `home.categories` and the hero CTAs.
+ * Edit the values below to update shared storefront copy and links.
  */
 
 export const site = {
@@ -15,7 +13,7 @@ export const site = {
   /** Instagram handle, without the @ — used for profile links across the site. */
   instagram: "aurja.co",
   /** Announcement bar copy above the header. */
-  announcement: "Our first collection is in the making — launching soon",
+  announcement: "Fine jewellery, shaped for stories",
   /** Shared contact details for the storefront. */
   contact: {
     /** WhatsApp number in international format, digits only (used for wa.me links). */
@@ -89,10 +87,6 @@ export function allProfileSlugs(): string[] {
  * All homepage copy lives here; components read from it so content can be
  * edited without touching markup. Images are optional — sections without
  * one render warm gradient placeholders (see MediaTile) keyed by `variant`.
- *
- * The site is pre-launch: category tiles are previews (not shop links) and
- * the launch signup posts to /api/subscribe, which forwards emails to the
- * Google Sheets webhook (see docs/google-sheets-subscriptions.md).
  * ---------------------------------------------------------------------- */
 
 export type NavLink = {
@@ -100,7 +94,7 @@ export type NavLink = {
   href: string;
 };
 
-/** Warm light gradient treatments used by MediaTile until real photos exist. */
+/** Warm light gradient treatments used by MediaTile when no photo is set. */
 export type TileVariant =
   | "champagne"
   | "honey"
@@ -134,8 +128,6 @@ export type HomeConfig = {
   hero: {
     tagline: string;
     constantWord: string;
-    phrases: string[];
-    finale: string;
     srText: string;
     primaryCta: NavLink;
     secondaryCta: NavLink;
@@ -145,8 +137,6 @@ export type HomeConfig = {
     eyebrow: string;
     title: string;
     description: string;
-    /** Label shown centered over each tile's blurred photo until the shop launches. */
-    comingSoonLabel: string;
     items: CategoryConfig[];
   };
   story: {
@@ -164,24 +154,10 @@ export type HomeConfig = {
     title: string;
     items: ValueConfig[];
   };
-  launch: {
-    eyebrow: string;
-    heading: string;
-    description: string;
-    /** Label for the Instagram link under the signup. */
-    instagramNote: string;
-  };
-  launchSignup: {
-    successMessage: string;
-    placeholder: string;
-    buttonLabel: string;
-  };
   instagram: {
     heading: string;
     /** CTA label, e.g. "Follow @aurja.co". */
     followLabel: string;
-    /** Number of square tiles in the grid. */
-    tileCount: number;
   };
   visit: {
     eyebrow: string;
@@ -199,16 +175,10 @@ export const home: HomeConfig = {
   hero: {
     tagline: "Shaped for Stories",
     constantWord: "Jewellery",
-    phrases: [
-      "For every moment,",
-      "For every milestone,",
-      "For everything in between.",
-    ],
-    finale: "Launching soon.",
     srText:
-      "Fine Crafted jewellery for everyday moments, big beginnings and everything in between — launching soon.",
-    primaryCta: { label: "Get Launch Updates", href: "#launch" },
-    secondaryCta: { label: "Read Our Story", href: "/story" },
+      "Fine jewellery for everyday moments, big beginnings and everything in between.",
+    primaryCta: { label: "Shop Jewellery", href: "/products" },
+    secondaryCta: { label: "Our Philosophy", href: "/story#philosophy" },
   },
   nav: [
     { label: "Collection", href: "/products" },
@@ -217,11 +187,10 @@ export const home: HomeConfig = {
     { label: "Contact", href: "/#visit" },
   ],
   categories: {
-    eyebrow: "In the Making",
-    title: "What's Coming",
+    eyebrow: "Find your favourite",
+    title: "Shop by category",
     description:
-      "The first collection spans six categories — each piece cast, set and polished by hand in our Surat atelier.",
-    comingSoonLabel: "Coming Soon",
+      "Explore thoughtfully crafted pieces for every moment and every story.",
     items: [
       {
         slug: "rings",
@@ -292,7 +261,7 @@ export const home: HomeConfig = {
   },
   values: {
     eyebrow: "The AURJA Way",
-    title: "What makes us different",
+    title: "Our Philosophy",
     items: [
       {
         icon: "diamond",
@@ -320,23 +289,9 @@ export const home: HomeConfig = {
       },
     ],
   },
-  launch: {
-    eyebrow: "Launching Soon",
-    heading: "A new chapter is about to begin",
-    description:
-      "Leave your email and we'll write the moment our first collection goes live. No noise — just the launch.",
-    instagramNote: "Follow the making on Instagram",
-  },
-  launchSignup: {
-    successMessage:
-      "You're on the list — we'll be in touch the moment we launch.",
-    placeholder: "Your email address",
-    buttonLabel: "Notify Me",
-  },
   instagram: {
-    heading: "Follow the Atelier",
+    heading: "Join us on social",
     followLabel: `Follow @${site.instagram}`,
-    tileCount: 6,
   },
   visit: {
     eyebrow: "Visit Us",

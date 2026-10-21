@@ -24,7 +24,7 @@ type MediaTileProps = {
   alt: string;
   variant: TileVariant;
   className?: string;
-  /** Render the photo blurred (e.g. pre-launch category previews). */
+  /** Render the photo blurred when it is only used as a backdrop. */
   blur?: boolean;
   /** Rendered above the media — e.g. captions or hover layers. */
   children?: ReactNode;

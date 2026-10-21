@@ -1,6 +1,6 @@
 # Google Sheets subscriptions
 
-The subscription writer is in `scripts/google-apps-script/Code.gs`. It uses a script lock to serialize requests and checks the existing rows before appending, so concurrent submissions cannot create duplicate email or WhatsApp entries within the same source. A person may subscribe separately to both the launch updates and the Aurja Journal.
+The subscription writer is in `scripts/google-apps-script/Code.gs`. It uses a script lock to serialize requests and checks the existing rows before appending, so concurrent submissions cannot create duplicate email or WhatsApp entries within the same source. A person may subscribe separately to collection updates and the Aurja Journal.
 
 ## One-time setup
 

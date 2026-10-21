@@ -3,7 +3,6 @@ import Link from "next/link";
 import { CurrencySelector } from "@/components/CurrencySelector";
 import { site, home } from "@/lib/site";
 import { InstagramIcon, MailIcon, WhatsAppIcon } from "../icons";
-import { LaunchSignup } from "./LaunchSignup";
 
 /** Social links live here (not in config) so lib/site.ts stays serializable. */
 const socials = [
@@ -28,12 +27,12 @@ const socials = [
 ];
 
 /**
- * Site footer — charcoal ground with the brand row, two link columns plus
- * the launch signup, and a slim bottom bar. The year is prerendered at
+ * Site footer — charcoal ground with the brand row, link columns, and a
+ * slim bottom bar. The year is prerendered at
  * build time, matching the bio page's pattern.
  */
 export function SiteFooter() {
-  const { footer, launch } = home;
+  const { footer } = home;
   const year = new Date().getFullYear();
 
   return (
@@ -80,8 +79,8 @@ export function SiteFooter() {
 
         <div aria-hidden className="mt-10 h-px bg-gradient-to-r from-transparent via-amber-200/30 to-transparent" />
 
-        {/* Link columns + launch signup */}
-        <div className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+        {/* Link columns */}
+        <div className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-2">
           {footer.linkColumns.map((column) => (
             <div key={column.heading}>
               <h3 className="text-xs font-medium uppercase tracking-[0.25em] text-amber-200/70">
@@ -101,19 +100,6 @@ export function SiteFooter() {
               </ul>
             </div>
           ))}
-
-          {/* Launch signup */}
-          <div>
-            <h3 className="text-xs font-medium uppercase tracking-[0.25em] text-amber-200/70">
-              {launch.eyebrow}
-            </h3>
-            <p className="mt-5 text-sm leading-relaxed text-stone-400">
-              {launch.description}
-            </p>
-            <div className="mt-5">
-              <LaunchSignup variant="footer" />
-            </div>
-          </div>
         </div>
 
         {/* Bottom bar */}

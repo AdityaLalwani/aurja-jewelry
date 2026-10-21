@@ -35,7 +35,7 @@ export function ProductGallery({
     return (
       <div className="relative aspect-[4/5] overflow-hidden bg-[#efefeb]">
         <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.2em] text-neutral-400">
-          Image coming soon
+          Image unavailable
         </div>
       </div>
     );

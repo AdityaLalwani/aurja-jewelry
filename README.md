@@ -1,6 +1,6 @@
 # AURJA — Shaped for Stories
 
-Pre-launch marketing site for a Surat-based jewellery atelier. Built with Next.js (App Router), React, TypeScript and Tailwind CSS v4.
+Storefront and brand site for a Surat-based jewellery atelier. Built with Next.js (App Router), React, TypeScript and Tailwind CSS v4.
 
 ## Getting started
 
@@ -17,9 +17,9 @@ The dev server binds to `0.0.0.0` so the site is reachable from other devices on
 - Homepage sections live in [app/components/homepage/](app/components/homepage/); pages in [app/](app/).
 - Brand fonts (Playfair Display + Jost) load via `next/font/google` in [app/layout.tsx](app/layout.tsx).
 
-## Launch-signup flow
+## Email subscriptions
 
-The email signup posts to `/api/subscribe`, which forwards to a Google Sheets webhook. Setup is documented in [docs/google-sheets-subscriptions.md](docs/google-sheets-subscriptions.md); the Apps Script server side is in [scripts/google-apps-script/Code.gs](scripts/google-apps-script/Code.gs).
+Email subscription forms post to `/api/subscribe`, which forwards to a Google Sheets webhook. Setup is documented in [docs/google-sheets-subscriptions.md](docs/google-sheets-subscriptions.md); the Apps Script server side is in [scripts/google-apps-script/Code.gs](scripts/google-apps-script/Code.gs).
 
 ## Scripts
 

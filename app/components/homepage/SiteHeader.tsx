@@ -13,7 +13,7 @@ import {
 } from "../icons";
 
 /**
- * Announcement bar + sticky header with desktop nav, a launch-notify pill and a
+ * Announcement bar + sticky header with desktop nav, a shop CTA and a
  * full-screen mobile menu. The only state is `menuOpen` — it initializes to
  * `false` on both server and client so hydration stays stable.
  */
@@ -92,12 +92,12 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          {/* Launch shortcut — scrolls to the signup section */}
+          {/* Primary shop shortcut */}
           <Link
-            href="#launch"
+            href="/products"
             className="inline-flex h-10 shrink-0 items-center rounded-full bg-stone-900 px-5 text-xs font-medium uppercase tracking-[0.2em] text-amber-50 transition-colors hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/50"
           >
-            {home.launchSignup.buttonLabel}
+            Shop Jewellery
           </Link>
         </div>
       </header>

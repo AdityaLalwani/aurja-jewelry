@@ -14,9 +14,11 @@ const ICON_LINK_CLASS =
 function CategoryNav({
   categories,
   activeSlug,
+  light = false,
 }: {
   categories: StoreCategory[];
   activeSlug: string | null;
+  light?: boolean;
 }) {
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
   const topLevelCategories = categories.filter(
@@ -49,8 +51,12 @@ function CategoryNav({
                 }
                 className={`text-xs font-medium uppercase tracking-[0.2em] transition-colors ${
                   isActive || isOpen
-                    ? "text-gold-link"
-                    : "text-neutral-600 hover:text-neutral-900"
+                    ? light
+                      ? "text-amber-200"
+                      : "text-gold-link"
+                    : light
+                      ? "text-white/90 hover:text-white"
+                      : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 {category.name}
@@ -60,8 +66,12 @@ function CategoryNav({
                 href={`/products?category=${category.slug}`}
                 className={`text-xs font-medium uppercase tracking-[0.2em] transition-colors ${
                   isActive
-                    ? "text-gold-link"
-                    : "text-neutral-600 hover:text-neutral-900"
+                    ? light
+                      ? "text-amber-200"
+                      : "text-gold-link"
+                    : light
+                      ? "text-white/90 hover:text-white"
+                      : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 {category.name}
@@ -69,11 +79,19 @@ function CategoryNav({
             )}
 
             {hasSubcategories && isOpen && (
-              <div className="absolute left-1/2 top-full z-30 mt-4 min-w-48 -translate-x-1/2 border border-neutral-200 bg-white p-2 shadow-lg">
+              <div
+                className={`absolute left-1/2 top-full z-30 mt-4 min-w-48 -translate-x-1/2 border p-2 shadow-lg ${
+                  light
+                    ? "border-white/15 bg-stone-950/95"
+                    : "border-neutral-200 bg-white"
+                }`}
+              >
                 <Link
                   href={`/products?category=${category.slug}`}
                   onClick={() => setOpenCategoryId(null)}
-                  className="block px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-900 hover:bg-cream"
+                  className={`block px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] hover:bg-cream ${
+                    light ? "text-white" : "text-neutral-900"
+                  }`}
                 >
                   View all {category.name}
                 </Link>
@@ -84,8 +102,12 @@ function CategoryNav({
                     onClick={() => setOpenCategoryId(null)}
                     className={`block px-3 py-2 text-sm transition-colors hover:bg-cream ${
                       activeSlug === subcategory.slug
-                        ? "text-gold-link"
-                        : "text-neutral-600"
+                        ? light
+                          ? "text-amber-700"
+                          : "text-gold-link"
+                        : light
+                          ? "text-white/80"
+                          : "text-neutral-600"
                     }`}
                   >
                     {subcategory.name}
@@ -105,13 +127,21 @@ function CategoryNav({
  * opts this subtree into client rendering, so it stays wrapped in Suspense
  * and prerendered pages fall back to the plain nav above.
  */
-function ActiveCategoryNav({ categories }: { categories: StoreCategory[] }) {
+function ActiveCategoryNav({
+  categories,
+  light,
+}: {
+  categories: StoreCategory[];
+  light: boolean;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeSlug =
     pathname === "/products" ? searchParams.get("category") : null;
 
-  return <CategoryNav categories={categories} activeSlug={activeSlug} />;
+  return (
+    <CategoryNav categories={categories} activeSlug={activeSlug} light={light} />
+  );
 }
 
 export function SiteHeader({
@@ -120,10 +150,25 @@ export function SiteHeader({
   categories: StoreCategory[];
 }) {
   const { wishlistSlugs, cartCount } = useStore();
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
+  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const overVideo = isHomePage && !isScrolled;
+  const iconLinkClass = overVideo
+    ? "relative rounded-full border border-white/35 p-2 text-white transition-colors hover:border-white hover:bg-white/10"
+    : ICON_LINK_CLASS;
   const topLevelCategories = categories.filter(
     (category) => !category.parentId,
   );
+
+  useEffect(() => {
+    const updateScrolledState = () => setIsScrolled(window.scrollY > 40);
+    updateScrolledState();
+    window.addEventListener("scroll", updateScrolledState, { passive: true });
+
+    return () => window.removeEventListener("scroll", updateScrolledState);
+  }, []);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -143,7 +188,22 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-neutral-200/80 bg-cream/90 backdrop-blur">
+      {!isHomePage && (
+        <div className="bg-stone-950 px-4 py-2 text-center text-[10px] font-medium uppercase tracking-[0.2em] text-amber-100 sm:text-xs">
+          Fine jewellery, shaped for stories
+        </div>
+      )}
+      <header
+        className={
+          isHomePage
+            ? `fixed inset-x-0 top-0 z-40 border-b backdrop-blur-md transition-[background-color,border-color,color,box-shadow] duration-300 ${
+                overVideo
+                  ? "border-white/20 bg-stone-950/15 text-white"
+                  : "border-neutral-200/80 bg-white/95 text-neutral-900 shadow-sm"
+              }`
+            : "sticky top-0 z-20 border-b border-neutral-200/80 bg-cream/90 backdrop-blur"
+        }
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
           <button
             type="button"
@@ -151,7 +211,11 @@ export function SiteHeader({
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-category-menu"
             onClick={() => setMobileMenuOpen(true)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold lg:hidden"
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold lg:hidden ${
+              overVideo
+                ? "border-white/40 text-white hover:border-white hover:bg-white/10"
+                : "border-neutral-300 text-neutral-600 hover:border-neutral-900 hover:text-neutral-900"
+            }`}
           >
             <svg
               viewBox="0 0 24 24"
@@ -176,13 +240,23 @@ export function SiteHeader({
             width={44}
             height={44}
             priority
-            className="h-11 w-11 object-contain"
+            className={`h-11 w-11 object-contain transition-[filter] duration-300 ${
+              overVideo ? "[filter:brightness(0)_invert(1)]" : ""
+            }`}
           />
           <span>
-            <span className="block font-logo text-xl tracking-[0.25em] text-kajal">
+            <span
+              className={`block font-logo text-xl tracking-[0.25em] ${
+                overVideo ? "text-white" : "text-kajal"
+              }`}
+            >
               AURJA
             </span>
-            <span className="block text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+            <span
+              className={`block text-[10px] uppercase tracking-[0.2em] ${
+                overVideo ? "text-white/75" : "text-neutral-500"
+              }`}
+            >
               Fine Jewelry
             </span>
           </span>
@@ -190,14 +264,25 @@ export function SiteHeader({
 
           {/* Categories — fetched from the Swell API on the server */}
           <div className="hidden min-w-0 flex-1 lg:flex">
-            <Suspense fallback={<CategoryNav categories={categories} activeSlug={null} />}>
-              <ActiveCategoryNav categories={categories} />
+            <Suspense
+              fallback={
+                <CategoryNav
+                  categories={categories}
+                  activeSlug={null}
+                  light={overVideo}
+                />
+              }
+            >
+              <ActiveCategoryNav
+                categories={categories}
+                light={overVideo}
+              />
             </Suspense>
           </div>
 
         {/* Icon menu: search, profile, wishlist, cart */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <Link href="/search" aria-label="Search" className={ICON_LINK_CLASS}>
+          <Link href="/search" aria-label="Search" className={iconLinkClass}>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -211,7 +296,7 @@ export function SiteHeader({
             </svg>
           </Link>
 
-          <Link href="/profile" aria-label="Profile" className={`${ICON_LINK_CLASS} hidden sm:inline-flex`}>
+          <Link href="/profile" aria-label="Profile" className={`${iconLinkClass} hidden sm:inline-flex`}>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -228,7 +313,7 @@ export function SiteHeader({
           <Link
             href="/wishlist"
             aria-label={`Wishlist, ${wishlistSlugs.length} item${wishlistSlugs.length === 1 ? "" : "s"}`}
-            className={`${ICON_LINK_CLASS} hidden sm:inline-flex`}
+            className={`${iconLinkClass} hidden sm:inline-flex`}
           >
             <svg
               viewBox="0 0 24 24"
@@ -250,7 +335,7 @@ export function SiteHeader({
           <Link
             href="/cart"
             aria-label={`Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
-            className={ICON_LINK_CLASS}
+            className={iconLinkClass}
           >
             <svg
               viewBox="0 0 24 24"

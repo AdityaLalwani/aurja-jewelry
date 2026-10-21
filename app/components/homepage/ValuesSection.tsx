@@ -15,14 +15,16 @@ const icons: Record<ValueConfig["icon"], typeof ShieldIcon> = {
 };
 
 /**
- * Values — four cards on a soft stone band explaining what makes AURJA
- * different. The fuller pre-launch successor to the old trust strip.
+ * Four cards that express the principles behind AURJA jewellery.
  */
 export function ValuesSection() {
   const { values } = home;
 
   return (
-    <section className="home-values relative overflow-hidden bg-stone-950 text-stone-50">
+    <section
+      id="philosophy"
+      className="home-values relative scroll-mt-24 overflow-hidden bg-stone-950 text-stone-50"
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute -right-32 top-20 h-80 w-80 rounded-full border border-amber-300/10 [box-shadow:0_0_0_28px_rgba(217,164,65,0.025),0_0_0_56px_rgba(217,164,65,0.02)]"
@@ -41,8 +43,8 @@ export function ValuesSection() {
               <span className="h-1.5 w-1.5 rotate-45 bg-amber-300" />
             </div>
             <p className="mt-8 max-w-sm text-sm leading-relaxed text-stone-400">
-              Thoughtful materials, close relationships and a slower way of
-              making. The details are where our difference lives.
+              We believe jewellery should feel personal, be made with care, and
+              stay meaningful long after the moment it marks.
             </p>
           </div>
 
