@@ -108,7 +108,7 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
     );
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center overflow-hidden px-5 py-12 sm:py-16">
+    <div className="relative flex min-h-dvh flex-col items-center overflow-hidden bg-[#0a0908] px-5 py-12 sm:py-16">
       {/* Ambient background glows */}
       <div
         aria-hidden

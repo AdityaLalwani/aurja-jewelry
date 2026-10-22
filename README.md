@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AURJA — Shaped for Stories
 
-## Getting Started
+Storefront and brand site for a Surat-based jewellery atelier. Built with Next.js (App Router), React, TypeScript and Tailwind CSS v4.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The dev server binds to `0.0.0.0` so the site is reachable from other devices on the LAN. Open `http://localhost:3000` (or your machine's LAN IP) in a browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How the site is organised
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- All copy and content lives in [lib/site.ts](lib/site.ts) — sections read from this config, so most content edits never touch markup.
+- Homepage sections live in [app/components/homepage/](app/components/homepage/); pages in [app/](app/).
+- Brand fonts (Playfair Display + Jost) load via `next/font/google` in [app/layout.tsx](app/layout.tsx).
 
-## Learn More
+## Email subscriptions
 
-To learn more about Next.js, take a look at the following resources:
+Email subscription forms post to `/api/subscribe`, which forwards to a Google Sheets webhook. Setup is documented in [docs/google-sheets-subscriptions.md](docs/google-sheets-subscriptions.md); the Apps Script server side is in [scripts/google-apps-script/Code.gs](scripts/google-apps-script/Code.gs).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `npm run dev` — dev server
+- `npm run build` — production build
+- `npm run start` — serve the production build
+- `npm run lint` — ESLint
 
-## Deploy on Vercel
+## Storefront performance
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The product listing requests 24 active products at a time. **Load 24 more** appends subsequent pages; sorting and filtering apply to the products currently loaded.
+- Public Swell product and category GET requests are cached for five minutes and one hour respectively. Shopper-specific cart requests remain uncached.
+- Development server logs show the method, status, Swell resource, and elapsed time for each Swell request. Query strings and identifiers are omitted.
+- Compare cold and warm navigation with `npm run build` followed by `npm run start`. Use browser DevTools Network/Performance to compare PLP TTFB, LCP, image bytes, and JavaScript transfer; development timings include compiler overhead.
