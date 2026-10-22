@@ -29,7 +29,7 @@ export async function ShopTheLook() {
     <section
       id="shop-by-look"
       aria-label="Shop by Look"
-      className="bg-background pb-12 pt-[4.5rem] sm:pb-16 sm:pt-28"
+      className="bg-gradient-to-b from-[#faf8f4] to-[#f6f2eb] pb-12 pt-[4.5rem] sm:pb-16 sm:pt-28"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <SectionHeading
