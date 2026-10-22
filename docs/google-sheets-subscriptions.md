@@ -56,3 +56,36 @@ so the product enquiry handler is available.
 Keep the spreadsheet restricted to the Aurja team: the order enquiries tab
 contains customer contact and delivery information. The webhook authenticates
 requests with the same `AURJA_WEBHOOK_SECRET` used for subscriptions.
+
+## Custom design uploads
+
+The **Custom Design** form accepts one JPG, PNG, WebP or PDF file up to 3 MB.
+The Next.js server validates the file and forwards it to the same authenticated
+Apps Script webhook. The script stores each file in a private Drive folder,
+adds the configured sales addresses as viewers (not public link access), saves
+the request in a `Custom Design Requests` tab, and emails the customer and sales
+team.
+
+To enable uploads:
+
+1. Create a private Google Drive folder for custom-design submissions. Do not
+   enable public or link sharing. Give the Apps Script owner access to it.
+2. In the Apps Script project's **Script Properties**, set
+   `AURJA_CUSTOM_DESIGN_FOLDER_ID` to the folder ID and make sure
+   `AURJA_SALES_EMAIL` contains the sales team addresses, separated by commas
+   or semicolons. Those addresses are granted viewer access to submitted files.
+3. In the Apps Script editor, select and run `authorizeCustomDesignUploads`
+   once, then approve the requested Drive, Sheets and email permissions.
+4. In **Deploy > Manage deployments**, edit the existing web-app deployment,
+   select **New version**, and deploy it. Keep the same deployment URL used by
+   `GOOGLE_SHEETS_WEBHOOK_URL`. The Next.js deployment must already have
+   `GOOGLE_SHEETS_WEBHOOK_URL` and `GOOGLE_SHEETS_WEBHOOK_SECRET` configured as
+   described above.
+
+The form reports an explicit configuration error until the Apps Script
+properties and deployment are ready. The `Custom Design Requests` sheet stores
+the request reference, customer contact details, design notes and private Drive
+file link. Keep the Drive folder and spreadsheet restricted to the Aurja team.
+If submissions fail with `Invalid source`, the live Apps Script deployment is
+still running an older version that does not recognize custom-design requests.
+Deploy a new version as described above and retry.

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CurrencySelector } from "@/components/CurrencySelector";
+import { CookieSettingsButton } from "@/components/CookieSettingsButton";
 import { site, home } from "@/lib/site";
 import { InstagramIcon, MailIcon, WhatsAppIcon } from "../icons";
 
@@ -80,7 +81,7 @@ export function SiteFooter() {
         <div aria-hidden className="mt-10 h-px bg-gradient-to-r from-transparent via-amber-200/30 to-transparent" />
 
         {/* Link columns */}
-        <div className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-2">
+        <div className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
           {footer.linkColumns.map((column) => (
             <div key={column.heading}>
               <h3 className="text-xs font-medium uppercase tracking-[0.25em] text-amber-200/70">
@@ -109,6 +110,7 @@ export function SiteFooter() {
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <CurrencySelector />
+            <CookieSettingsButton />
             <p className="uppercase tracking-[0.2em]">Crafted in India</p>
           </div>
         </div>

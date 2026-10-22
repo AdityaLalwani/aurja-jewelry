@@ -9,6 +9,7 @@ import { CartSnapshot } from "./CartSnapshot";
 import { Suspense } from "react";
 import { getStoreCategories, type StoreCategory } from "@/lib/swell";
 import { headers } from "next/headers";
+import { CookiePreferences } from "@/components/CookiePreferences";
 
 async function getNavigationCategories(): Promise<StoreCategory[]> {
   const categories = await getStoreCategories();
@@ -75,6 +76,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <CartSnapshot />
           </Suspense>
           {children}
+          <CookiePreferences />
         </StoreProvider>
       </body>
     </html>

@@ -59,11 +59,21 @@ Admin issues a custom sign-in token only after the emailed code is verified.
 Firebase itself does not send these numeric codes. Email delivery and any
 provider charges depend on the configured Resend account.
 
-The existing `.env.local` already contains the public Firebase configuration,
-Firebase Admin service-account JSON, session secret, and Turnstile settings.
-Add the Resend variables locally and to the hosting provider's server-side
-environment, then restart or redeploy the app. The Firebase Admin SDK requires
-Node.js 22 or newer; the project now declares that runtime requirement.
+Set the Firebase, Firebase Admin, Turnstile, Resend, and `SESSION_SECRET`
+variables in `.env.local` for local development and in the hosting provider's
+environment for deployment. `SESSION_SECRET` must be a strong, random,
+server-only value shared by the cart and sign-in cookies. You can generate one
+with:
+
+```sh
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+Do not commit `.env.local` or expose `SESSION_SECRET` with a `NEXT_PUBLIC_`
+prefix. Restart the development server after changing environment variables,
+or redeploy the app after changing the hosting environment. The Firebase
+Admin SDK requires Node.js 22 or newer; the project now declares that runtime
+requirement.
 
 ## Sign-in behavior
 

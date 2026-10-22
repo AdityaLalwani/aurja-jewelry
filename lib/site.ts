@@ -309,6 +309,18 @@ export const home: HomeConfig = {
         ],
       },
       {
+        heading: "Customer Care",
+        links: [
+          { label: "Privacy Policy", href: "/privacy-policy" },
+          { label: "Refund Policy", href: "/refund-policy" },
+          { label: "Care Guide", href: "/care-guide" },
+          { label: "Size Guide", href: "/size-guide" },
+          { label: "FAQ", href: "/faq" },
+          { label: "Terms & Conditions", href: "/terms-and-conditions" },
+          { label: "Custom Design", href: "/custom-design" },
+        ],
+      },
+      {
         heading: "Contact",
         links: [
           {

@@ -37,6 +37,18 @@ function doPost(event) {
         }, 500);
       }
     }
+    if (body.type === "custom-design") {
+      try {
+        return handleCustomDesign(body);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Custom design processing failed", error);
+        return jsonResponse({
+          ok: false,
+          error: "Custom design processing failed: " + message.slice(0, 300)
+        }, 500);
+      }
+    }
 
     const email = String(body.email || "").trim().toLowerCase();
     const whatsapp = String(body.whatsapp || "").trim();
@@ -353,8 +365,172 @@ function handleProductEnquiry(body) {
   return jsonResponse({ ok: true, duplicate: duplicateRequest }, 200);
 }
 
+function handleCustomDesign(body) {
+  const requestId = String(body.requestId || "").trim();
+  const name = String(body.name || "").trim();
+  const email = String(body.email || "").trim().toLowerCase();
+  const phone = String(body.phone || "").trim();
+  const details = String(body.details || "").trim();
+  const upload = body.file || {};
+  const fileName = String(upload.name || "").trim();
+  const mimeType = String(upload.mimeType || "").trim();
+  const encodedFile = String(upload.data || "").trim();
+  const allowedTypes = {
+    "image/jpeg": /\.jpe?g$/i,
+    "image/png": /\.png$/i,
+    "image/webp": /\.webp$/i,
+    "application/pdf": /\.pdf$/i
+  };
+
+  if (!/^[0-9a-f-]{36}$/i.test(requestId)) {
+    throw new Error("Invalid request ID");
+  }
+  if (!name || name.length > 120 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 ||
+      !/^\+?[0-9\s().-]{8,24}$/.test(phone) ||
+      phone.replace(/\D/g, "").length < 8 ||
+      details.length > 1500) {
+    throw new Error("Invalid contact details or design notes");
+  }
+  if (!Object.prototype.hasOwnProperty.call(allowedTypes, mimeType) ||
+      !allowedTypes[mimeType].test(fileName) ||
+      !/^[A-Za-z0-9+/]+=*$/.test(encodedFile) || encodedFile.length > 4200000) {
+    throw new Error("Invalid design file");
+  }
+
+  const salesEmailSetting = PropertiesService.getScriptProperties().getProperty("AURJA_SALES_EMAIL") || "";
+  const salesEmails = salesEmailSetting.split(/[;,]/).map(function (address) {
+    return address.trim();
+  }).filter(Boolean);
+  if (!salesEmails.length || salesEmails.some(function (address) {
+    return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) || address.length > 254;
+  })) {
+    throw new Error("Missing or invalid AURJA_SALES_EMAIL");
+  }
+
+  const folderId = PropertiesService.getScriptProperties().getProperty("AURJA_CUSTOM_DESIGN_FOLDER_ID");
+  if (!folderId) throw new Error("Missing AURJA_CUSTOM_DESIGN_FOLDER_ID");
+
+  const sheet = getCustomDesignSheet();
+  const rows = sheet.getDataRange().getValues();
+  const existingIndex = rows.findIndex(function (row, index) {
+    return index > 0 && String(row[1] || "") === requestId;
+  });
+  let rowNumber;
+  let fileUrl;
+  let duplicateRequest = false;
+
+  if (existingIndex > 0) {
+    rowNumber = existingIndex + 1;
+    fileUrl = String(rows[existingIndex][7] || "");
+    duplicateRequest = true;
+  } else {
+    const bytes = Utilities.base64Decode(encodedFile);
+    if (!bytes.length || bytes.length > 3 * 1024 * 1024) {
+      throw new Error("Design file must be no larger than 3 MB");
+    }
+
+    const folder = DriveApp.getFolderById(folderId);
+    const file = folder.createFile(Utilities.newBlob(bytes, mimeType, fileName));
+    try {
+      salesEmails.forEach(function (address) {
+        file.addViewer(address);
+      });
+      sheet.appendRow([
+        new Date(),
+        requestId,
+        safeSheetText(name),
+        safeSheetText(email),
+        safeSheetText(phone),
+        safeSheetText(details),
+        safeSheetText(fileName),
+        file.getUrl(),
+        "Pending",
+        "Pending"
+      ]);
+      rowNumber = sheet.getLastRow();
+      fileUrl = file.getUrl();
+    } catch (error) {
+      file.setTrashed(true);
+      throw error;
+    }
+  }
+
+  const storedName = String(sheet.getRange(rowNumber, 3).getValue());
+  const storedEmail = String(sheet.getRange(rowNumber, 4).getValue());
+  const storedFileName = String(sheet.getRange(rowNumber, 7).getValue());
+
+  if (String(sheet.getRange(rowNumber, 9).getValue()) !== "Sent") {
+    MailApp.sendEmail({
+      to: storedEmail,
+      subject: "We received your AURJA custom design request",
+      body:
+        "Dear " + storedName + ",\n\n" +
+        "Thank you for sharing your design with AURJA. Our team has received " +
+        "your request and will review it before getting back to you with a quote " +
+        "or any questions about the details.\n\n" +
+        "Your request is not an order confirmation.\n\n" +
+        "With care,\nAURJA Atelier",
+      name: "AURJA Atelier"
+    });
+    sheet.getRange(rowNumber, 9).setValue("Sent");
+  }
+
+  if (String(sheet.getRange(rowNumber, 10).getValue()) !== "Sent") {
+    MailApp.sendEmail({
+      to: salesEmails.join(","),
+      subject: "New AURJA custom design request",
+      body:
+        "A new custom design request has been submitted.\n\n" +
+        "Request ID: " + requestId + "\n" +
+        "Name: " + storedName + "\n" +
+        "Email: " + storedEmail + "\n" +
+        "Phone: " + String(sheet.getRange(rowNumber, 5).getValue()) + "\n\n" +
+        "Design notes: " + String(sheet.getRange(rowNumber, 6).getValue() || "None") + "\n" +
+        "File: " + storedFileName + "\n" +
+        "Private Drive link: " + fileUrl,
+      name: "AURJA Website"
+    });
+    sheet.getRange(rowNumber, 10).setValue("Sent");
+  }
+
+  return jsonResponse({ ok: true, duplicate: duplicateRequest }, 200);
+}
+
+function authorizeCustomDesignUploads() {
+  const folderId = PropertiesService.getScriptProperties().getProperty("AURJA_CUSTOM_DESIGN_FOLDER_ID");
+  if (!folderId) throw new Error("Set AURJA_CUSTOM_DESIGN_FOLDER_ID before authorizing uploads");
+
+  const folder = DriveApp.getFolderById(folderId);
+  const checkFile = folder.createFile(
+    "AURJA upload permission check.txt",
+    "Temporary permission check. This file is removed by the authorization helper.",
+    MimeType.PLAIN_TEXT
+  );
+  checkFile.setTrashed(true);
+  MailApp.getRemainingDailyQuota();
+  getCustomDesignSheet();
+}
+
 function authorizeOrderEnquiryEmails() {
   MailApp.getRemainingDailyQuota();
+}
+
+function getCustomDesignSheet() {
+  const spreadsheetId = PropertiesService.getScriptProperties().getProperty("AURJA_SPREADSHEET_ID");
+  if (!spreadsheetId) throw new Error("Missing spreadsheet ID");
+
+  const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+  const sheetName = "Custom Design Requests";
+  let sheet = spreadsheet.getSheetByName(sheetName);
+  if (!sheet) sheet = spreadsheet.insertSheet(sheetName);
+
+  const headers = [
+    "Created At", "Request ID", "Name", "Email", "Phone", "Design Notes",
+    "File Name", "Private Drive File", "Customer Confirmation", "Sales Notification"
+  ];
+  if (sheet.getLastRow() === 0) sheet.appendRow(headers);
+  return sheet;
 }
 
 function getSheet() {
