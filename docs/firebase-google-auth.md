@@ -74,6 +74,12 @@ prefix. Restart the development server after changing environment variables,
 or redeploy the app after changing the hosting environment. The Firebase
 Admin SDK requires Node.js 22 or newer; the project now declares that runtime
 requirement.
+The existing `.env.local` already contains the public Firebase configuration,
+Firebase Admin service-account JSON, session secret, and Turnstile settings.
+Add the Resend variables locally and to the hosting provider's server-side
+environment, then restart or redeploy the app. The Firebase Admin dependency
+tree requires Node.js 22.12 or newer; the project declares this runtime
+requirement so deployment uses a compatible Node version.
 
 ## Sign-in behavior
 

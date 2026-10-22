@@ -78,8 +78,20 @@ export async function swellFetch<T>(
     }
 
     if (!response.ok) {
+      const responseMessage =
+        responseData !== null &&
+        typeof responseData === "object" &&
+        "message" in responseData &&
+        typeof responseData.message === "string"
+          ? responseData.message
+          : responseData !== null &&
+              typeof responseData === "object" &&
+              "error" in responseData &&
+              typeof responseData.error === "string"
+            ? responseData.error
+            : undefined;
       const error = new Error(
-        `Swell API request failed with status ${response.status}.`,
+        `Swell API request failed for ${path} with status ${response.status}${responseMessage ? `: ${responseMessage}` : "."}`,
       );
       Object.assign(error, {
         status: response.status,
@@ -675,7 +687,7 @@ export type SwellVariantUpdateInput = Partial<
 export async function createSwellVariant(
   input: SwellVariantInput,
 ): Promise<SwellVariant> {
-  return swellFetch<SwellVariant>("/v1/products:variants", {
+  return swellFetch<SwellVariant>("/products:variants", {
     method: "POST",
     body: input,
     useSecretKey: true,
@@ -726,7 +738,7 @@ export async function getSwellVariant(
 ): Promise<SwellVariant | null> {
   const query = buildSwellVariantQuery(options);
   const variant = await swellFetch<SwellVariant | null>(
-    `/v1/products:variants/${encodeURIComponent(variantId)}${query}`,
+    `/products:variants/${encodeURIComponent(variantId)}${query}`,
   );
   return variant ?? null;
 }
@@ -743,7 +755,7 @@ export async function updateSwellVariant(
   input: SwellVariantUpdateInput,
 ): Promise<SwellVariant> {
   return swellFetch<SwellVariant>(
-    `/v1/products:variants/${encodeURIComponent(variantId)}`,
+    `/products:variants/${encodeURIComponent(variantId)}`,
     {
       method: "PUT",
       body: input,
@@ -761,7 +773,9 @@ export async function listSwellVariants(
   options: SwellVariantListQuery = {},
 ): Promise<SwellVariantListResult> {
   const query = buildSwellVariantQuery(options);
-  return swellFetch<SwellVariantListResult>(`/v1/products:variants${query}`);
+  return swellFetch<SwellVariantListResult>(`/products:variants${query}`, {
+    useSecretKey: true,
+  });
 }
 
 /**
@@ -774,7 +788,7 @@ export async function deleteSwellVariant(
   variantId: string,
 ): Promise<SwellVariant> {
   return swellFetch<SwellVariant>(
-    `/v1/products:variants/${encodeURIComponent(variantId)}`,
+    `/products:variants/${encodeURIComponent(variantId)}`,
     { method: "DELETE", useSecretKey: true },
   );
 }
@@ -984,6 +998,7 @@ export interface SwellProduct {
   id: string;
   name?: string;
   slug?: string;
+  sku?: string;
   price?: number;
   currency?: string;
   active?: boolean;
@@ -1068,6 +1083,42 @@ export const getJewelryProductBySlug = cache(
   return product ? mapSwellProduct(product) : null;
   },
 );
+
+export async function getJewelryProductsBySkus(
+  skus: readonly string[],
+): Promise<{ sku: string; product: JewelryProduct }[]> {
+  return Promise.all(
+    skus.map(async (sku) => {
+      const params = new URLSearchParams({
+        search: sku,
+        limit: "100",
+        where: JSON.stringify({ active: true }),
+      });
+      const products = await swellFetch<SwellProductListResult>(
+        `/products?${params.toString()}`,
+        {
+          useSecretKey: true,
+          next: {
+            revalidate: CATALOG_REVALIDATE_SECONDS,
+            tags: ["swell-products"],
+          },
+        },
+      );
+      const matchedProduct = products.results.find(
+        (product) =>
+          (product.sku ??
+            firstAttributeValue(product.attributes, ["sku", "product_sku"]))?.toUpperCase() ===
+          sku.toUpperCase(),
+      );
+
+      if (!matchedProduct) {
+        throw new Error(`No active Swell product found for SKU "${sku}".`);
+      }
+
+      return { sku, product: mapSwellProduct(matchedProduct) };
+    }),
+  );
+}
 
 /* ---------------------------------------------------------------------------
  * Carts — https://developers.swell.is/backend-api/carts
