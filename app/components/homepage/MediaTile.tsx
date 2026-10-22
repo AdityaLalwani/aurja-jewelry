@@ -55,6 +55,7 @@ export function MediaTile({
           src={src}
           alt={alt}
           fill
+          sizes="(max-width: 639px) calc((100vw - 56px) / 2), (max-width: 767px) calc((100vw - 152px) / 2), (max-width: 1279px) calc((100vw - 176px) / 3), 368px"
           unoptimized={isAnimated}
           className={`object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] ${blur ? "scale-110 blur-md" : ""}`}
         />

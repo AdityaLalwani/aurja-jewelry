@@ -197,48 +197,42 @@ export const home: HomeConfig = {
         name: "Rings",
         description: "Solitaires, bands & stacks",
         variant: "champagne",
-        image:
-          "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=85",
+        image: "/32.jpg",
       },
       {
         slug: "earrings",
         name: "Earrings",
         description: "Studs, drops & hoops",
         variant: "honey",
-        image:
-          "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=85",
+        image: "/33.jpg",
       },
       {
         slug: "pendants",
         name: "Pendants",
         description: "Charms & keepsakes",
         variant: "blush",
-        image:
-          "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=85",
+        image: "/37.jpg",
       },
       {
         slug: "bracelets-bangles",
         name: "Bracelets & Bangles",
         description: "Cuffs, chains & kadas",
         variant: "pearl",
-        image:
-          "https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=85",
+        image: "/35.jpg",
       },
       {
         slug: "necklaces",
         name: "Necklaces",
         description: "Chokers to long chains",
         variant: "sand",
-        image:
-          "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=900&q=85",
+        image: "/34.jpg",
       },
       {
         slug: "silver",
         name: "Silver",
         description: "Sterling silver essentials",
         variant: "dusk",
-        image:
-          "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=85",
+        image: "/36.jpg",
       },
     ],
   },
