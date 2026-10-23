@@ -24,11 +24,7 @@ export default function StoryPage() {
   return (
     <>
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-stone-200 bg-[#f6f0e8]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_0%,rgba(217,164,65,0.2),transparent_34%),linear-gradient(135deg,#faf7f2,#f1e8dc)]"
-          />
+        <section className="relative overflow-hidden border-b border-stone-200 bg-chandan">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-24 top-16 h-72 w-72 rounded-full border border-amber-700/15 motion-safe:animate-halo-pulse [box-shadow:0_0_0_22px_rgba(217,164,65,0.035),0_0_0_44px_rgba(217,164,65,0.025)]"

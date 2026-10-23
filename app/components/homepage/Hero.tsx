@@ -49,13 +49,27 @@ export function Hero() {
           </p>
           <h1 className="mt-5 font-display text-5xl font-medium leading-[0.98] tracking-[-0.035em] text-white sm:text-7xl lg:text-8xl">
             {hero.constantWord}
-            <span className="mt-2 block font-display text-3xl font-normal italic tracking-normal text-amber-100 sm:text-5xl lg:text-6xl">
-              for every story.
+            <span className="hero-tagline-rotator mt-2 block font-display text-3xl font-normal italic tracking-normal text-amber-100 sm:text-5xl lg:text-6xl">
+              <span aria-hidden="true" className="hero-tagline-rotator__phrase">
+                For every moment,
+              </span>
+              <span
+                aria-hidden="true"
+                className="hero-tagline-rotator__phrase hero-tagline-rotator__phrase--second"
+              >
+                For every milestone,
+              </span>
+              <span
+                aria-hidden="true"
+                className="hero-tagline-rotator__phrase hero-tagline-rotator__phrase--third"
+              >
+                For everything in between.
+              </span>
+              <span className="sr-only">
+                For every moment, for every milestone, for everything in between.
+              </span>
             </span>
           </h1>
-          <p className="mt-6 max-w-lg text-sm leading-relaxed text-white/85 sm:text-base">
-            {hero.srText}
-          </p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link
               href={hero.primaryCta.href}

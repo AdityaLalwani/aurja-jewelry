@@ -5,7 +5,7 @@
   --aurja-gold: #c39655;
   --kajal: #282826;
   --sindoori: #661514;
-  --chandan: #f5ebd0;
+  --chandan: #f2ece2;
   --background: var(--chandan);
   --foreground: var(--kajal);
   --cream: var(--chandan);
@@ -82,10 +82,60 @@
   }
 }
 
+.hero-tagline-rotator {
+  display: grid;
+  grid-template: 1fr / 1fr;
+}
+
+.hero-tagline-rotator__phrase {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  transform: perspective(800px) rotateX(-90deg);
+  transform-origin: center center;
+  visibility: hidden;
+  animation: hero-tagline-rotate 9s ease-in-out infinite;
+}
+
+.hero-tagline-rotator__phrase--second {
+  animation-delay: 3s;
+}
+
+.hero-tagline-rotator__phrase--third {
+  animation-delay: 6s;
+}
+
+@keyframes hero-tagline-rotate {
+  0% {
+    transform: perspective(800px) rotateX(-90deg);
+    visibility: visible;
+  }
+  9% {
+    transform: perspective(800px) rotateX(0);
+    visibility: visible;
+  }
+  25% {
+    transform: perspective(800px) rotateX(0);
+    visibility: visible;
+  }
+  33% {
+    transform: perspective(800px) rotateX(90deg);
+    visibility: visible;
+  }
+  34%,
+  100% {
+    transform: perspective(800px) rotateX(90deg);
+    visibility: hidden;
+  }
+}
+
 body {
-  background: var(--background);
+  background: #f2ece2;
   color: var(--foreground);
   font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+}
+
+main:not(.home-page) {
+  background-color: #f2ece2;
 }
 
 .warranty-embed [class^="zite-embed-popup-button-"] {
@@ -141,7 +191,7 @@ body.frame-film-header-hidden .site-header-shell {
 
 .frame-film {
   --film-ink: #22251f;
-  --film-paper: #eeece2;
+  --film-paper: #f2ece2;
   --film-rust: #a64b36;
   color: var(--film-ink);
   background: var(--film-paper);
@@ -601,5 +651,16 @@ body.frame-film-header-hidden .site-header-shell {
 
   .story-progress {
     transition: none;
+  }
+
+  .hero-tagline-rotator__phrase {
+    animation: none;
+    visibility: visible;
+    transform: none;
+  }
+
+  .hero-tagline-rotator__phrase--second,
+  .hero-tagline-rotator__phrase--third {
+    display: none;
   }
 }

@@ -21,6 +21,7 @@ function CategoryNav({
   light?: boolean;
 }) {
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
+  const isStoryActive = usePathname() === "/story";
   const topLevelCategories = categories.filter(
     (category) => !category.parentId,
   );
@@ -118,6 +119,20 @@ function CategoryNav({
           </div>
         );
       })}
+      <Link
+        href="/story"
+        className={`text-xs font-medium uppercase tracking-[0.2em] transition-colors ${
+          isStoryActive
+            ? light
+              ? "text-amber-200"
+              : "text-gold-link"
+            : light
+              ? "text-white/90 hover:text-white"
+              : "text-neutral-600 hover:text-neutral-900"
+        }`}
+      >
+        Aurja Story
+      </Link>
     </nav>
   );
 }
@@ -432,6 +447,15 @@ export function SiteHeader({
                   </li>
                 );
               })}
+              <li className="py-3">
+                <Link
+                  href="/story"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1 font-display text-xl text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                >
+                  Aurja Story
+                </Link>
+              </li>
             </ul>
           </nav>
 

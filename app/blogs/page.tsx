@@ -13,11 +13,7 @@ export default function BlogsPage() {
   return (
     <>
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-stone-200 bg-[#f6f0e8]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_0%,rgba(217,164,65,0.2),transparent_35%),linear-gradient(135deg,#faf7f2,#f1e8dc)]"
-          />
+        <section className="relative overflow-hidden border-b border-stone-200 bg-chandan">
           <div className="relative mx-auto max-w-7xl px-5 pb-20 pt-16 sm:px-8 sm:pb-28 sm:pt-24">
             <p className="motion-safe:animate-fade-up text-xs font-medium uppercase tracking-[0.32em] text-amber-700">
               The Aurja Journal

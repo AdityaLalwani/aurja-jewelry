@@ -14,11 +14,7 @@ export default function WarrantyRegistrationPage() {
     <>
       <SiteHeader />
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-stone-200 bg-[#f4eee5]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_18%,rgba(217,164,65,0.2),transparent_32%),linear-gradient(135deg,#faf7f2,#f1e8dc)]"
-          />
+        <section className="relative overflow-hidden border-b border-stone-200 bg-chandan">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-20 top-20 h-64 w-64 rounded-full border border-amber-700/15 [box-shadow:0_0_0_20px_rgba(217,164,65,0.035),0_0_0_40px_rgba(217,164,65,0.025)]"
