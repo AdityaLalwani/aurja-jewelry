@@ -229,7 +229,7 @@ export function ProductGrid({
       </div>
 
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((product, index) => (
             <ProductCard
               key={product.slug}
@@ -375,6 +375,8 @@ export function ProductGrid({
 
               {FACETS.map(({ key, label }) => {
                 const options = getFacetOptions(products, key);
+                if (options.length === 0) return null;
+
                 return (
                   <fieldset
                     key={key}
@@ -383,28 +385,22 @@ export function ProductGrid({
                     <legend className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-800">
                       {label}
                     </legend>
-                    {options.length > 0 ? (
-                      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                        {options.map((option) => (
-                          <label
-                            key={option}
-                            className="flex cursor-pointer items-center gap-2 text-sm text-neutral-600"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedFacets[key].includes(option)}
-                              onChange={() => toggleFacet(key, option)}
-                              className="size-4 accent-[#b88a44]"
-                            />
-                            <span>{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-xs text-neutral-400">
-                        No options available
-                      </p>
-                    )}
+                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                      {options.map((option) => (
+                        <label
+                          key={option}
+                          className="flex cursor-pointer items-center gap-2 text-sm text-neutral-600"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedFacets[key].includes(option)}
+                            onChange={() => toggleFacet(key, option)}
+                            className="size-4 accent-[#b88a44]"
+                          />
+                          <span>{option}</span>
+                        </label>
+                      ))}
+                    </div>
                   </fieldset>
                 );
               })}

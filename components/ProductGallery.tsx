@@ -6,9 +6,11 @@ import { useEffect, useState } from "react";
 export function ProductGallery({
   images,
   name,
+  stockLevel,
 }: {
   images: string[];
   name: string;
+  stockLevel?: number;
 }) {
   const galleryImages = images.slice(0, 6);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -58,7 +60,7 @@ export function ProductGallery({
               className={`relative aspect-[5/6] overflow-hidden bg-[#efefeb] ${
                 index === 0 ? "col-span-1" : "col-span-1"
               }`}
-              aria-label={`Open image ${index + 1}`}
+              aria-label={`Open image ${index + 1}${index === 0 && stockLevel === 1 ? ", only 1 left" : ""}`}
             >
               <Image
                 src={image}
@@ -68,6 +70,11 @@ export function ProductGallery({
                 sizes="(min-width: 1024px) 26vw, 50vw"
                 className="object-cover transition-transform duration-300 hover:scale-[1.02]"
               />
+              {index === 0 && stockLevel === 1 ? (
+                <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-800 shadow-sm">
+                  Only 1 left
+                </span>
+              ) : null}
             </button>
           ))}
         </div>

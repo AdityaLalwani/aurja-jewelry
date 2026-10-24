@@ -115,6 +115,7 @@ export interface JewelryProduct {
   name: string;
   slug: string;
   price_inr: number;
+  stock_level?: number;
   images: string[];
   attributes: {
     metal_type: string;
@@ -210,6 +211,7 @@ export function mapSwellProduct(
     name: product.name ?? product.slug ?? "Untitled product",
     slug: product.slug ?? product.id,
     price_inr: Math.round(priceUsd * 83),
+    stock_level: product.stock_level,
     images,
     attributes: {
       metal_type: metalType ?? "Gold",
@@ -1000,6 +1002,7 @@ export interface SwellProduct {
   slug?: string;
   sku?: string;
   price?: number;
+  stock_level?: number;
   currency?: string;
   active?: boolean;
   attributes?: Record<string, unknown>;

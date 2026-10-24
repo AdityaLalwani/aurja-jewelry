@@ -129,13 +129,13 @@
 }
 
 body {
-  background: #f2ece2;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 }
 
 main:not(.home-page) {
-  background-color: #f2ece2;
+  background-color: var(--background);
 }
 
 .warranty-embed [class^="zite-embed-popup-button-"] {
@@ -191,7 +191,7 @@ body.frame-film-header-hidden .site-header-shell {
 
 .frame-film {
   --film-ink: #22251f;
-  --film-paper: #f2ece2;
+  --film-paper: var(--background);
   --film-rust: #a64b36;
   color: var(--film-ink);
   background: var(--film-paper);
@@ -519,7 +519,7 @@ body.frame-film-header-hidden .site-header-shell {
 }
 
 .home-page .home-categories::before {
-  background: linear-gradient(180deg, #faf8f4 0%, #f6f2eb 100%);
+  background: var(--background);
 }
 
 .home-page #social,
@@ -530,11 +530,11 @@ body.frame-film-header-hidden .site-header-shell {
 }
 
 .home-page #social::before {
-  background: linear-gradient(180deg, #f1ebe1 0%, #f7f3ec 100%);
+  background: var(--background);
 }
 
 .home-page .home-visit::before {
-  background: linear-gradient(180deg, #f8f6f1 0%, #f1ece3 100%);
+  background: var(--background);
 }
 
 .home-page .home-categories h2 {
@@ -550,7 +550,7 @@ body.frame-film-header-hidden .site-header-shell {
 
 .home-page .home-visit > div > span {
   border-radius: 0;
-  background: #e7ded0;
+  background: var(--background);
 }
 
 .home-page + footer {

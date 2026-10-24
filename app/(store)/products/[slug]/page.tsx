@@ -93,7 +93,11 @@ export default async function ProductPage(props: ProductPageProps) {
 
       <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
         <div className="space-y-4">
-          <ProductGallery images={product.images} name={product.name} />
+          <ProductGallery
+            images={product.images}
+            name={product.name}
+            stockLevel={product.stock_level}
+          />
 
         </div>
 
