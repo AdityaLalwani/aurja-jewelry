@@ -37,17 +37,11 @@ export function ProductCard({
   return (
     <>
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-shadow duration-300 hover:shadow-lg">
-      <Link
-        href={`/products/${product.slug}`}
-        className="block focus:outline-none"
-      >
-        <div className="relative aspect-square overflow-hidden bg-neutral-100 sm:aspect-[4/5]">
-          <WishlistButton slug={product.slug} className="absolute right-3 top-3 z-10" />
-          {product.stock_level === 1 ? (
-            <span className="absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-800 shadow-sm">
-              Only 1 left
-            </span>
-          ) : null}
+      <div className="relative aspect-square overflow-hidden bg-neutral-100 sm:aspect-[4/5]">
+        <Link
+          href={`/products/${product.slug}`}
+          className="absolute inset-0 block focus:outline-none"
+        >
           {product.images[0] ? (
             <Image
               src={product.images[0]}
@@ -56,15 +50,39 @@ export function ProductCard({
               priority={priority}
               quality={70}
               sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 30vw, 50vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className={`object-cover transition-transform duration-500 ease-in-out motion-reduce:transition-none ${
+                product.images[1]
+                  ? "group-hover:-translate-x-full"
+                  : "group-hover:scale-105"
+              }`}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.2em] text-neutral-400">
               Image unavailable
             </div>
           )}
-        </div>
-      </Link>
+          {product.images[1] ? (
+            <Image
+              src={product.images[1]}
+              alt=""
+              aria-hidden="true"
+              fill
+              quality={70}
+              sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 30vw, 50vw"
+              className="translate-x-full object-cover transition-transform duration-500 ease-in-out group-hover:translate-x-0 motion-reduce:transition-none"
+            />
+          ) : null}
+        </Link>
+        <WishlistButton
+          slug={product.slug}
+          className="absolute right-3 top-3 z-10"
+        />
+        {product.stock_level === 1 ? (
+          <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-800 shadow-sm">
+            Only 1 left
+          </span>
+        ) : null}
+      </div>
       <div className="flex flex-1 flex-col gap-1 p-2 sm:gap-3 sm:p-5">
         <Link
           href={`/products/${product.slug}`}

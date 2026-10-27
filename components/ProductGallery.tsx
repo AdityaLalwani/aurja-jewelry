@@ -7,12 +7,17 @@ export function ProductGallery({
   images,
   name,
   stockLevel,
+  youtubeId,
 }: {
   images: string[];
   name: string;
   stockLevel?: number;
+  youtubeId?: string;
 }) {
-  const galleryImages = images.slice(0, 6);
+  const validYoutubeId =
+    youtubeId && /^[a-zA-Z0-9_-]{11}$/.test(youtubeId) ? youtubeId : undefined;
+  const galleryImages = images;
+  const visibleImages = galleryImages.slice(0, validYoutubeId ? 5 : 6);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -33,7 +38,7 @@ export function ProductGallery({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [galleryImages.length, isExpanded]);
 
-  if (galleryImages.length === 0) {
+  if (galleryImages.length === 0 && !validYoutubeId) {
     return (
       <div className="relative aspect-[4/5] overflow-hidden bg-[#efefeb]">
         <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.2em] text-neutral-400">
@@ -43,67 +48,88 @@ export function ProductGallery({
     );
   }
 
-  const featureImage = galleryImages[activeIndex] ?? galleryImages[0];
+  const featureImage = galleryImages[activeIndex];
 
   return (
     <>
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          {galleryImages.slice(0, 2).map((image, index) => (
-            <button
-              key={`${image}-${index}`}
-              type="button"
-              onClick={() => {
-                setActiveIndex(index);
-                setIsExpanded(true);
-              }}
-              className={`relative aspect-[5/6] overflow-hidden bg-[#efefeb] ${
-                index === 0 ? "col-span-1" : "col-span-1"
-              }`}
-              aria-label={`Open image ${index + 1}${index === 0 && stockLevel === 1 ? ", only 1 left" : ""}`}
-            >
-              <Image
-                src={image}
-                alt={`${name} — view ${index + 1}`}
-                fill
-                priority={index === 0}
-                sizes="(min-width: 1024px) 26vw, 50vw"
-                className="object-cover transition-transform duration-300 hover:scale-[1.02]"
-              />
-              {index === 0 && stockLevel === 1 ? (
-                <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-800 shadow-sm">
-                  Only 1 left
-                </span>
-              ) : null}
-            </button>
-          ))}
-        </div>
-
-        {galleryImages.length > 2 && (
-          <div className="grid grid-cols-4 gap-3">
-            {galleryImages.slice(2).map((image, index) => {
-              const actualIndex = index + 2;
-              return (
+        {visibleImages.length > 0 || validYoutubeId ? (
+          <div className="grid grid-cols-2 gap-3">
+            {visibleImages
+              .slice(0, validYoutubeId ? 1 : 2)
+              .map((image, index) => (
                 <button
-                  key={`${image}-${actualIndex}`}
+                  key={`${image}-${index}`}
                   type="button"
                   onClick={() => {
-                    setActiveIndex(actualIndex);
+                    setActiveIndex(index);
                     setIsExpanded(true);
                   }}
-                  className="relative aspect-square overflow-hidden bg-[#efefeb]"
-                  aria-label={`Open image ${actualIndex + 1}`}
+                  className="relative aspect-[5/6] overflow-hidden bg-[#efefeb]"
+                  aria-label={`Open image ${index + 1}${index === 0 && stockLevel === 1 ? ", only 1 left" : ""}`}
                 >
                   <Image
                     src={image}
-                    alt={`${name} — view ${actualIndex + 1}`}
+                    alt={`${name} — view ${index + 1}`}
                     fill
-                    sizes="(min-width: 1024px) 12vw, 25vw"
+                    priority={index === 0}
+                    sizes="(min-width: 1024px) 26vw, 50vw"
                     className="object-cover transition-transform duration-300 hover:scale-[1.02]"
                   />
+                  {index === 0 && stockLevel === 1 ? (
+                    <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-800 shadow-sm">
+                      Only 1 left
+                    </span>
+                  ) : null}
                 </button>
-              );
-            })}
+              ))}
+            {validYoutubeId ? (
+              <div className="relative aspect-[5/6] overflow-hidden bg-[#efefeb]">
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${validYoutubeId}?autoplay=1&mute=1&loop=1&playlist=${validYoutubeId}&rel=0&playsinline=1`}
+                  title={`${name} video`}
+                  className="absolute inset-0 h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="relative aspect-[4/5] overflow-hidden bg-[#efefeb]">
+            <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.2em] text-neutral-400">
+              Image unavailable
+            </div>
+          </div>
+        )}
+
+        {visibleImages.length > (validYoutubeId ? 1 : 2) && (
+          <div className="grid grid-cols-4 gap-3">
+            {visibleImages
+              .slice(validYoutubeId ? 1 : 2)
+              .map((image, index) => {
+                const actualIndex = index + (validYoutubeId ? 1 : 2);
+                return (
+                  <button
+                    key={`${image}-${actualIndex}`}
+                    type="button"
+                    onClick={() => {
+                      setActiveIndex(actualIndex);
+                      setIsExpanded(true);
+                    }}
+                    className="relative aspect-square overflow-hidden bg-[#efefeb]"
+                    aria-label={`Open image ${actualIndex + 1}`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${name} — view ${actualIndex + 1}`}
+                      fill
+                      sizes="(min-width: 1024px) 12vw, 25vw"
+                      className="object-cover transition-transform duration-300 hover:scale-[1.02]"
+                    />
+                  </button>
+                );
+              })}
           </div>
         )}
       </div>
@@ -155,13 +181,15 @@ export function ProductGallery({
             </div>
 
             <div className="relative min-h-0 min-w-0 flex-1">
-              <Image
-                src={featureImage}
-                alt={`${name} — expanded view`}
-                fill
-                sizes="(min-width: 1024px) 80vw, 75vw"
-                className="object-contain"
-              />
+              {featureImage ? (
+                <Image
+                  src={featureImage}
+                  alt={`${name} — expanded view`}
+                  fill
+                  sizes="(min-width: 1024px) 80vw, 75vw"
+                  className="object-contain"
+                />
+              ) : null}
 
               <button
                 type="button"

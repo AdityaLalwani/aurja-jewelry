@@ -117,10 +117,12 @@ export interface JewelryProduct {
   price_inr: number;
   stock_level?: number;
   images: string[];
+  description?: string;
   attributes: {
     metal_type: string;
-    metal_color: string;
+    metal_color?: string;
     metal_weight_gms: number;
+    youtube_id?: string;
     size?: string;
     gemstone_type: string;
     diamond_carat: number;
@@ -189,7 +191,7 @@ function firstAttributeValue(
 
 export function mapSwellProduct(
   product: SwellProduct,
-  imageLimit = 6,
+  imageLimit?: number,
 ): JewelryProduct {
   const attributes = {
     ...product.attributes,
@@ -204,23 +206,26 @@ export function mapSwellProduct(
   ]);
   const images = (product.images ?? [])
     .map((image) => image.file?.url)
-    .filter((url): url is string => Boolean(url))
-    .slice(0, imageLimit);
+    .filter((url): url is string => Boolean(url));
 
   return {
     name: product.name ?? product.slug ?? "Untitled product",
     slug: product.slug ?? product.id,
     price_inr: Math.round(priceUsd * 83),
     stock_level: product.stock_level,
-    images,
+    images: imageLimit === undefined ? images : images.slice(0, imageLimit),
+    description:
+      product.description ||
+      firstAttributeValue(attributes, ["description", "product_story", "story"]),
     attributes: {
       metal_type: metalType ?? "Gold",
       metal_color:
-        firstAttributeValue(attributes, ["metal_color", "color"]) ?? "Yellow",
+        firstAttributeValue(attributes, ["metal_color", "color"]) ?? undefined,
       metal_weight_gms: Number(
         firstAttributeValue(attributes, ["metal_weight_gms", "metal_weight"]) ??
           0,
       ),
+      youtube_id: firstAttributeValue(attributes, ["youtube_id"]),
       size: firstAttributeValue(attributes, ["size", "ring_size"]) ?? undefined,
       gemstone_type: gemstoneType ?? "None",
       diamond_carat: Number(
@@ -350,7 +355,7 @@ async function fetchJewelryProductPage(
     },
   );
   const mappedProducts = result.results.map((product) =>
-    mapSwellProduct(product, 1),
+    mapSwellProduct(product, 2),
   );
   const products =
     compact
@@ -1000,6 +1005,7 @@ export interface SwellProduct {
   id: string;
   name?: string;
   slug?: string;
+  description?: string;
   sku?: string;
   price?: number;
   stock_level?: number;
@@ -1118,7 +1124,7 @@ export async function getJewelryProductsBySkus(
         throw new Error(`No active Swell product found for SKU "${sku}".`);
       }
 
-      return { sku, product: mapSwellProduct(matchedProduct) };
+      return { sku, product: mapSwellProduct(matchedProduct, 2) };
     }),
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const COOKIE_NAME = "aurja_cookie_preferences";
@@ -23,15 +23,6 @@ function readPreferenceCookie() {
   } catch {
     return null;
   }
-}
-
-function subscribeToPreferences(onChange: () => void) {
-  window.addEventListener("aurja:cookie-preferences-changed", onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener("aurja:cookie-preferences-changed", onChange);
-    window.removeEventListener("storage", onChange);
-  };
 }
 
 function parsePreferences(value: string | null): CookiePreferences | null {
@@ -64,15 +55,28 @@ function savePreferences(preferences: CookiePreferences) {
 }
 
 export function CookiePreferences() {
-  const rawPreferences = useSyncExternalStore(
-    subscribeToPreferences,
-    readPreferenceCookie,
-    () => null,
-  );
+  const [rawPreferences, setRawPreferences] = useState<string | null>(null);
+  const [preferencesChecked, setPreferencesChecked] = useState(false);
   const preferences = parsePreferences(rawPreferences);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+
+  useEffect(() => {
+    const syncPreferences = () => {
+      setRawPreferences(readPreferenceCookie());
+      setPreferencesChecked(true);
+    };
+
+    window.addEventListener("aurja:cookie-preferences-changed", syncPreferences);
+    window.addEventListener("storage", syncPreferences);
+    syncPreferences();
+
+    return () => {
+      window.removeEventListener("aurja:cookie-preferences-changed", syncPreferences);
+      window.removeEventListener("storage", syncPreferences);
+    };
+  }, []);
 
   useEffect(() => {
     const openSettings = () => {
@@ -117,7 +121,7 @@ export function CookiePreferences() {
 
   return (
     <>
-      {!preferences ? (
+      {preferencesChecked && !preferences ? (
         <aside
           aria-label="Cookie preferences"
           className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-[#faf7f2] px-5 py-5 shadow-[0_-12px_40px_rgba(41,37,36,0.12)] sm:px-8"

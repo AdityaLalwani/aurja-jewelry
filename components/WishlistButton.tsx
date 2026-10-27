@@ -19,8 +19,10 @@ export function WishlistButton({
       aria-pressed={saved}
       title={saved ? "Remove from wishlist" : "Add to wishlist"}
       onClick={() => toggleWishlist(slug)}
-      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white/90 shadow-sm backdrop-blur transition-colors hover:border-gold hover:text-gold sm:h-10 sm:w-10 ${
-        saved ? "border-gold text-gold" : "border-neutral-200 text-neutral-600"
+      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white/90 shadow-sm backdrop-blur transition-colors sm:h-10 sm:w-10 ${
+        saved
+          ? "border-red-600 text-red-600 hover:border-red-700 hover:text-red-700"
+          : "border-neutral-200 text-neutral-600 hover:border-gold hover:text-gold"
       } ${className}`}
     >
       <svg
