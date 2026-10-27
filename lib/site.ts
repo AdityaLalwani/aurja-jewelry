@@ -211,7 +211,7 @@ export const home: HomeConfig = {
         name: "Pendants",
         description: "Charms & keepsakes",
         variant: "blush",
-        image: "/37.jpg",
+        image: "/36.jpg",
       },
       {
         slug: "bracelets-bangles",
@@ -232,7 +232,7 @@ export const home: HomeConfig = {
         name: "Silver",
         description: "Sterling silver essentials",
         variant: "dusk",
-        image: "/36.jpg",
+        image: "/37.jpg",
       },
     ],
   },
