@@ -26,11 +26,38 @@ function formatDisplayAmount(amount: number, currency: "INR" | "USD") {
 export function CartContent({
   view,
   contactDetails,
+  loadError = false,
 }: {
   view: CartView;
   contactDetails: CartContactDetails;
+  loadError?: boolean;
 }) {
   const { currency } = useStore();
+
+  if (loadError) {
+    return (
+      <div
+        role="alert"
+        className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center gap-6 px-4 py-32 text-center sm:px-6"
+      >
+        <p className="text-[11px] uppercase tracking-[0.35em] text-gold">
+          Your Cart
+        </p>
+        <h1 className="font-display text-3xl leading-tight text-neutral-900 sm:text-4xl">
+          We couldn&apos;t load your cart
+        </h1>
+        <p className="max-w-md text-sm leading-6 text-neutral-500">
+          Your items may still be saved. Please try again in a moment.
+        </p>
+        <Link
+          href="/cart"
+          className="rounded-full bg-gold px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark"
+        >
+          Try again
+        </Link>
+      </div>
+    );
+  }
 
   if (view.items.length === 0) {
     return (

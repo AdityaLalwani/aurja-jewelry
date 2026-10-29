@@ -10,12 +10,10 @@ import {
 } from "@/lib/swell";
 
 async function getExpandedCart(cartId: string) {
-  try {
-    return await getSwellCart(cartId, { expand: ["items.product"] });
-  } catch (error) {
-    console.error("Could not load the cart page", error);
-    return null;
-  }
+  return getSwellCart(cartId, {
+    include: ["items"],
+    expand: ["items.product"],
+  });
 }
 
 export default async function CartPage() {
@@ -23,10 +21,20 @@ export default async function CartPage() {
     getCartIdFromCookie(),
     getSessionAccountId(),
   ]);
-  const [cart, account] = await Promise.all([
-    cartId ? getExpandedCart(cartId) : Promise.resolve(null),
+  const cartPromise = cartId
+    ? getExpandedCart(cartId).then(
+        (cart) => ({ cart, loadError: false }),
+        (error: unknown) => {
+          console.error("Could not load the cart page", error);
+          return { cart: null, loadError: true };
+        },
+      )
+    : Promise.resolve({ cart: null, loadError: false });
+  const [cartResult, account] = await Promise.all([
+    cartPromise,
     accountId ? getSwellAccount(accountId) : Promise.resolve(null),
   ]);
+  const { cart, loadError: cartLoadError } = cartResult;
 
   const productLookup = Object.fromEntries(
     (
@@ -55,5 +63,11 @@ export default async function CartPage() {
     phone: account?.phone ?? "",
   };
 
-  return <CartContent view={view} contactDetails={contactDetails} />;
+  return (
+    <CartContent
+      view={view}
+      contactDetails={contactDetails}
+      loadError={cartLoadError}
+    />
+  );
 }

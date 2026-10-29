@@ -1186,7 +1186,11 @@ function buildSwellQuery(
     }
     search.set(
       key,
-      typeof value === "object" ? JSON.stringify(value) : String(value),
+      Array.isArray(value)
+        ? value.join(",")
+        : typeof value === "object"
+          ? JSON.stringify(value)
+          : String(value),
     );
   }
 
@@ -1634,6 +1638,13 @@ export interface SwellCartInput {
 /** Cart record as returned by the Swell API. */
 export interface SwellCart {
   id: string;
+  errors?: Record<
+    string,
+    {
+      message?: string;
+      code?: string;
+    }
+  >;
   status?: SwellCartStatus;
   number?: string;
   currency?: string;

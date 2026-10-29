@@ -78,6 +78,23 @@ function readMetadataImage(item: SwellCartItem): string | null {
   return getFirstImageUrl(image);
 }
 
+function readMetadataVariantSummary(item: SwellCartItem): string[] {
+  const variantKey = item.metadata?.variant_key;
+  if (typeof variantKey !== "string" || variantKey === "default") {
+    return [];
+  }
+
+  return variantKey
+    .split("|")
+    .flatMap((selection) => {
+      const separator = selection.indexOf(":");
+      if (separator <= 0 || separator === selection.length - 1) {
+        return [];
+      }
+      return [`${selection.slice(0, separator)}: ${selection.slice(separator + 1)}`];
+    });
+}
+
 function buildCartItemView(
   item: SwellCartItem,
   productLookup: Record<string, JewelryProduct> = {},
@@ -98,8 +115,14 @@ function buildCartItemView(
     expandedProduct;
   const metadataImage = readMetadataImage(item);
 
-  const variantSummary = getItemOptionSummary(product, item.options ?? []);
-  const showPriceOnRequest = isNaturalGemstoneItemOption(item.options ?? []);
+  const optionSummary = getItemOptionSummary(product, item.options ?? []);
+  const variantSummary =
+    optionSummary.length > 0 ? optionSummary : readMetadataVariantSummary(item);
+  const showPriceOnRequest =
+    isNaturalGemstoneItemOption(item.options ?? []) ||
+    variantSummary.some((selection) =>
+      /^gem\s*stone:\s*natural$/i.test(selection),
+    );
   const resolvedPrice = item.price > 0 ? item.price : product ? product.attributes.price_usd : 0;
 
   return {
@@ -112,8 +135,8 @@ function buildCartItemView(
     variantSummary,
     showPriceOnRequest,
     price: resolvedPrice,
-    priceInr: showPriceOnRequest ? null : product ? product.price_inr : null,
-    priceUsd: showPriceOnRequest ? null : product ? product.attributes.price_usd : null,
+    priceInr: showPriceOnRequest ? null : resolvedPrice * 83,
+    priceUsd: showPriceOnRequest ? null : resolvedPrice,
     quantity: item.quantity,
   };
 }

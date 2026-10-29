@@ -109,11 +109,14 @@ function matchesSelectedOptions(
     Array.isArray(itemOptions) &&
     itemOptions.length === normalizedSelection.length &&
     normalizedSelection.every(({ name, value }) =>
-      itemOptions.some(
-        (existing) =>
-          normalizeOptionValue(existing.name) === name &&
-          normalizeOptionValue(String(existing.value)) === value,
-      ),
+      itemOptions.some((existing) => {
+        const existingName = normalizeOptionValue(existing.name);
+        const existingId = normalizeOptionValue(existing.id);
+        return (
+          (existingName === name || existingId === name) &&
+          normalizeOptionValue(String(existing.value)) === value
+        );
+      }),
     )
   );
 }
@@ -121,19 +124,25 @@ function matchesSelectedOptions(
 function isSameCartLine(
   itemEntry: SwellCartItem,
   productId: string,
-  resolvedVariantId: string | undefined,
+  variantId: string | undefined,
   optionPayload: Array<{ name: string; value: string }>,
+  variantKey: string,
 ): boolean {
   if (itemEntry.product_id !== productId) {
     return false;
   }
 
-  if (resolvedVariantId) {
-    return itemEntry.variant_id === resolvedVariantId;
+  if (variantId && itemEntry.variant_id !== variantId) {
+    return false;
   }
 
-  if (itemEntry.variant_id) {
-    return false;
+  if (optionPayload.length > 0) {
+    return matchesSelectedOptions(itemEntry.options, optionPayload);
+  }
+
+  if (variantId) {
+    const itemVariantKey = itemEntry.metadata?.variant_key;
+    return typeof itemVariantKey !== "string" || itemVariantKey === variantKey;
   }
 
   return matchesSelectedOptions(itemEntry.options, optionPayload);
@@ -156,7 +165,9 @@ async function resolveCart(expandProducts = false): Promise<ResolvedCart | null>
   try {
     const cart = await getSwellCart(
       cartId,
-      expandProducts ? { expand: ["items.product"] } : undefined,
+      expandProducts
+        ? { include: ["items"], expand: ["items.product"] }
+        : { include: ["items"] },
     );
     return cart ? { cartId, cart } : null;
   } catch (error) {
@@ -196,6 +207,7 @@ export async function addToCartAction(
     return { error: "This piece is no longer available." };
   }
 
+  let writeItemCount: number | null = null;
   try {
     // Resolve the product server-side from the slug alone — the client
     // never supplies a product id or price.
@@ -211,9 +223,33 @@ export async function addToCartAction(
         ? selectedOptions
         : getDefaultVariantSelections(product.options ?? []);
     const resolvedVariantId = resolveSelectedVariantId(product, defaultSelections);
-    const optionPayload = Object.entries(defaultSelections)
-      .filter(([, value]) => value)
-      .map(([name, value]) => ({ name, value }));
+    const activeVariants = (product.variants?.results ?? []).filter(
+      (variant) => variant.active !== false,
+    );
+    const variantOptionsAreLinked = activeVariants.some(
+      (variant) => (variant.option_value_ids ?? []).length > 0,
+    );
+    const cartOptions =
+      activeVariants.length > 0 && !variantOptionsAreLinked
+        ? []
+        : Object.entries(defaultSelections).flatMap(([name, value]) => {
+            const option = (product.options ?? []).find(
+              (candidate) =>
+                candidate.name?.trim().toLowerCase() ===
+                name.trim().toLowerCase(),
+            );
+            if (!option || !value) {
+              return [];
+            }
+
+            return [
+              {
+                ...(option.id ? { id: option.id } : {}),
+                name,
+                value,
+              },
+            ];
+          });
     const selectedPriceUsd =
       getSelectedVariantPrice(product.options ?? [], defaultSelections) ||
       Number(product.price ?? 0);
@@ -228,10 +264,13 @@ export async function addToCartAction(
       .map(([name, value]) => `${name.trim()}:${value.trim()}`)
       .sort()
       .join("|") || "default";
+    if (activeVariants.length > 0 && !resolvedVariantId) {
+      throw new Error("No active Swell variant matches the selected options.");
+    }
     const item = {
       product_id: product.id,
       quantity,
-      price: selectedPriceUsd,
+      ...(selectedPriceUsd > 0 ? { price: selectedPriceUsd } : {}),
       metadata: {
         slug,
         product_slug: slug,
@@ -239,18 +278,33 @@ export async function addToCartAction(
         ...(imageUrl ? { image: String(imageUrl) } : {}),
       },
       ...(resolvedVariantId ? { variant_id: resolvedVariantId } : {}),
-      ...(optionPayload.length > 0 ? { options: optionPayload } : {}),
+      ...(cartOptions.length > 0 ? { options: cartOptions } : {}),
     };
 
+    let cartId: string;
     if (!resolved) {
       const cart = await createSwellCart({
         items: [item],
       });
-      await createCartCookie(cart.id);
+      if (!cart.id) {
+        const detail = Object.values(cart.errors ?? {})
+          .map((entry) => entry.message)
+          .filter(Boolean)
+          .join("; ");
+        throw new Error(detail || "Swell did not return a cart id.");
+      }
+      writeItemCount = cart.items?.length ?? 0;
+      cartId = cart.id;
     } else {
       const cartItems = resolved.cart.items ?? [];
       const existing = cartItems.find((itemEntry) =>
-        isSameCartLine(itemEntry, product.id, resolvedVariantId, optionPayload),
+        isSameCartLine(
+          itemEntry,
+          product.id,
+          resolvedVariantId,
+          cartOptions,
+          variantKey,
+        ),
       );
       const updatedItems = cartItems.map((cartItem) =>
         existing?.id === cartItem.id
@@ -262,20 +316,41 @@ export async function addToCartAction(
       );
 
       if (existing) {
-        await updateSwellCart(resolved.cartId, {
+        const updatedCart = await updateSwellCart(resolved.cartId, {
           $set: { items: updatedItems },
         });
+        writeItemCount = updatedCart.items?.length ?? 0;
       } else {
-        await updateSwellCart(resolved.cartId, {
+        const updatedCart = await updateSwellCart(resolved.cartId, {
           $set: { items: [...updatedItems, item] },
         });
+        writeItemCount = updatedCart.items?.length ?? 0;
       }
+      cartId = resolved.cartId;
     }
+
+    const savedCart = await getSwellCart(cartId, { include: ["items"] });
+    const savedItem = savedCart?.items?.find(
+      (cartItem) =>
+        cartItem.product_id === product.id &&
+        (!resolvedVariantId || cartItem.variant_id === resolvedVariantId),
+    );
+    if (!savedItem) {
+      const readItemCount = savedCart?.items?.length ?? 0;
+      throw new Error(
+        `Swell did not return the product line after adding it (write=${writeItemCount ?? "unknown"}, read=${readItemCount}).`,
+      );
+    }
+
+    await createCartCookie(cartId);
   } catch (error) {
     console.error("Swell add to cart failed", error);
     return {
       error:
-        "We could not add this piece to your cart right now. Please try again in a moment.",
+        error instanceof Error &&
+        error.message.startsWith("Swell did not return the product line after adding it")
+          ? error.message
+          : "We could not add this piece to your cart right now. Please try again in a moment.",
     };
   }
 

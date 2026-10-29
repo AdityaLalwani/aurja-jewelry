@@ -27,7 +27,7 @@ export function ProductCard({
     addToCartAction,
     undefined,
   );
-  const inCart = isInCart(product.slug) || Boolean(state?.success);
+  const inCart = isInCart(product.slug);
 
   function openEnquiry() {
     setEnquiryOpen(true);

@@ -10,10 +10,13 @@ export async function CartSnapshot() {
 
   let cart: Awaited<ReturnType<typeof getSwellCart>>;
   try {
-    cart = await getSwellCart(cartId, { expand: ["items.product"] });
+    cart = await getSwellCart(cartId, {
+      include: ["items"],
+      expand: ["items.product"],
+    });
   } catch (error) {
     console.error("Could not load the cart snapshot", error);
-    return <CartSnapshotSync slugs={[]} count={0} />;
+    return null;
   }
 
   const cartItems = cart?.items ?? [];
