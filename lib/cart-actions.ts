@@ -5,9 +5,13 @@ import { revalidatePath } from "next/cache";
 import {
   createSwellCart,
   deleteSwellCart,
+  getDefaultVariantSelections,
+  getFirstImageUrl,
   getJewelryProductBySlug,
   findSwellProductBySlug,
+  getSelectedVariantPrice,
   getSwellCart,
+  resolveSelectedVariantId,
   updateSwellCart,
   type SwellCart,
   type SwellCartItem,
@@ -67,6 +71,7 @@ interface ResolvedCart {
 function toCartItemInput(
   item: SwellCartItem,
   quantity = item.quantity,
+  priceOverride?: number,
 ): SwellCartItemInput {
   return {
     id: item.id,
@@ -75,7 +80,63 @@ function toCartItemInput(
     quantity,
     ...(item.options ? { options: item.options } : {}),
     ...(item.metadata ? { metadata: item.metadata } : {}),
+    ...(typeof priceOverride === "number" && Number.isFinite(priceOverride)
+      ? { price: priceOverride }
+      : item.price > 0
+        ? { price: item.price }
+        : {}),
   };
+}
+
+function normalizeOptionValue(value: string | undefined): string {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function matchesSelectedOptions(
+  itemOptions: SwellCartItem["options"],
+  selection: Array<{ name: string; value: string }> = [],
+): boolean {
+  if (selection.length === 0) {
+    return !itemOptions || itemOptions.length === 0;
+  }
+
+  const normalizedSelection = selection.map((option) => ({
+    name: normalizeOptionValue(option.name),
+    value: normalizeOptionValue(option.value),
+  }));
+
+  return (
+    Array.isArray(itemOptions) &&
+    itemOptions.length === normalizedSelection.length &&
+    normalizedSelection.every(({ name, value }) =>
+      itemOptions.some(
+        (existing) =>
+          normalizeOptionValue(existing.name) === name &&
+          normalizeOptionValue(String(existing.value)) === value,
+      ),
+    )
+  );
+}
+
+function isSameCartLine(
+  itemEntry: SwellCartItem,
+  productId: string,
+  resolvedVariantId: string | undefined,
+  optionPayload: Array<{ name: string; value: string }>,
+): boolean {
+  if (itemEntry.product_id !== productId) {
+    return false;
+  }
+
+  if (resolvedVariantId) {
+    return itemEntry.variant_id === resolvedVariantId;
+  }
+
+  if (itemEntry.variant_id) {
+    return false;
+  }
+
+  return matchesSelectedOptions(itemEntry.options, optionPayload);
 }
 
 /**
@@ -113,6 +174,23 @@ export async function addToCartAction(
   const slug = readField(formData, "slug");
   const quantity = clampQuantity(Number(readField(formData, "quantity")));
   const redirectToCart = readField(formData, "redirect") === "cart";
+  const selectedOptionsField = readField(formData, "selectedOptions");
+  const selectedOptions = (() => {
+    if (!selectedOptionsField) {
+      return {} as Record<string, string>;
+    }
+
+    try {
+      const parsed = JSON.parse(selectedOptionsField) as Record<string, unknown>;
+      return Object.fromEntries(
+        Object.entries(parsed).flatMap(([key, value]) =>
+          typeof value === "string" && value ? [[key, value]] : [],
+        ),
+      );
+    } catch {
+      return {} as Record<string, string>;
+    }
+  })();
 
   if (!slug) {
     return { error: "This piece is no longer available." };
@@ -128,27 +206,51 @@ export async function addToCartAction(
     if (!product) {
       return { error: "This piece is no longer available." };
     }
-    const variantId = product.variants?.results?.find(
-      (variant) => variant.active !== false,
-    )?.id;
+    const defaultSelections =
+      Object.keys(selectedOptions).length > 0
+        ? selectedOptions
+        : getDefaultVariantSelections(product.options ?? []);
+    const resolvedVariantId = resolveSelectedVariantId(product, defaultSelections);
+    const optionPayload = Object.entries(defaultSelections)
+      .filter(([, value]) => value)
+      .map(([name, value]) => ({ name, value }));
+    const selectedPriceUsd =
+      getSelectedVariantPrice(product.options ?? [], defaultSelections) ||
+      Number(product.price ?? 0);
+    const imageUrl =
+      getFirstImageUrl(
+        product.content?.imagekit_urls ?? product.attributes?.imagekit_urls,
+      ) ??
+      getFirstImageUrl(product.images?.[0]?.file?.url) ??
+      null;
+    const variantKey = Object.entries(defaultSelections)
+      .filter(([, value]) => value && value.trim())
+      .map(([name, value]) => `${name.trim()}:${value.trim()}`)
+      .sort()
+      .join("|") || "default";
     const item = {
       product_id: product.id,
       quantity,
-      metadata: { slug },
-      ...(variantId ? { variant_id: variantId } : {}),
+      price: selectedPriceUsd,
+      metadata: {
+        slug,
+        product_slug: slug,
+        variant_key: variantKey,
+        ...(imageUrl ? { image: String(imageUrl) } : {}),
+      },
+      ...(resolvedVariantId ? { variant_id: resolvedVariantId } : {}),
+      ...(optionPayload.length > 0 ? { options: optionPayload } : {}),
     };
 
     if (!resolved) {
-      // No usable cart yet — first visit, stale cookie, or a cart Swell has
-      // since discarded. Creating one also overwrites the stale cookie.
       const cart = await createSwellCart({
         items: [item],
       });
       await createCartCookie(cart.id);
     } else {
       const cartItems = resolved.cart.items ?? [];
-      const existing = cartItems.find(
-        (item) => item.product_id === product.id,
+      const existing = cartItems.find((itemEntry) =>
+        isSameCartLine(itemEntry, product.id, resolvedVariantId, optionPayload),
       );
       const updatedItems = cartItems.map((cartItem) =>
         existing?.id === cartItem.id

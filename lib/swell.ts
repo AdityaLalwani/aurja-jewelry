@@ -111,6 +111,20 @@ export async function swellFetch<T>(
   }
 }
 
+export interface SwellProductOptionValue {
+  id?: string | null;
+  name?: string;
+  price?: number | null;
+  active?: boolean;
+}
+
+export interface SwellProductOption {
+  id?: string | null;
+  name?: string;
+  active?: boolean;
+  values: SwellProductOptionValue[];
+}
+
 export interface JewelryProduct {
   name: string;
   slug: string;
@@ -118,6 +132,7 @@ export interface JewelryProduct {
   stock_level?: number;
   images: string[];
   description?: string;
+  variant_options?: SwellProductOption[];
   attributes: {
     metal_type: string;
     metal_color?: string;
@@ -155,6 +170,303 @@ export interface JewelryProduct {
   };
 }
 
+function coercePrice(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
+}
+
+function normalizeProductOptions(input: unknown): SwellProductOption[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return input
+    .filter((option): option is Record<string, unknown> => Boolean(option) && typeof option === "object")
+    .map((option) => {
+      const values = Array.isArray(option.values)
+        ? option.values.filter(
+            (value): value is Record<string, unknown> =>
+              value !== null && typeof value === "object",
+          )
+        : [];
+
+      return {
+        id: typeof option.id === "string" ? option.id : undefined,
+        name:
+          typeof option.name === "string" && option.name.trim()
+            ? option.name
+            : "Option",
+        active: option.active !== false,
+        values: values.map((value) => ({
+          id: typeof value.id === "string" ? value.id : undefined,
+          name:
+            typeof value.name === "string" && value.name.trim()
+              ? value.name
+              : "Value",
+          price: coercePrice(value.price),
+          active: value.active !== false,
+        })),
+      };
+    })
+    .filter((option) => option.values.length > 0 && option.active !== false);
+}
+
+export function getProductOptionValuePrice(
+  optionValue: Pick<SwellProductOptionValue, "price"> | undefined,
+): number {
+  return optionValue ? coercePrice(optionValue.price) : 0;
+}
+
+export function getDefaultVariantSelections(
+  options: SwellProductOption[] = [],
+): Record<string, string> {
+  const selections: Record<string, string> = {};
+
+  for (const option of options) {
+    const optionName = option.name?.trim() || "Option";
+    if (!option.values.length) {
+      continue;
+    }
+
+    const lowestValue = [...option.values]
+      .filter((value) => value.active !== false)
+      .sort(
+        (first, second) =>
+          getProductOptionValuePrice(first) - getProductOptionValuePrice(second),
+      )[0];
+
+    if (lowestValue?.name) {
+      selections[optionName] = lowestValue.name;
+    }
+  }
+
+  return selections;
+}
+
+export function resolveSelectedVariantId(
+  product: Pick<SwellProduct, "options" | "variants"> | null | undefined,
+  selections: Record<string, string> = {},
+): string | undefined {
+  const activeVariants = (product?.variants?.results ?? []).filter(
+    (variant) => variant.active !== false,
+  );
+  if (!activeVariants.length) {
+    return undefined;
+  }
+
+  const selectedPairs = Object.entries(selections).filter(([, value]) => value?.trim());
+  if (selectedPairs.length === 0) {
+    return activeVariants[0]?.id;
+  }
+
+  const selectedValueIds: string[] = [];
+  if (product?.options?.length) {
+    for (const option of product.options) {
+      const optionName = option.name?.trim() || "";
+      const selectedName = optionName ? selections[optionName] : undefined;
+      if (!selectedName) {
+        continue;
+      }
+
+      const matchingValue = option.values.find(
+        (value) =>
+          value.active !== false &&
+          value.name &&
+          value.name.trim().toLowerCase() === selectedName.trim().toLowerCase(),
+      );
+
+      if (matchingValue?.id) {
+        selectedValueIds.push(matchingValue.id);
+      }
+    }
+  }
+
+  if (selectedValueIds.length > 0) {
+    const resolvedVariant = activeVariants.find((variant) => {
+      const variantValueIds = variant.option_value_ids ?? [];
+      if (!variantValueIds.length) {
+        return false;
+      }
+      return (
+        variantValueIds.length >= selectedValueIds.length &&
+        selectedValueIds.every((id) => variantValueIds.includes(id))
+      );
+    });
+
+    if (resolvedVariant) {
+      return resolvedVariant.id;
+    }
+  }
+
+  return activeVariants[0]?.id;
+}
+
+export function getSelectedVariantPrice(
+  options: SwellProductOption[] = [],
+  selections: Record<string, string> = {},
+): number {
+  let total = 0;
+
+  for (const option of options) {
+    const optionName = option.name?.trim() || "";
+    const selectionName = optionName ? selections[optionName] : undefined;
+    if (!selectionName) {
+      continue;
+    }
+
+    const selectedValue = option.values.find(
+      (value) =>
+        value.active !== false &&
+        value.name &&
+        value.name.trim().toLowerCase() === selectionName.trim().toLowerCase(),
+    );
+
+    if (selectedValue) {
+      total += getProductOptionValuePrice(selectedValue);
+    }
+  }
+
+  return total;
+}
+
+export function getSelectionNameKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+export function isNaturalGemstoneSelection(
+  options: SwellProductOption[] = [],
+  selections: Record<string, string> = {},
+): boolean {
+  const gemstoneOption = options.find((option) => {
+    const optionName = option.name ?? "";
+    return (
+      getSelectionNameKey(optionName) === "gemstone" ||
+      getSelectionNameKey(optionName) === "gem stone"
+    );
+  });
+
+  if (!gemstoneOption) {
+    return false;
+  }
+
+  const optionName = gemstoneOption.name ?? "";
+  const selectedValueName = optionName ? selections[optionName] : undefined;
+  const selectedValue = gemstoneOption.values.find(
+    (value) =>
+      value.active !== false &&
+      value.name &&
+      value.name === selectedValueName,
+  );
+
+  return selectedValue?.name?.toLowerCase() === "natural";
+}
+
+export function getVariantSelectionSummary(
+  optionGroups: SwellProductOption[] = [],
+  selections: Record<string, string> = {},
+): string[] {
+  return optionGroups
+    .map((option) => {
+      const optionName = option.name ?? "";
+      const selectedValueName = optionName ? selections[optionName] : undefined;
+      if (!selectedValueName) {
+        return null;
+      }
+
+      const selectedValue = option.values.find(
+        (value) =>
+          value.active !== false &&
+          value.name &&
+          value.name.toLowerCase() === selectedValueName.toLowerCase(),
+      );
+
+      if (!selectedValue?.name) {
+        return null;
+      }
+
+      return `${optionName}: ${selectedValue.name}`;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+export function getItemOptionSummary(
+  product: Pick<JewelryProduct, "variant_options"> | undefined,
+  itemOptions: SwellCartItemOption[] = [],
+): string[] {
+  const lookup = new Map<string, string>();
+  for (const option of itemOptions) {
+    if (!option.name || !option.value) {
+      continue;
+    }
+    lookup.set(getSelectionNameKey(option.name), String(option.value));
+  }
+
+  if (!product?.variant_options?.length) {
+    return Array.from(lookup.entries()).map(([name, value]) => `${name}: ${value}`);
+  }
+
+  return product.variant_options
+    .map((option) => {
+      const optionName = option.name ?? "";
+      if (!optionName) {
+        return null;
+      }
+      const value = lookup.get(getSelectionNameKey(optionName));
+      if (!value) {
+        return null;
+      }
+      return `${optionName}: ${value}`;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+export function isNaturalGemstoneItemOption(
+  itemOptions: SwellCartItemOption[] = [],
+): boolean {
+  return itemOptions.some(
+    (option) =>
+      option.name &&
+      (getSelectionNameKey(option.name) === "gemstone" ||
+        getSelectionNameKey(option.name) === "gem stone") &&
+      String(option.value).toLowerCase() === "natural",
+  );
+}
+
+export function getLowestActiveVariantPrice(
+  product: Pick<SwellProduct, "price" | "options" | "variants">,
+): number {
+  const optionGroups = normalizeProductOptions(product.options);
+  if (optionGroups.length === 0) {
+    return coercePrice(product.price);
+  }
+
+  const lowestVariantPrice = optionGroups.reduce((sum, option) => {
+    const candidateValues = option.values.filter((value) => value.active !== false);
+    if (!candidateValues.length) {
+      return sum;
+    }
+
+    const lowestValuePrice = candidateValues.reduce(
+      (min, value) => Math.min(min, getProductOptionValuePrice(value)),
+      Number.POSITIVE_INFINITY,
+    );
+
+    return sum + (Number.isFinite(lowestValuePrice) ? lowestValuePrice : 0);
+  }, 0);
+
+  return lowestVariantPrice > 0 ? lowestVariantPrice : coercePrice(product.price);
+}
+
 /** Catalog feed for the storefront, filtered by a Swell category slug. */
 function firstAttributeValue(
   attributes: Record<string, unknown> | undefined,
@@ -189,6 +501,48 @@ function firstAttributeValue(
   return undefined;
 }
 
+export function extractImageUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => extractImageUrls(entry));
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const trimmed = value.trim();
+    if (
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    ) {
+      try {
+        return extractImageUrls(JSON.parse(trimmed));
+      } catch {
+        return [trimmed];
+      }
+    }
+    return [trimmed];
+  }
+
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+
+    if ("urls" in record) {
+      return extractImageUrls(record.urls);
+    }
+
+    if ("url" in record && typeof record.url === "string" && record.url.trim()) {
+      return [record.url];
+    }
+
+    return Object.values(record).flatMap((entry) => extractImageUrls(entry));
+  }
+
+  return [];
+}
+
+export function getFirstImageUrl(value: unknown): string | null {
+  const [firstUrl] = extractImageUrls(value);
+  return firstUrl ?? null;
+}
+
 export function mapSwellProduct(
   product: SwellProduct,
   imageLimit?: number,
@@ -198,15 +552,26 @@ export function mapSwellProduct(
     ...product.content,
     content: product.content ?? product.attributes?.content,
   };
-  const priceUsd = product.price ?? 0;
+  const normalizedOptions = normalizeProductOptions(product.options);
+  const variantPriceUsd = getLowestActiveVariantPrice(product);
+  const priceUsd = variantPriceUsd > 0 ? variantPriceUsd : coercePrice(product.price);
   const metalType = firstAttributeValue(attributes, ["metal_type", "metal"]);
   const gemstoneType = firstAttributeValue(attributes, [
     "gemstone_type",
     "gemstone",
   ]);
-  const images = (product.images ?? [])
-    .map((image) => image.file?.url)
-    .filter((url): url is string => Boolean(url));
+  const imageKitValue =
+    product.content?.imagekit_urls ??
+    product.attributes?.imagekit_urls ??
+    product.content?.imagekitUrls ??
+    product.attributes?.imagekitUrls;
+  const imageKitImages = extractImageUrls(imageKitValue);
+  const images =
+    imageKitImages.length > 0
+      ? imageKitImages
+      : (product.images ?? [])
+          .map((image) => image.file?.url)
+          .filter((url): url is string => Boolean(url));
 
   return {
     name: product.name ?? product.slug ?? "Untitled product",
@@ -217,6 +582,7 @@ export function mapSwellProduct(
     description:
       product.description ||
       firstAttributeValue(attributes, ["description", "product_story", "story"]),
+    variant_options: normalizedOptions,
     attributes: {
       metal_type: metalType ?? "Gold",
       metal_color:
@@ -1015,6 +1381,7 @@ export interface SwellProduct {
   content?: Record<string, unknown>;
   images?: SwellImage[] | null;
   variable?: boolean;
+  options?: SwellProductOption[];
   variants?: {
     results?: SwellProductVariant[];
   };
@@ -1062,7 +1429,7 @@ export async function findSwellProductBySlug(
   slug: string,
 ): Promise<SwellProduct | null> {
   try {
-    const product = await swellFetch<SwellProduct>(
+    const product = await swellFetch<SwellProduct | null>(
       `/products/${encodeURIComponent(slug)}?expand=variants:100`,
       {
         useSecretKey: true,
@@ -1072,6 +1439,39 @@ export async function findSwellProductBySlug(
         },
       },
     );
+    if (!product) {
+      return null;
+    }
+    return product.active === false ? null : product;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      (error as Error & { status?: number }).status === 404
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function findSwellProductById(
+  productId: string,
+): Promise<SwellProduct | null> {
+  try {
+    const product = await swellFetch<SwellProduct | null>(
+      `/products/${encodeURIComponent(productId)}?expand=variants:100`,
+      {
+        useSecretKey: true,
+        next: {
+          revalidate: CATALOG_REVALIDATE_SECONDS,
+          tags: ["swell-products"],
+        },
+      },
+    );
+    if (!product) {
+      return null;
+    }
     return product.active === false ? null : product;
   } catch (error) {
     if (
@@ -1088,8 +1488,8 @@ export async function findSwellProductBySlug(
 /** Retrieve and normalize one live Swell product for the storefront PDP. */
 export const getJewelryProductBySlug = cache(
   async (slug: string): Promise<JewelryProduct | null> => {
-  const product = await findSwellProductBySlug(slug);
-  return product ? mapSwellProduct(product) : null;
+    const product = await findSwellProductBySlug(slug);
+    return product ? mapSwellProduct(product) : null;
   },
 );
 

@@ -230,11 +230,10 @@ export function ProductGrid({
 
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product, index) => (
+          {filteredProducts.map((product) => (
             <ProductCard
               key={product.slug}
               product={product}
-              priority={index === 0}
             />
           ))}
         </div>

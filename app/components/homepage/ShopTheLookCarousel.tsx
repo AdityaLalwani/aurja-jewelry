@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import type { JewelryProduct } from "@/lib/swell";
+import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 type ShopTheLookProduct = {
   sku: string;
@@ -215,7 +216,8 @@ export function ShopTheLookCarousel({
             <div className="relative aspect-square overflow-hidden bg-[#fffdf8] max-sm:size-16 max-sm:shrink-0">
               {activeProduct.product.images[0] ? (
                 <Image
-                  src={activeProduct.product.images[0]}
+                  src={normalizeImageSource(activeProduct.product.images[0])}
+                  loader={imageKitLoader}
                   alt={activeProduct.product.name}
                   fill
                   sizes="(max-width: 639px) 64px, 225px"

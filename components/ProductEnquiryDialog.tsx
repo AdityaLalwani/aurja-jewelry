@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { formatPrice, useStore, type Currency } from "@/components/StoreProvider";
 import { submitProductEnquiryAction } from "@/lib/cart-actions";
 import type { JewelryProduct } from "@/lib/swell";
+import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 const enquiryInputClasses =
   "w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-gold focus:outline-none";
@@ -79,13 +80,18 @@ export function ProductEnquiryDialog({
         <div className="mt-6 flex items-center gap-4 rounded-xl bg-neutral-50 p-4">
           {product.images[0] ? (
             <Image
-              src={product.images[0]}
+              src={normalizeImageSource(product.images[0])}
+              loader={imageKitLoader}
               alt=""
               width={64}
               height={64}
               className="h-16 w-16 rounded-lg object-cover"
             />
-          ) : null}
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-center text-[9px] uppercase tracking-wide text-neutral-400">
+              No image
+            </div>
+          )}
           <div>
             <p className="font-medium text-neutral-900">{product.name}</p>
             <p className="mt-1 text-sm text-neutral-500">

@@ -22,8 +22,9 @@ type StoreContextValue = {
   isWishlisted: (slug: string) => boolean;
   toggleWishlist: (slug: string) => void;
   isInCart: (slug: string) => boolean;
+  isVariantInCart: (slug: string, variantKey: string) => boolean;
   cartCount: number;
-  setCartSnapshot: (slugs: string[], count: number) => void;
+  setCartSnapshot: (slugs: string[], count: number, variantKeys?: string[]) => void;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -51,25 +52,29 @@ export function StoreProvider({
   detectCurrencyFromBrowser?: boolean;
 }) {
   const [currency, setCurrency] = useState<Currency>(initialCurrency);
+
+  useEffect(() => {
+    if (!detectCurrencyFromBrowser || typeof window === "undefined") {
+      return;
+    }
+
+    const { language } = window.navigator;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const detectedCurrency =
+      language.toUpperCase().endsWith("-IN") ||
+      timeZone === "Asia/Kolkata" ||
+      timeZone === "Asia/Calcutta"
+        ? "INR"
+        : "USD";
+
+    setCurrency((current) => (current === detectedCurrency ? current : detectedCurrency));
+  }, [detectCurrencyFromBrowser]);
   const [enquiredSlugs, setEnquiredSlugs] = useState<string[]>([]);
   const [wishlistSlugs, setWishlistSlugs] = useState<string[]>([]);
   const [wishlistHydrated, setWishlistHydrated] = useState(false);
   const [cartSlugs, setCartSlugs] = useState(initialCartSlugs);
+  const [cartVariantKeys, setCartVariantKeys] = useState<string[]>([]);
   const [cartCount, setCartCount] = useState(0);
-
-  useEffect(() => {
-    if (!detectCurrencyFromBrowser) return;
-
-    const { language } = window.navigator;
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    setCurrency(
-      language.toUpperCase().endsWith("-IN") ||
-        timeZone === "Asia/Kolkata" ||
-        timeZone === "Asia/Calcutta"
-        ? "INR"
-        : "USD",
-    );
-  }, [detectCurrencyFromBrowser]);
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
@@ -124,10 +129,44 @@ export function StoreProvider({
     (slug: string) => cartSlugs.includes(slug),
     [cartSlugs],
   );
-  const setCartSnapshot = useCallback((slugs: string[], count: number) => {
-    setCartSlugs(slugs);
-    setCartCount(count);
-  }, []);
+  const isVariantInCart = useCallback(
+    (slug: string, variantKey: string) => {
+      if (!slug) {
+        return false;
+      }
+      const normalizedVariantKey = variantKey || "default";
+      return (
+        cartSlugs.includes(slug) &&
+        cartVariantKeys.includes(`${slug}::${normalizedVariantKey}`)
+      );
+    },
+    [cartSlugs, cartVariantKeys],
+  );
+  const setCartSnapshot = useCallback(
+    (slugs: string[], count: number, variantKeys: string[] = []) => {
+      const nextSlugs = [...slugs];
+      const nextVariantKeys = [...variantKeys];
+
+      setCartSlugs((currentSlugs) => {
+        const sameSlugs =
+          currentSlugs.length === nextSlugs.length &&
+          currentSlugs.every((slug, index) => slug === nextSlugs[index]);
+        return sameSlugs ? currentSlugs : nextSlugs;
+      });
+
+      setCartVariantKeys((currentVariantKeys) => {
+        const sameVariantKeys =
+          currentVariantKeys.length === nextVariantKeys.length &&
+          currentVariantKeys.every(
+            (variantKey, index) => variantKey === nextVariantKeys[index],
+          );
+        return sameVariantKeys ? currentVariantKeys : nextVariantKeys;
+      });
+
+      setCartCount((currentCount) => (currentCount === count ? currentCount : count));
+    },
+    [],
+  );
 
   const value = useMemo<StoreContextValue>(
     () => ({
@@ -139,6 +178,7 @@ export function StoreProvider({
       isWishlisted,
       toggleWishlist,
       isInCart,
+      isVariantInCart,
       cartCount,
       setCartSnapshot,
     }),
@@ -146,6 +186,7 @@ export function StoreProvider({
       currency,
       enquiredSlugs,
       isInCart,
+      isVariantInCart,
       isWishlisted,
       markEnquired,
       toggleWishlist,

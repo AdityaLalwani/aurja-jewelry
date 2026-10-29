@@ -204,9 +204,38 @@ function ProductInformation({
   );
 }
 
-export function ProductActions({ product }: { product: JewelryProduct }) {
-  const { currency, isInCart } = useStore();
-  const inCart = isInCart(product.slug);
+export function ProductActions({
+  product,
+  variantPrice,
+  showPriceOnRequest = false,
+  selectedOptions = {},
+}: {
+  product: JewelryProduct;
+  variantPrice?: number;
+  showPriceOnRequest?: boolean;
+  selectedOptions?: Record<string, string>;
+}) {
+  const { currency, isInCart, isVariantInCart } = useStore();
+  const variantKey = Object.entries(selectedOptions)
+    .filter(([, value]) => value && value.trim())
+    .map(([name, value]) => `${name.trim()}:${value.trim()}`)
+    .sort()
+    .join("|") || "default";
+  const inCart =
+    Object.keys(selectedOptions).length > 0
+      ? isVariantInCart(product.slug, variantKey)
+      : isVariantInCart(product.slug, "default") || isInCart(product.slug);
+  const displayProduct =
+    variantPrice === undefined
+      ? product
+      : {
+          ...product,
+          price_inr: Math.round(variantPrice * 83),
+          attributes: {
+            ...product.attributes,
+            price_usd: variantPrice,
+          },
+        };
   const [state, formAction, pending] = useActionState(
     addToCartAction,
     undefined,
@@ -242,7 +271,7 @@ export function ProductActions({ product }: { product: JewelryProduct }) {
               {product.name}
             </p>
             <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
-              M.R.P. {formatPrice(product, currency)}
+              M.R.P. {showPriceOnRequest ? "Price on request" : formatPrice(displayProduct, currency)}
             </p>
           </div>
 
@@ -288,6 +317,11 @@ export function ProductActions({ product }: { product: JewelryProduct }) {
                 <input type="hidden" name="slug" value={product.slug} />
                 <input type="hidden" name="quantity" value="1" />
                 <input type="hidden" name="redirect" value="cart" />
+                <input
+                  type="hidden"
+                  name="selectedOptions"
+                  value={JSON.stringify(selectedOptions)}
+                />
                 <button
                   type="submit"
                   disabled={pending}

@@ -7,6 +7,7 @@ import { CartEnquiryForm } from "@/components/CartEnquiryForm";
 import { useStore } from "@/components/StoreProvider";
 import { WishlistButton } from "@/components/WishlistButton";
 import type { CartView } from "@/lib/cart-view";
+import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 interface CartContactDetails {
   name: string;
@@ -55,9 +56,12 @@ export function CartContent({
   }
 
   const amountForCurrency = (item: CartView["items"][number]) =>
-    currency === "INR" ? item.priceInr ?? item.price * 83 : item.priceUsd ?? item.price;
+    currency === "INR"
+      ? item.priceInr ?? item.price * 83
+      : item.priceUsd ?? item.price;
   const total = view.items.reduce(
-    (sum, item) => sum + amountForCurrency(item) * item.quantity,
+    (sum, item) =>
+      item.showPriceOnRequest ? sum : sum + amountForCurrency(item) * item.quantity,
     0,
   );
 
@@ -93,13 +97,18 @@ export function CartContent({
                     >
                       {item.image ? (
                         <Image
-                          src={item.image}
+                          src={normalizeImageSource(item.image)}
+                          loader={imageKitLoader}
                           alt={item.name}
                           fill
                           sizes="96px"
                           className="object-cover"
                         />
-                      ) : null}
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-center text-[10px] uppercase tracking-wide text-neutral-400">
+                          Image unavailable
+                        </div>
+                      )}
                     </Link>
                   ) : (
                     <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-neutral-100" />
@@ -129,8 +138,15 @@ export function CartContent({
                         {" "}· {item.attributes.metal_weight_gms} g
                       </p>
                     ) : null}
+                    {item.variantSummary.length > 0 ? (
+                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                        {item.variantSummary.join(" · ")}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-xs text-neutral-500">
-                      {formatDisplayAmount(itemAmount, currency)} each
+                      {item.showPriceOnRequest
+                        ? "Price on request"
+                        : `${formatDisplayAmount(itemAmount, currency)} each`}
                     </p>
                     {item.slug ? (
                       <WishlistButton
@@ -144,10 +160,11 @@ export function CartContent({
                     itemId={item.id}
                     name={item.name}
                     quantity={item.quantity}
-                    lineTotal={formatDisplayAmount(
-                      itemAmount * item.quantity,
-                      currency,
-                    )}
+                    lineTotal={
+                      item.showPriceOnRequest
+                        ? "Price on request"
+                        : formatDisplayAmount(itemAmount * item.quantity, currency)
+                    }
                   />
                 </li>
               );

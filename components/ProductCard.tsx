@@ -7,6 +7,7 @@ import { formatPrice, useStore } from "@/components/StoreProvider";
 import { addToCartAction } from "@/lib/cart-actions";
 import { WishlistButton } from "@/components/WishlistButton";
 import type { JewelryProduct } from "@/lib/swell";
+import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 const ProductEnquiryDialog = lazy(() =>
   import("@/components/ProductEnquiryDialog").then((module) => ({
@@ -16,10 +17,8 @@ const ProductEnquiryDialog = lazy(() =>
 
 export function ProductCard({
   product,
-  priority = false,
 }: {
   product: JewelryProduct;
-  priority?: boolean;
 }) {
   const { currency, enquiredSlugs, isInCart } = useStore();
   const [enquiryOpen, setEnquiryOpen] = useState(false);
@@ -44,10 +43,10 @@ export function ProductCard({
         >
           {product.images[0] ? (
             <Image
-              src={product.images[0]}
+              src={normalizeImageSource(product.images[0])}
+              loader={imageKitLoader}
               alt={product.name}
               fill
-              priority={priority}
               quality={70}
               sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 30vw, 50vw"
               className={`object-cover transition-transform duration-500 ease-in-out motion-reduce:transition-none ${
@@ -63,7 +62,8 @@ export function ProductCard({
           )}
           {product.images[1] ? (
             <Image
-              src={product.images[1]}
+              src={normalizeImageSource(product.images[1])}
+              loader={imageKitLoader}
               alt=""
               aria-hidden="true"
               fill

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ProductActions } from "@/components/ProductActions";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductSpecifications } from "@/components/ProductSpecifications";
+import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { getJewelryProductBySlug } from "@/lib/swell";
 
 type ProductPageProps = {
@@ -94,23 +94,7 @@ export default async function ProductPage(props: ProductPageProps) {
         </div>
 
         <div className="flex flex-col gap-8 pt-2">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-              {attributes.metal_type === "Gold" ? "18K Gold" : attributes.metal_type}
-            </p>
-            <h1 className="mt-3 font-display text-4xl uppercase leading-[1.05] tracking-[0.04em] text-neutral-900 sm:text-[2.8rem]">
-              {product.name}
-            </h1>
-          </div>
-
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="font-display text-[2.75rem] leading-none tracking-[-0.04em] text-neutral-900">
-                ₹{new Intl.NumberFormat("en-IN").format(product.price_inr)}
-              </p>
-              <p className="mt-2 text-sm text-neutral-500">Inclusive of all taxes*</p>
-            </div>
-          </div>
+          <ProductVariantSelector product={product} />
 
           {product.description ? (
             <section aria-labelledby="product-description">
@@ -141,8 +125,6 @@ export default async function ProductPage(props: ProductPageProps) {
           </section>
         </div>
       </div>
-
-      <ProductActions product={product} />
     </div>
   );
 }

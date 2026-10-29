@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 export function ProductGallery({
   images,
@@ -69,7 +70,8 @@ export function ProductGallery({
                   aria-label={`Open image ${index + 1}${index === 0 && stockLevel === 1 ? ", only 1 left" : ""}`}
                 >
                   <Image
-                    src={image}
+                    src={normalizeImageSource(image)}
+                    loader={imageKitLoader}
                     alt={`${name} — view ${index + 1}`}
                     fill
                     priority={index === 0}
@@ -121,7 +123,8 @@ export function ProductGallery({
                     aria-label={`Open image ${actualIndex + 1}`}
                   >
                     <Image
-                      src={image}
+                      src={normalizeImageSource(image)}
+                      loader={imageKitLoader}
                       alt={`${name} — view ${actualIndex + 1}`}
                       fill
                       sizes="(min-width: 1024px) 12vw, 25vw"
@@ -170,7 +173,8 @@ export function ProductGallery({
                   aria-current={index === activeIndex ? "true" : undefined}
                 >
                   <Image
-                    src={image}
+                    src={normalizeImageSource(image)}
+                    loader={imageKitLoader}
                     alt=""
                     fill
                     sizes="48px"
@@ -183,7 +187,8 @@ export function ProductGallery({
             <div className="relative min-h-0 min-w-0 flex-1">
               {featureImage ? (
                 <Image
-                  src={featureImage}
+                  src={normalizeImageSource(featureImage)}
+                  loader={imageKitLoader}
                   alt={`${name} — expanded view`}
                   fill
                   sizes="(min-width: 1024px) 80vw, 75vw"

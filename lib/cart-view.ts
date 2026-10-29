@@ -1,4 +1,7 @@
 import {
+  getFirstImageUrl,
+  getItemOptionSummary,
+  isNaturalGemstoneItemOption,
   mapSwellProduct,
   type JewelryProduct,
   type SwellCart,
@@ -21,6 +24,8 @@ export interface CartItemView {
   name: string;
   image: string | null;
   attributes: JewelryProduct["attributes"] | null;
+  variantSummary: string[];
+  showPriceOnRequest: boolean;
   /** Unit price from the Swell cart, in the cart's store currency. */
   price: number;
   /** Catalog unit prices, when the item maps to a storefront product. */
@@ -62,42 +67,67 @@ export function formatAmount(amount: number, currencyCode: string): string {
 }
 
 function readSlug(item: SwellCartItem): string | null {
-  const slug = item.metadata?.slug;
-  return typeof slug === "string" && slug ? slug : null;
+  const metadataSlug = item.metadata?.slug;
+  const productSlug = item.metadata?.product_slug;
+  const fallbackSlug = typeof metadataSlug === "string" && metadataSlug ? metadataSlug : typeof productSlug === "string" && productSlug ? productSlug : null;
+  return fallbackSlug ?? (item.product?.slug && item.product.slug.length > 0 ? item.product.slug : null);
+}
+
+function readMetadataImage(item: SwellCartItem): string | null {
+  const image = item.metadata?.image;
+  return getFirstImageUrl(image);
 }
 
 function buildCartItemView(
   item: SwellCartItem,
+  productLookup: Record<string, JewelryProduct> = {},
 ): CartItemView {
   const expandedProduct = item.product
     ? mapSwellProduct(item.product)
     : undefined;
+  const fallbackImages = item.product
+    ? (item.product.images ?? [])
+        .map((image) => image.file?.url)
+        .filter((url): url is string => Boolean(url))
+    : [];
   const slug = readSlug(item) ?? expandedProduct?.slug ?? null;
-  const product = expandedProduct;
+  const productId = item.product_id;
+  const product =
+    (slug ? productLookup[slug] : undefined) ??
+    (productId ? productLookup[productId] : undefined) ??
+    expandedProduct;
+  const metadataImage = readMetadataImage(item);
+
+  const variantSummary = getItemOptionSummary(product, item.options ?? []);
+  const showPriceOnRequest = isNaturalGemstoneItemOption(item.options ?? []);
+  const resolvedPrice = item.price > 0 ? item.price : product ? product.attributes.price_usd : 0;
 
   return {
     id: item.id,
     productId: item.product_id,
     slug,
     name: product?.name ?? item.product_name ?? "Piece from the collection",
-    image: product?.images[0] ?? null,
+    image: metadataImage ?? product?.images[0] ?? fallbackImages[0] ?? null,
     attributes: product?.attributes ?? null,
-    price: item.price,
-    priceInr: product ? product.price_inr : null,
-    priceUsd: product ? product.attributes.price_usd : null,
+    variantSummary,
+    showPriceOnRequest,
+    price: resolvedPrice,
+    priceInr: showPriceOnRequest ? null : product ? product.price_inr : null,
+    priceUsd: showPriceOnRequest ? null : product ? product.attributes.price_usd : null,
     quantity: item.quantity,
   };
 }
 
 export function buildCartView(
   cart: SwellCart | null,
+  productLookup: Record<string, JewelryProduct> = {},
 ): CartView {
   if (!cart) {
     return EMPTY_CART_VIEW;
   }
 
   const items = (cart.items ?? []).map((item) =>
-    buildCartItemView(item),
+    buildCartItemView(item, productLookup),
   );
 
   return {
