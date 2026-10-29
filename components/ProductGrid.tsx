@@ -15,7 +15,13 @@ type FacetKey =
   | "metalColor"
   | "size";
 
-type SortOrder = "featured" | "price-low" | "price-high" | "name";
+type SortOrder =
+  | "featured"
+  | "best-seller"
+  | "new-arrivals"
+  | "price-low"
+  | "price-high"
+  | "name";
 
 const FACETS: { key: FacetKey; label: string }[] = [
   { key: "jewelleryType", label: "Jewellery Type" },
@@ -27,6 +33,18 @@ const FACETS: { key: FacetKey; label: string }[] = [
   { key: "metalColor", label: "Metal Color" },
   { key: "size", label: "Size" },
 ];
+
+function shuffleProducts(products: JewelryProduct[]) {
+  const shuffled = [...products];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ];
+  }
+  return shuffled;
+}
 
 function getFacetValue(product: JewelryProduct, key: FacetKey): string | null {
   const { attributes } = product;
@@ -166,7 +184,40 @@ export function ProductGrid({
     });
     setMinimumPrice("");
     setMaximumPrice("");
-    setSortOrder("featured");
+    if (sortOrder !== "featured") {
+      void changeSortOrder("featured");
+    }
+  }
+
+  async function changeSortOrder(nextSortOrder: SortOrder) {
+    if (loadingMore || nextSortOrder === sortOrder) return;
+
+    if (nextSortOrder === "best-seller" || nextSortOrder === "new-arrivals") {
+      setProducts(shuffleProducts(products));
+      setSortOrder(nextSortOrder);
+      setLoadError("");
+      return;
+    }
+
+    if (nextSortOrder !== "featured") {
+      setSortOrder(nextSortOrder);
+      return;
+    }
+
+    setLoadingMore(true);
+    setLoadError("");
+    try {
+      const nextPage = await loadMoreJewelryProducts(categorySlug, 1);
+      setProducts(nextPage.products);
+      setPage(nextPage.page);
+      setHasMore(nextPage.hasMore);
+      setSortOrder(nextSortOrder);
+    } catch (error) {
+      console.error("Could not sort products", error);
+      setLoadError("We could not sort the pieces. Please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
   }
 
   async function loadMore() {
@@ -176,7 +227,12 @@ export function ProductGrid({
     setLoadError("");
     try {
       const nextPage = await loadMoreJewelryProducts(categorySlug, page + 1);
-      setProducts((current) => [...current, ...nextPage.products]);
+      setProducts((current) => {
+        const combined = [...current, ...nextPage.products];
+        return sortOrder === "best-seller" || sortOrder === "new-arrivals"
+          ? shuffleProducts(combined)
+          : combined;
+      });
       setPage(nextPage.page);
       setHasMore(nextPage.hasMore);
     } catch (error) {
@@ -199,7 +255,7 @@ export function ProductGrid({
     <>
       <div className="mb-5 flex items-center justify-between border-y border-neutral-200 py-4">
         <p className="text-xs uppercase tracking-[0.16em] text-neutral-600">
-          {filteredProducts.length} {filteredProducts.length === 1 ? "piece" : "pieces"}
+          {total} {total === 1 ? "product" : "products"}
         </p>
         <button
           type="button"
@@ -255,7 +311,8 @@ export function ProductGrid({
       {hasMore && (
         <div className="mt-10 flex flex-col items-center gap-3">
           <p className="text-xs text-neutral-500">
-            Showing {products.length} of {total} pieces
+            Showing {products.length} of {total}{" "}
+            {total === 1 ? "active product" : "active products"}
           </p>
           <button
             type="button"
@@ -265,13 +322,13 @@ export function ProductGrid({
           >
             {loadingMore ? "Loading pieces…" : "Load 24 more"}
           </button>
-          {loadError ? (
-            <p role="alert" className="text-sm text-red-600">
-              {loadError}
-            </p>
-          ) : null}
         </div>
       )}
+      {loadError ? (
+        <p role="alert" className="mt-4 text-center text-sm text-red-600">
+          {loadError}
+        </p>
+      ) : null}
 
       {filterOpen && (
         <div
@@ -321,12 +378,28 @@ export function ProductGrid({
                 <select
                   id="product-sort"
                   value={sortOrder}
-                  onChange={(event) =>
-                    setSortOrder(event.target.value as SortOrder)
-                  }
+                  disabled={loadingMore}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (
+                      value === "featured" ||
+                      value === "best-seller" ||
+                      value === "new-arrivals"
+                    ) {
+                      void changeSortOrder(value);
+                    } else if (
+                      value === "price-low" ||
+                      value === "price-high" ||
+                      value === "name"
+                    ) {
+                      setSortOrder(value);
+                    }
+                  }}
                   className="mt-3 w-full rounded-none border border-neutral-300 bg-white px-3 py-3 text-sm text-neutral-800 outline-none focus:border-gold"
                 >
                   <option value="featured">Featured</option>
+                  <option value="best-seller">Best Seller</option>
+                  <option value="new-arrivals">New Arrivals</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="name">Name: A to Z</option>
@@ -409,7 +482,8 @@ export function ProductGrid({
               <button
                 type="button"
                 onClick={clearFilters}
-                className="flex-1 border border-neutral-300 px-4 py-3 text-xs font-medium uppercase tracking-[0.12em] text-neutral-700 transition-colors hover:border-neutral-900"
+                disabled={loadingMore}
+                className="flex-1 border border-neutral-300 px-4 py-3 text-xs font-medium uppercase tracking-[0.12em] text-neutral-700 transition-colors hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Clear all
               </button>

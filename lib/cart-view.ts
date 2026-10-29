@@ -99,11 +99,13 @@ function buildCartItemView(
   item: SwellCartItem,
   productLookup: Record<string, JewelryProduct> = {},
 ): CartItemView {
-  const expandedProduct = item.product
-    ? mapSwellProduct(item.product)
+  const activeExpandedProduct =
+    item.product?.active === true ? item.product : undefined;
+  const expandedProduct = activeExpandedProduct
+    ? mapSwellProduct(activeExpandedProduct)
     : undefined;
-  const fallbackImages = item.product
-    ? (item.product.images ?? [])
+  const fallbackImages = activeExpandedProduct
+    ? (activeExpandedProduct.images ?? [])
         .map((image) => image.file?.url)
         .filter((url): url is string => Boolean(url))
     : [];

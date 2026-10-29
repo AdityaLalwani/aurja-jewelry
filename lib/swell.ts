@@ -681,6 +681,7 @@ async function fetchJewelryProductPage(
   page: number,
   limit: number,
   compact = false,
+  countActiveProducts = false,
 ): Promise<{
   products: JewelryProduct[];
   total: number;
@@ -710,19 +711,45 @@ async function fetchJewelryProductPage(
     params.set("categories", categoryId);
   }
 
-  const result = await swellFetch<SwellProductListResult>(
-    `/products?${params.toString()}`,
-    {
-      useSecretKey: true,
-      next: {
-        revalidate: CATALOG_REVALIDATE_SECONDS,
-        tags: ["swell-products"],
+  const activeCountParams = new URLSearchParams({
+    fields: "id,active",
+    page: "all",
+  });
+  if (categoryId) {
+    activeCountParams.set("categories", categoryId);
+  }
+
+  const [result, activeCountResult] = await Promise.all([
+    swellFetch<SwellProductListResult>(
+      `/products?${params.toString()}`,
+      {
+        useSecretKey: true,
+        next: {
+          revalidate: CATALOG_REVALIDATE_SECONDS,
+          tags: ["swell-products"],
+        },
       },
-    },
-  );
-  const mappedProducts = result.results.map((product) =>
-    mapSwellProduct(product, 2),
-  );
+    ),
+    countActiveProducts
+      ? swellFetch<SwellProductListResult>(
+          `/products?${activeCountParams.toString()}`,
+          {
+            useSecretKey: true,
+            next: {
+              revalidate: CATALOG_REVALIDATE_SECONDS,
+              tags: ["swell-products"],
+            },
+          },
+        )
+      : Promise.resolve(null),
+  ]);
+  const mappedProducts = result.results
+    .filter((product) => product.active === true)
+    .map((product) => mapSwellProduct(product, 2));
+  const total = activeCountResult
+    ? activeCountResult.results.filter((product) => product.active === true)
+        .length
+    : result.count;
   const products =
     compact
       ? mappedProducts.map((product) => ({
@@ -747,9 +774,9 @@ async function fetchJewelryProductPage(
       : mappedProducts;
   return {
     products,
-    total: result.count,
+    total,
     page,
-    hasMore: page * limit < result.count,
+    hasMore: page * limit < total,
   };
 }
 
@@ -768,6 +795,7 @@ export async function getJewelryProductPage(
     categorySlug,
     Math.max(1, Math.floor(page)),
     Math.min(100, Math.max(1, Math.floor(limit))),
+    true,
     true,
   );
 }
@@ -1446,7 +1474,7 @@ export async function findSwellProductBySlug(
     if (!product) {
       return null;
     }
-    return product.active === false ? null : product;
+    return product.active === true ? product : null;
   } catch (error) {
     if (
       error instanceof Error &&
@@ -1476,7 +1504,7 @@ export async function findSwellProductById(
     if (!product) {
       return null;
     }
-    return product.active === false ? null : product;
+    return product.active === true ? product : null;
   } catch (error) {
     if (
       error instanceof Error &&
@@ -1519,6 +1547,7 @@ export async function getJewelryProductsBySkus(
       );
       const matchedProduct = products.results.find(
         (product) =>
+          product.active === true &&
           (product.sku ??
             firstAttributeValue(product.attributes, ["sku", "product_sku"]))?.toUpperCase() ===
           sku.toUpperCase(),
