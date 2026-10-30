@@ -19,7 +19,7 @@ async function getNavigationCategories(): Promise<StoreCategory[]> {
     { id: "rings", name: "Rings", slug: "rings", parentId: null },
     { id: "earrings", name: "Earrings", slug: "earrings", parentId: null },
     { id: "pendants", name: "Pendants", slug: "pendants", parentId: null },
-    { id: "bracelets-bangles", name: "Bracelets & Bangles", slug: "bracelets-bangles", parentId: null },
+    { id: "bracelets", name: "Bracelets", slug: "bracelets", parentId: null },
     { id: "necklaces", name: "Necklaces", slug: "necklaces", parentId: null },
     { id: "men", name: "Men", slug: "men", parentId: null },
   ];

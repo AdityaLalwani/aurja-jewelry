@@ -29,7 +29,7 @@ export async function ShopTheLook() {
     <section
       id="shop-by-look"
       aria-label="Shop by Look"
-      className="bg-chandan pb-12 pt-[4.5rem] sm:pb-16 sm:pt-28"
+      className="bg-chandan py-16 sm:py-24"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <SectionHeading

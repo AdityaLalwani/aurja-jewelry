@@ -496,15 +496,15 @@ body.frame-film-header-hidden .site-header-shell {
   font-size: 0.95rem;
 }
 
-.home-page .home-categories {
+.home-page .home-categories,
+.home-page .home-values {
   position: relative;
   z-index: 0;
   isolation: isolate;
-  padding-top: 7rem;
-  padding-bottom: 7rem;
 }
 
 .home-page .home-categories::before,
+.home-page .home-values::before,
 .home-page #social::before,
 .home-page .home-visit::before {
   position: absolute;
@@ -519,6 +519,10 @@ body.frame-film-header-hidden .site-header-shell {
 }
 
 .home-page .home-categories::before {
+  background: var(--background);
+}
+
+.home-page .home-values::before {
   background: var(--background);
 }
 

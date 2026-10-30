@@ -214,8 +214,8 @@ export const home: HomeConfig = {
         image: "/36.jpg",
       },
       {
-        slug: "bracelets-bangles",
-        name: "Bracelets & Bangles",
+        slug: "bracelets",
+        name: "Bracelets",
         description: "Cuffs, chains & kadas",
         variant: "pearl",
         image: "/35.jpg",

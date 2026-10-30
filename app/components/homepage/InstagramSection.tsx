@@ -13,7 +13,7 @@ export function InstagramSection() {
   return (
     <section
       id="social"
-      className="mx-auto max-w-7xl scroll-mt-24 px-5 py-14 sm:px-8 sm:py-20"
+      className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 sm:px-8 sm:py-24"
     >
       <div className="relative mx-auto grid max-w-5xl grid-cols-[minmax(0,0.7fr)_minmax(15rem,1.4fr)_minmax(0,0.7fr)] items-center gap-3 sm:gap-6">
         <div className="grid gap-3 sm:gap-5">
