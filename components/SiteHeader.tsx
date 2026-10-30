@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -21,13 +21,40 @@ function CategoryNav({
   light?: boolean;
 }) {
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
   const isStoryActive = usePathname() === "/story";
   const topLevelCategories = categories.filter(
     (category) => !category.parentId,
   );
 
+  useEffect(() => {
+    if (!openCategoryId) return;
+
+    function closeOnOutsideInteraction(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        navRef.current &&
+        !navRef.current.contains(event.target)
+      ) {
+        setOpenCategoryId(null);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpenCategoryId(null);
+    }
+
+    document.addEventListener("pointerdown", closeOnOutsideInteraction);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideInteraction);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openCategoryId]);
+
   return (
     <nav
+      ref={navRef}
       aria-label="Categories"
       className="flex flex-1 items-center justify-center gap-4 sm:gap-6"
     >
@@ -42,14 +69,28 @@ function CategoryNav({
           subcategories.some((subcategory) => activeSlug === subcategory.slug);
 
         return (
-          <div key={category.id} className="relative">
+          <div
+            key={category.id}
+            className="relative"
+            onMouseEnter={
+              hasSubcategories
+                ? () => setOpenCategoryId(category.id)
+                : undefined
+            }
+            onMouseLeave={
+              hasSubcategories
+                ? () =>
+                    setOpenCategoryId((current) =>
+                      current === category.id ? null : current,
+                    )
+                : undefined
+            }
+          >
             {hasSubcategories ? (
               <button
                 type="button"
                 aria-expanded={isOpen}
-                onClick={() =>
-                  setOpenCategoryId(isOpen ? null : category.id)
-                }
+                onClick={() => setOpenCategoryId(category.id)}
                 className={`text-xs font-medium uppercase tracking-[0.2em] transition-colors ${
                   isActive || isOpen
                     ? light
@@ -81,39 +122,43 @@ function CategoryNav({
 
             {hasSubcategories && isOpen && (
               <div
-                className={`absolute left-1/2 top-full z-30 mt-4 min-w-48 -translate-x-1/2 border p-2 shadow-lg ${
-                  light
-                    ? "border-white/15 bg-stone-950/95"
-                    : "border-neutral-200 bg-white"
-                }`}
+                className="absolute left-1/2 top-full z-30 min-w-48 -translate-x-1/2 pt-4"
               >
-                <Link
-                  href={`/products?category=${category.slug}`}
-                  onClick={() => setOpenCategoryId(null)}
-                  className={`block px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] hover:bg-cream ${
-                    light ? "text-white" : "text-neutral-900"
+                <div
+                  className={`border p-2 shadow-lg ${
+                    light
+                      ? "border-white/15 bg-stone-950/95"
+                      : "border-neutral-200 bg-white"
                   }`}
                 >
-                  View all {category.name}
-                </Link>
-                {subcategories.map((subcategory) => (
                   <Link
-                    key={subcategory.id}
-                    href={`/products?category=${subcategory.slug}`}
+                    href={`/products?category=${category.slug}`}
                     onClick={() => setOpenCategoryId(null)}
-                    className={`block px-3 py-2 text-sm transition-colors hover:bg-cream ${
-                      activeSlug === subcategory.slug
-                        ? light
-                          ? "text-amber-700"
-                          : "text-gold-link"
-                        : light
-                          ? "text-white/80"
-                          : "text-neutral-600"
+                    className={`block px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] hover:bg-cream ${
+                      light ? "text-white" : "text-neutral-900"
                     }`}
                   >
-                    {subcategory.name}
+                    View all {category.name}
                   </Link>
-                ))}
+                  {subcategories.map((subcategory) => (
+                    <Link
+                      key={subcategory.id}
+                      href={`/products?category=${subcategory.slug}`}
+                      onClick={() => setOpenCategoryId(null)}
+                      className={`block px-3 py-2 text-sm transition-colors hover:bg-cream ${
+                        activeSlug === subcategory.slug
+                          ? light
+                            ? "text-amber-700"
+                            : "text-gold-link"
+                          : light
+                            ? "text-white/80"
+                            : "text-neutral-600"
+                      }`}
+                    >
+                      {subcategory.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>

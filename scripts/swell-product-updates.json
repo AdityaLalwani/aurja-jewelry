@@ -1,0 +1,648 @@
+{
+  "ASR001": {
+    "style": "Solitaire",
+    "youtube_id": "OOjKP6dnWRs",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 2.0,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      },
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.15,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 10
+      }
+    ],
+    "occasion": "Engagement",
+    "shipment_weight": {
+      "9K Gold": 2.56152,
+      "14K Gold": 3.3644,
+      "18K Gold": 3.822,
+      "925 Silver": 2.6
+    }
+  },
+  "ASR002": {
+    "style": "Bespoke",
+    "youtube_id": "toNLI-1WGCE",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 2.1,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 21
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 1.817694,
+      "14K Gold": 2.38743,
+      "18K Gold": 2.71215,
+      "925 Silver": 1.845
+    }
+  },
+  "ASR003": {
+    "style": "Solitaire",
+    "youtube_id": "PT1WuIJST1w",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Heart",
+        "carats": 3.0,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      },
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.21,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 21
+      }
+    ],
+    "occasion": "Engagement",
+    "shipment_weight": {
+      "9K Gold": 2.108328,
+      "14K Gold": 2.76916,
+      "18K Gold": 3.1458,
+      "925 Silver": 2.14
+    }
+  },
+  "ASR004": {
+    "style": "Lightweight",
+    "youtube_id": "WoQsbXbJ2jM",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.12,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 14
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 0.8502276,
+      "14K Gold": 1.116722,
+      "18K Gold": 1.26861,
+      "925 Silver": 0.863
+    }
+  },
+  "ASR005": {
+    "style": "Lightweight",
+    "youtube_id": "0GsXux9xvg0",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.03,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 0.7576188,
+      "14K Gold": 0.995086,
+      "18K Gold": 1.13043,
+      "925 Silver": 0.769
+    }
+  },
+  "ASR006": {
+    "style": "Lightweight",
+    "youtube_id": "dO952X9gNxA",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.216,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 24
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 1.4620368,
+      "14K Gold": 1.920296,
+      "18K Gold": 2.18148,
+      "925 Silver": 1.484
+    }
+  },
+  "ASR007": {
+    "style": "Bespoke",
+    "youtube_id": "1YbVRoGkKz4",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Rectangle",
+        "carats": 3.0,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      },
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.196,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 14
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 2.620632,
+      "14K Gold": 3.44204,
+      "18K Gold": 3.9102,
+      "925 Silver": 2.66
+    }
+  },
+  "ASR008": {
+    "style": "Lightweight",
+    "youtube_id": "JDCsofisRjc",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.12,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 3
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 0.679788,
+      "14K Gold": 0.89286,
+      "18K Gold": 1.0143,
+      "925 Silver": 0.69
+    }
+  },
+  "ASR009": {
+    "style": "Bespoke",
+    "youtube_id": "IhdA5Bxaw5M",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Oval",
+        "carats": 0.25,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 0.6049128,
+      "14K Gold": 0.794516,
+      "18K Gold": 0.90258,
+      "925 Silver": 0.614
+    }
+  },
+  "ASR010": {
+    "style": "Lightweight",
+    "youtube_id": "8dl7IRYpFVk",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Baguette, Marquise, Round",
+        "carats": 0.75,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 23
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 2.5447716,
+      "14K Gold": 3.342402,
+      "18K Gold": 3.79701,
+      "925 Silver": 2.583
+    }
+  },
+  "ASR011": {
+    "style": "Solitaire",
+    "youtube_id": "O11UwxyZcvo",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.104,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 8
+      }
+    ],
+    "occasion": "Engagement",
+    "shipment_weight": {
+      "9K Gold": 1.0718976,
+      "14K Gold": 1.407872,
+      "18K Gold": 1.59936,
+      "925 Silver": 1.088
+    }
+  },
+  "ASR012": {
+    "style": "Lightweight",
+    "youtube_id": "Up9Ne3FXwbI",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 3.75,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      },
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.144,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 18
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 2.1516768,
+      "14K Gold": 2.826096,
+      "18K Gold": 3.21048,
+      "925 Silver": 2.184
+    }
+  },
+  "ASR013": {
+    "style": "Lightweight",
+    "youtube_id": "e-YGTpAYBmY",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.216,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 31
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 2.0068524,
+      "14K Gold": 2.635878,
+      "18K Gold": 2.99439,
+      "925 Silver": 2.037
+    }
+  },
+  "ASR014": {
+    "style": "Bespoke",
+    "youtube_id": "AmUtSXU9obQ",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Emerald",
+        "carats": 0.25,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 0.6876696,
+      "14K Gold": 0.903212,
+      "18K Gold": 1.02606,
+      "925 Silver": 0.698
+    }
+  },
+  "ASR015": {
+    "style": "Solitaire",
+    "youtube_id": "7UkjcJm2nOI",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.315,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 9
+      }
+    ],
+    "occasion": "Engagement",
+    "shipment_weight": {
+      "9K Gold": 1.5999648,
+      "14K Gold": 2.101456,
+      "18K Gold": 2.38728,
+      "925 Silver": 1.624
+    }
+  },
+  "ASR016": {
+    "style": "Bespoke",
+    "youtube_id": "jKznHUdw99k",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Princess",
+        "carats": 0.65,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 2
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 2.205863,
+      "14K Gold": 2.897266,
+      "18K Gold": 3.29133,
+      "925 Silver": 2.239
+    }
+  },
+  "ASR017": {
+    "style": "Bespoke",
+    "youtube_id": "oQfsDvsKS-U",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Oval",
+        "carats": 1.013,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 1
+      },
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.54,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 12
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 2.06892,
+      "14K Gold": 2.7174,
+      "18K Gold": 3.087,
+      "925 Silver": 2.1
+    }
+  },
+  "ASR018": {
+    "style": "Lightweight",
+    "youtube_id": "o8wbs0snBYY",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Oval",
+        "carats": 0.9,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 9
+      }
+    ],
+    "occasion": "Everyday",
+    "shipment_weight": {
+      "9K Gold": 1.7319816,
+      "14K Gold": 2.274852,
+      "18K Gold": 2.58426,
+      "925 Silver": 1.758
+    }
+  },
+  "ASR019": {
+    "style": "Bespoke",
+    "youtube_id": "ufK7MXRuzzI",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Emerald, Round",
+        "carats": 0.66,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 9
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 0.34482,
+      "14K Gold": 0.4529,
+      "18K Gold": 0.5145,
+      "925 Silver": 0.35
+    }
+  },
+  "ASER001": {
+    "style": "Solitaire",
+    "youtube_id": "dQtGWN2WU_c",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 1.0,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 2
+      }
+    ],
+    "occasion": "Gifting",
+    "shipment_weight": {
+      "9K Gold": 1.261056,
+      "14K Gold": 1.65632,
+      "18K Gold": 1.8816,
+      "925 Silver": 1.28
+    }
+  },
+  "ASER002": {
+    "style": "Solitaire",
+    "youtube_id": "fIpsMXbuZ3o",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 4.0,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 2
+      }
+    ],
+    "occasion": "Gifting",
+    "shipment_weight": {
+      "9K Gold": 1.30539,
+      "14K Gold": 1.71455,
+      "18K Gold": 1.94775,
+      "925 Silver": 1.325
+    }
+  },
+  "ASER003": {
+    "style": "Solitaire",
+    "youtube_id": "17cAH6WBqB0",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Princess",
+        "carats": 1.0,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 2
+      }
+    ],
+    "occasion": "Gifting",
+    "shipment_weight": {
+      "9K Gold": 1.142832,
+      "14K Gold": 1.50104,
+      "18K Gold": 1.7052,
+      "925 Silver": 1.16
+    }
+  },
+  "ASER004": {
+    "style": "Lightweight",
+    "youtube_id": "DoLQCPvsJnM",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 1.6,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 20
+      }
+    ],
+    "occasion": "Party",
+    "shipment_weight": {
+      "9K Gold": 2.522112,
+      "14K Gold": 3.31264,
+      "18K Gold": 3.7632,
+      "925 Silver": 2.56
+    }
+  },
+  "ASB001": {
+    "style": "Bespoke",
+    "youtube_id": "XLn4OGmk8tM",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.9,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 3
+      },
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.39,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 39
+      }
+    ],
+    "occasion": "Anniversary",
+    "shipment_weight": {
+      "9K Gold": 1.911288,
+      "14K Gold": 2.51036,
+      "18K Gold": 2.8518,
+      "925 Silver": 1.94
+    }
+  },
+  "ASN001": {
+    "style": "Bespoke",
+    "youtube_id": "3ozFejHGWEk",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Round",
+        "carats": 0.12,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 30
+      }
+    ],
+    "occasion": "Gifting",
+    "shipment_weight": {
+      "9K Gold": 2.2324632,
+      "14K Gold": 2.932204,
+      "18K Gold": 3.33102,
+      "925 Silver": 2.266
+    }
+  },
+  "ASN002": {
+    "style": "Bespoke",
+    "youtube_id": "38APhNDd8Fc",
+    "metal_type": "Gold",
+    "size": "Customizable",
+    "stone_details": [
+      {
+        "type": "Lab Grown Diamonds",
+        "shape": "Emerald, Marquise",
+        "carats": 2.8,
+        "color": "FG",
+        "clarity": "VVS-VS",
+        "pieces": 14
+      }
+    ],
+    "occasion": "Party",
+    "shipment_weight": {
+      "9K Gold": 5.0284608,
+      "14K Gold": 6.604576,
+      "18K Gold": 7.50288,
+      "925 Silver": 5.104
+    }
+  }
+}

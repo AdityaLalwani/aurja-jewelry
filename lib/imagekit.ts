@@ -41,10 +41,6 @@ export function getImageKitUrl(
   src: string,
   { width, height, quality = 75 }: ImageKitTransformOptions = {},
 ): string {
-  const endpointValue = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
-  if (!endpointValue) return src;
-
-  const endpoint = new URL(endpointValue);
   let imageUrl: URL;
   try {
     imageUrl = new URL(src);
@@ -52,13 +48,21 @@ export function getImageKitUrl(
     return src;
   }
 
-  const endpointPath = endpoint.pathname.endsWith("/")
-    ? endpoint.pathname
-    : `${endpoint.pathname}/`;
-  if (
-    imageUrl.origin !== endpoint.origin ||
-    !imageUrl.pathname.startsWith(endpointPath)
-  ) {
+  const isImageKitHost = imageUrl.hostname === "ik.imagekit.io";
+  const endpointValue = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+  if (endpointValue) {
+    const endpoint = new URL(endpointValue);
+    const endpointPath = endpoint.pathname.endsWith("/")
+      ? endpoint.pathname
+      : `${endpoint.pathname}/`;
+    if (
+      (imageUrl.origin !== endpoint.origin ||
+        !imageUrl.pathname.startsWith(endpointPath)) &&
+      !isImageKitHost
+    ) {
+      return src;
+    }
+  } else if (!isImageKitHost) {
     return src;
   }
 

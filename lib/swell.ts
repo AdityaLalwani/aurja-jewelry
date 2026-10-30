@@ -115,6 +115,7 @@ export interface SwellProductOptionValue {
   id?: string | null;
   name?: string;
   price?: number | null;
+  shipment_weight?: number;
   active?: boolean;
 }
 
@@ -125,14 +126,26 @@ export interface SwellProductOption {
   values: SwellProductOptionValue[];
 }
 
+export interface ProductStoneDetail {
+  type?: string;
+  shape?: string;
+  size?: string;
+  weight?: string;
+  color?: string;
+  clarity?: string;
+  pieces?: string;
+}
+
 export interface JewelryProduct {
   name: string;
   slug: string;
+  sku?: string;
   price_inr: number;
   stock_level?: number;
   images: string[];
   description?: string;
   variant_options?: SwellProductOption[];
+  stone_details?: ProductStoneDetail[];
   attributes: {
     metal_type: string;
     metal_color?: string;
@@ -185,6 +198,64 @@ function coercePrice(value: unknown): number {
   return 0;
 }
 
+function coerceOptionalNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
+function readRecordValue(value: unknown, key: string): unknown {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function normalizeStoneDetails(input: unknown): ProductStoneDetail[] {
+  const entries = Array.isArray(input)
+    ? input
+    : input !== null && typeof input === "object"
+      ? Object.values(input)
+      : [];
+  if (entries.length === 0) {
+    return [];
+  }
+
+  const toText = (value: unknown): string | undefined =>
+    typeof value === "string" || typeof value === "number"
+      ? String(value)
+      : undefined;
+
+  return entries.flatMap((entry) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      return [];
+    }
+
+    const detail = entry as Record<string, unknown>;
+    const normalized: ProductStoneDetail = {
+      type: toText(detail.type ?? detail.stone),
+      shape: toText(detail.shape),
+      size: toText(detail.size),
+      weight: toText(detail.weight ?? detail.carats),
+      color: toText(detail.color),
+      clarity: toText(detail.clarity),
+      pieces: toText(detail.pieces ?? detail.pcs),
+    };
+
+    return Object.values(normalized).some(Boolean) ? [normalized] : [];
+  });
+}
+
 function normalizeProductOptions(input: unknown): SwellProductOption[] {
   if (!Array.isArray(input)) {
     return [];
@@ -207,15 +278,21 @@ function normalizeProductOptions(input: unknown): SwellProductOption[] {
             ? option.name
             : "Option",
         active: option.active !== false,
-        values: values.map((value) => ({
-          id: typeof value.id === "string" ? value.id : undefined,
-          name:
-            typeof value.name === "string" && value.name.trim()
-              ? value.name
-              : "Value",
-          price: coercePrice(value.price),
-          active: value.active !== false,
-        })),
+        values: values.map((value) => {
+          const shipmentWeight = coerceOptionalNumber(value.shipment_weight);
+          return {
+            id: typeof value.id === "string" ? value.id : undefined,
+            name:
+              typeof value.name === "string" && value.name.trim()
+                ? value.name
+                : "Value",
+            price: coercePrice(value.price),
+            ...(shipmentWeight !== undefined
+              ? { shipment_weight: shipmentWeight }
+              : {}),
+            active: value.active !== false,
+          };
+        }),
       };
     })
     .filter((option) => option.values.length > 0 && option.active !== false);
@@ -555,7 +632,9 @@ export function mapSwellProduct(
   const normalizedOptions = normalizeProductOptions(product.options);
   const variantPriceUsd = getLowestActiveVariantPrice(product);
   const priceUsd = variantPriceUsd > 0 ? variantPriceUsd : coercePrice(product.price);
-  const metalType = firstAttributeValue(attributes, ["metal_type", "metal"]);
+  const metalType =
+    firstAttributeValue(product.content, ["metal"]) ??
+    firstAttributeValue(attributes, ["metal_type", "metal"]);
   const gemstoneType = firstAttributeValue(attributes, [
     "gemstone_type",
     "gemstone",
@@ -576,6 +655,10 @@ export function mapSwellProduct(
   return {
     name: product.name ?? product.slug ?? "Untitled product",
     slug: product.slug ?? product.id,
+    sku:
+      product.sku ??
+      firstAttributeValue(attributes, ["sku", "product_sku"]) ??
+      undefined,
     price_inr: Math.round(priceUsd * 83),
     stock_level: product.stock_level,
     images: imageLimit === undefined ? images : images.slice(0, imageLimit),
@@ -583,6 +666,11 @@ export function mapSwellProduct(
       product.description ||
       firstAttributeValue(attributes, ["description", "product_story", "story"]),
     variant_options: normalizedOptions,
+    stone_details: normalizeStoneDetails(
+      product.content?.stone_details ??
+        product.attributes?.stone_details ??
+        readRecordValue(product.attributes?.content, "stone_details"),
+    ),
     attributes: {
       metal_type: metalType ?? "Gold",
       metal_color:
@@ -592,7 +680,7 @@ export function mapSwellProduct(
           0,
       ),
       youtube_id: firstAttributeValue(attributes, ["youtube_id"]),
-      size: firstAttributeValue(attributes, ["size", "ring_size"]) ?? undefined,
+      size: firstAttributeValue(product.content, ["size"]) ?? undefined,
       gemstone_type: gemstoneType ?? "None",
       diamond_carat: Number(
         firstAttributeValue(attributes, ["diamond_carat"]) ?? 0,
@@ -767,6 +855,7 @@ async function fetchJewelryProductPage(
             jewellery_type: product.attributes.jewellery_type,
             product_category: product.attributes.product_category,
             shop_for: product.attributes.shop_for,
+            collection: product.attributes.collection,
             karatage: product.attributes.karatage,
             gold_purity: product.attributes.gold_purity,
           },

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { ProductActions } from "@/components/ProductActions";
+import { ProductSpecifications } from "@/components/ProductSpecifications";
+import { ProductStoneDetails } from "@/components/ProductStoneDetails";
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import {
   getDefaultVariantSelections,
@@ -10,10 +12,19 @@ import {
   type JewelryProduct,
 } from "@/lib/swell";
 
+type ProductSpecification = {
+  label: string;
+  value: string;
+};
+
 export function ProductVariantSelector({
   product,
+  description,
+  specifications,
 }: {
   product: JewelryProduct;
+  description?: string;
+  specifications: ProductSpecification[];
 }) {
   const { currency } = useStore();
   const defaultSelections = useMemo(
@@ -53,6 +64,56 @@ export function ProductVariantSelector({
     [product, variantPriceUsd],
   );
 
+  const selectedVariantValues = useMemo(
+    () =>
+      (product.variant_options ?? []).flatMap((option) => {
+        const optionName = option.name ?? "Option";
+        const selectedName = selectedValues[optionName];
+        const selectedValue = selectedName
+          ? option.values.find(
+              (value) =>
+                value.active !== false &&
+                value.name?.trim().toLowerCase() ===
+                  selectedName.trim().toLowerCase(),
+            )
+          : undefined;
+        return selectedValue ? [{ option, value: selectedValue }] : [];
+      }),
+    [product.variant_options, selectedValues],
+  );
+  const selectedShipmentWeight = selectedVariantValues.find(
+    ({ value }) => value.shipment_weight !== undefined,
+  )?.value.shipment_weight;
+  const selectedMetal = selectedVariantValues.find(({ option }) => {
+    const optionName = option.name?.trim().toLowerCase();
+    return optionName === "metal" || optionName === "metal type";
+  })?.value.name;
+  const resolvedSpecifications = specifications.map((specification) =>
+    specification.label.toLowerCase() === "metal" && selectedMetal
+      ? { ...specification, value: selectedMetal }
+      : specification,
+  );
+  if (selectedShipmentWeight !== undefined) {
+    const sizeIndex = resolvedSpecifications.findIndex(
+      (specification) => specification.label.toLowerCase() === "size",
+    );
+    const occasionIndex = resolvedSpecifications.findIndex(
+      (specification) => specification.label.toLowerCase() === "occasion",
+    );
+    const weightIndex =
+      sizeIndex >= 0
+        ? sizeIndex + 1
+        : occasionIndex >= 0
+          ? occasionIndex + 1
+          : 0;
+    resolvedSpecifications.splice(weightIndex, 0, {
+      label: "Net weight",
+      value: `${new Intl.NumberFormat("en-IN", {
+        maximumFractionDigits: 3,
+      }).format(selectedShipmentWeight)} g`,
+    });
+  }
+
   function selectOption(optionName: string, valueName: string) {
     setSelectedValues((current) => ({
       ...current,
@@ -64,7 +125,7 @@ export function ProductVariantSelector({
     <>
       <div>
         <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-          {product.attributes.metal_type === "Gold" ? "18K Gold" : product.attributes.metal_type}
+          {product.sku ?? "SKU unavailable"}
         </p>
         <h1 className="mt-3 font-display text-4xl uppercase leading-[1.05] tracking-[0.04em] text-neutral-900 sm:text-[2.8rem]">
           {product.name}
@@ -135,6 +196,35 @@ export function ProductVariantSelector({
         showPriceOnRequest={isNaturalGemstone}
         selectedOptions={selectedValues}
       />
+
+      {description ? (
+        <section aria-labelledby="product-description">
+          <h2
+            id="product-description"
+            className="text-xs uppercase tracking-[0.2em] text-neutral-500"
+          >
+            Product description
+          </h2>
+          <p className="mt-3 whitespace-pre-line text-sm leading-7 text-neutral-700">
+            {description}
+          </p>
+        </section>
+      ) : null}
+
+      <section
+        id="product-specifications"
+        className="scroll-mt-24 border-t border-neutral-200"
+        aria-labelledby="product-specifications-heading"
+      >
+        <h2
+          id="product-specifications-heading"
+          className="mb-4 text-xs uppercase tracking-[0.2em] text-neutral-500"
+        >
+          Product specifications
+        </h2>
+        <ProductSpecifications specifications={resolvedSpecifications} />
+      </section>
+      <ProductStoneDetails details={product.stone_details ?? []} />
     </>
   );
 }

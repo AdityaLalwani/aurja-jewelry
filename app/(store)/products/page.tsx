@@ -24,9 +24,6 @@ export default async function ProductsPage({
     <>
       <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-20 pt-8 sm:px-6 lg:px-10">
         <div className="mb-7">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-neutral-500">
-            Aurja Fine Jewellery
-          </p>
           <h1 className="mt-2 font-display text-3xl capitalize leading-tight text-neutral-900 sm:text-4xl">
             {title}
           </h1>

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductGallery } from "@/components/ProductGallery";
-import { ProductSpecifications } from "@/components/ProductSpecifications";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { getJewelryProductBySlug } from "@/lib/swell";
 
@@ -30,12 +29,20 @@ export default async function ProductPage(props: ProductPageProps) {
   }
 
   const { attributes } = product;
-  const metalLabel =
-    [attributes.metal_color, attributes.metal_type].filter(Boolean).join(" ") ||
-    "Metal";
+  const description = product.description
+    ?.replace(/<\/p>\s*<p\b[^>]*>/gi, "\n\n")
+    .replace(/<\/?p\b[^>]*>/gi, "")
+    .trim();
   const specifications: { label: string; value: string }[] = [
-    ...(metalLabel && metalLabel !== "Metal"
-      ? [{ label: "Metal", value: metalLabel }]
+    ...(attributes.product_category
+      ? [{ label: "Category", value: attributes.product_category }]
+      : []),
+    ...(attributes.occasion
+      ? [{ label: "Occasion", value: attributes.occasion }]
+      : []),
+    ...(attributes.size ? [{ label: "Size", value: attributes.size }] : []),
+    ...(attributes.metal_type
+      ? [{ label: "Metal", value: attributes.metal_type }]
       : []),
     ...(attributes.gross_weight_gms
       ? [{ label: "Gross weight", value: `${attributes.gross_weight_gms} g` }]
@@ -60,9 +67,6 @@ export default async function ProductPage(props: ProductPageProps) {
       : []),
     ...(attributes.setting_type
       ? [{ label: "Setting type", value: attributes.setting_type }]
-      : []),
-    ...(attributes.size
-      ? [{ label: "Size", value: attributes.size }]
       : []),
   ];
   return (
@@ -94,35 +98,11 @@ export default async function ProductPage(props: ProductPageProps) {
         </div>
 
         <div className="flex flex-col gap-8 pt-2">
-          <ProductVariantSelector product={product} />
-
-          {product.description ? (
-            <section aria-labelledby="product-description">
-              <h2
-                id="product-description"
-                className="text-xs uppercase tracking-[0.2em] text-neutral-500"
-              >
-                Product description
-              </h2>
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-neutral-700">
-                {product.description}
-              </p>
-            </section>
-          ) : null}
-
-          <section
-            id="product-specifications"
-            className="scroll-mt-24 border-t border-neutral-200"
-            aria-labelledby="product-specifications-heading"
-          >
-            <h2
-              id="product-specifications-heading"
-              className="mb-4 text-xs uppercase tracking-[0.2em] text-neutral-500"
-            >
-              Product specifications
-            </h2>
-            <ProductSpecifications specifications={specifications} />
-          </section>
+          <ProductVariantSelector
+            product={product}
+            description={description}
+            specifications={specifications}
+          />
         </div>
       </div>
     </div>

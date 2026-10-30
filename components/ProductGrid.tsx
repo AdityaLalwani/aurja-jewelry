@@ -10,28 +10,25 @@ type FacetKey =
   | "productCategory"
   | "diamondCarat"
   | "shopFor"
-  | "karatage"
   | "diamondClarity"
   | "metalColor"
-  | "size";
+  | "style";
 
 type SortOrder =
   | "featured"
   | "best-seller"
   | "new-arrivals"
   | "price-low"
-  | "price-high"
-  | "name";
+  | "price-high";
 
 const FACETS: { key: FacetKey; label: string }[] = [
   { key: "jewelleryType", label: "Jewellery Type" },
   { key: "productCategory", label: "Product Category" },
   { key: "diamondCarat", label: "Diamond Carat" },
   { key: "shopFor", label: "Shop For" },
-  { key: "karatage", label: "Karatage Metal" },
   { key: "diamondClarity", label: "Diamond Clarity" },
   { key: "metalColor", label: "Metal Color" },
-  { key: "size", label: "Size" },
+  { key: "style", label: "Style" },
 ];
 
 function shuffleProducts(products: JewelryProduct[]) {
@@ -59,16 +56,14 @@ function getFacetValue(product: JewelryProduct, key: FacetKey): string | null {
         : null;
     case "shopFor":
       return attributes.shop_for ?? null;
-    case "karatage":
-      return attributes.karatage ?? attributes.gold_purity ?? attributes.metal_type;
     case "diamondClarity":
       return attributes.diamond_clarity === "N/A"
         ? null
         : attributes.diamond_clarity;
     case "metalColor":
       return attributes.metal_color || null;
-    case "size":
-      return attributes.size ?? attributes.ring_size ?? null;
+    case "style":
+      return attributes.collection ?? null;
   }
 }
 
@@ -112,10 +107,9 @@ export function ProductGrid({
     productCategory: [],
     diamondCarat: [],
     shopFor: [],
-    karatage: [],
     diamondClarity: [],
     metalColor: [],
-    size: [],
+    style: [],
   });
   const [minimumPrice, setMinimumPrice] = useState("");
   const [maximumPrice, setMaximumPrice] = useState("");
@@ -155,7 +149,6 @@ export function ProductGrid({
     .sort((first, second) => {
       if (sortOrder === "price-low") return first.price_inr - second.price_inr;
       if (sortOrder === "price-high") return second.price_inr - first.price_inr;
-      if (sortOrder === "name") return first.name.localeCompare(second.name);
       return 0;
     });
 
@@ -177,10 +170,9 @@ export function ProductGrid({
       productCategory: [],
       diamondCarat: [],
       shopFor: [],
-      karatage: [],
       diamondClarity: [],
       metalColor: [],
-      size: [],
+      style: [],
     });
     setMinimumPrice("");
     setMaximumPrice("");
@@ -387,11 +379,7 @@ export function ProductGrid({
                       value === "new-arrivals"
                     ) {
                       void changeSortOrder(value);
-                    } else if (
-                      value === "price-low" ||
-                      value === "price-high" ||
-                      value === "name"
-                    ) {
+                    } else if (value === "price-low" || value === "price-high") {
                       setSortOrder(value);
                     }
                   }}
@@ -402,7 +390,6 @@ export function ProductGrid({
                   <option value="new-arrivals">New Arrivals</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
-                  <option value="name">Name: A to Z</option>
                 </select>
               </div>
 
