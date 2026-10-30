@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
-import { loadMoreJewelryProducts } from "@/lib/product-actions";
+import {
+  loadJewelryProductsForFilters,
+  loadMoreJewelryProducts,
+} from "@/lib/product-actions";
 import type { JewelryProduct } from "@/lib/swell";
 
 type FacetKey =
@@ -100,6 +103,11 @@ export function ProductGrid({
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [filterProducts, setFilterProducts] = useState<
+    JewelryProduct[] | null
+  >(null);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [filterLoadError, setFilterLoadError] = useState("");
   const [selectedFacets, setSelectedFacets] = useState<
     Record<FacetKey, string[]>
   >({
@@ -130,27 +138,56 @@ export function ProductGrid({
       0,
     ) + (minimumPrice || maximumPrice ? 1 : 0);
 
-  const filteredProducts = products
-    .filter((product) => {
-      const matchesFacets = FACETS.every(({ key }) => {
-        const selected = selectedFacets[key];
-        return (
-          selected.length === 0 ||
-          selected.includes(getFacetValue(product, key) ?? "")
-        );
-      });
-      const price = product.price_inr;
-      const matchesMinimum =
-        minimumPrice === "" || price >= Number(minimumPrice);
-      const matchesMaximum =
-        maximumPrice === "" || price <= Number(maximumPrice);
-      return matchesFacets && matchesMinimum && matchesMaximum;
-    })
-    .sort((first, second) => {
+  const filterSource = filterProducts ?? products;
+  const matchesFilters = (product: JewelryProduct) => {
+    const matchesFacets = FACETS.every(({ key }) => {
+      const selected = selectedFacets[key];
+      return (
+        selected.length === 0 ||
+        selected.includes(getFacetValue(product, key) ?? "")
+      );
+    });
+    const price = product.price_inr;
+    const matchesMinimum =
+      minimumPrice === "" || price >= Number(minimumPrice);
+    const matchesMaximum =
+      maximumPrice === "" || price <= Number(maximumPrice);
+    return matchesFacets && matchesMinimum && matchesMaximum;
+  };
+  const sortProducts = (items: JewelryProduct[]) =>
+    items.sort((first, second) => {
       if (sortOrder === "price-low") return first.price_inr - second.price_inr;
       if (sortOrder === "price-high") return second.price_inr - first.price_inr;
       return 0;
     });
+  const filteredProducts = sortProducts(filterSource.filter(matchesFilters));
+  const resultCount =
+    activeFilterCount > 0 ? filteredProducts.length : total;
+  const visibleProducts =
+    filterProducts !== null && activeFilterCount > 0
+      ? filteredProducts
+      : sortProducts(products.filter(matchesFilters));
+
+  function loadFilterProducts() {
+    if (filterLoading || filterProducts !== null) return;
+
+    setFilterLoading(true);
+    setFilterLoadError("");
+    void loadJewelryProductsForFilters(categorySlug)
+      .then(setFilterProducts)
+      .catch((error: unknown) => {
+        console.error("Could not load products for filtering", error);
+        setFilterLoadError(
+          "We could not load the full collection. Results currently include loaded pieces only.",
+        );
+      })
+      .finally(() => setFilterLoading(false));
+  }
+
+  function openFilters() {
+    setFilterOpen(true);
+    loadFilterProducts();
+  }
 
   function toggleFacet(key: FacetKey, value: string) {
     setSelectedFacets((current) => {
@@ -236,10 +273,10 @@ export function ProductGrid({
   }
 
   const priceRange =
-    products.length > 0
+    filterSource.length > 0
       ? {
-          minimum: Math.min(...products.map((product) => product.price_inr)),
-          maximum: Math.max(...products.map((product) => product.price_inr)),
+          minimum: Math.min(...filterSource.map((product) => product.price_inr)),
+          maximum: Math.max(...filterSource.map((product) => product.price_inr)),
         }
       : { minimum: 0, maximum: 0 };
 
@@ -247,11 +284,11 @@ export function ProductGrid({
     <>
       <div className="mb-5 flex items-center justify-between border-y border-neutral-200 py-4">
         <p className="text-xs uppercase tracking-[0.16em] text-neutral-600">
-          {total} {total === 1 ? "product" : "products"}
+          {resultCount} {resultCount === 1 ? "product" : "products"}
         </p>
         <button
           type="button"
-          onClick={() => setFilterOpen(true)}
+          onClick={openFilters}
           aria-haspopup="dialog"
           className="flex items-center gap-3 border border-neutral-900 px-5 py-3 text-xs font-medium uppercase tracking-[0.14em] text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
         >
@@ -276,9 +313,9 @@ export function ProductGrid({
         </button>
       </div>
 
-      {filteredProducts.length > 0 ? (
+      {visibleProducts.length > 0 ? (
         <div className="grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product) => (
+          {visibleProducts.map((product) => (
             <ProductCard
               key={product.slug}
               product={product}
@@ -300,7 +337,7 @@ export function ProductGrid({
         </div>
       )}
 
-      {hasMore && (
+      {hasMore && !(filterProducts !== null && activeFilterCount > 0) && (
         <div className="mt-10 flex flex-col items-center gap-3">
           <p className="text-xs text-neutral-500">
             Showing {products.length} of {total}{" "}
@@ -345,8 +382,9 @@ export function ProductGrid({
                   Sort &amp; Filter
                 </h2>
                 <p className="mt-1 text-xs text-neutral-500">
-                  {filteredProducts.length}{" "}
-                  {filteredProducts.length === 1 ? "piece" : "pieces"} available
+                  {filterLoading
+                    ? "Loading the full collection…"
+                    : `${resultCount} ${resultCount === 1 ? "piece" : "pieces"} available`}
                 </p>
               </div>
               <button
@@ -393,10 +431,23 @@ export function ProductGrid({
                 </select>
               </div>
 
-              {hasMore ? (
+              {filterLoadError ? (
+                <p
+                  role="alert"
+                  className="border-b border-neutral-200 py-4 text-xs leading-5 text-red-600"
+                >
+                  {filterLoadError}{" "}
+                  <button
+                    type="button"
+                    onClick={loadFilterProducts}
+                    className="font-semibold underline"
+                  >
+                    Try again
+                  </button>
+                </p>
+              ) : filterLoading ? (
                 <p className="border-b border-neutral-200 py-4 text-xs leading-5 text-neutral-500">
-                  Filters apply to loaded pieces. Load more products to widen
-                  your selection.
+                  Loading all pieces so filters can include the full collection…
                 </p>
               ) : null}
 
@@ -433,7 +484,7 @@ export function ProductGrid({
               </fieldset>
 
               {FACETS.map(({ key, label }) => {
-                const options = getFacetOptions(products, key);
+                const options = getFacetOptions(filterSource, key);
                 if (options.length === 0) return null;
 
                 return (
@@ -477,10 +528,12 @@ export function ProductGrid({
               <button
                 type="button"
                 onClick={() => setFilterOpen(false)}
+                disabled={filterLoading}
                 className="flex-1 bg-neutral-900 px-4 py-3 text-xs font-medium uppercase tracking-[0.12em] text-white transition-colors hover:bg-neutral-700"
               >
-                Show {filteredProducts.length}{" "}
-                {filteredProducts.length === 1 ? "piece" : "pieces"}
+                {filterLoading
+                  ? "Loading…"
+                  : `Show ${resultCount} ${resultCount === 1 ? "piece" : "pieces"}`}
               </button>
             </footer>
           </section>

@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { profiles, storyPage } from "@/lib/site";
 import { ArrowRightIcon } from "../components/icons";
-import { ValuesSection } from "../components/homepage/ValuesSection";
 import { SiteFooter } from "../components/homepage/SiteFooter";
 import { StoryNarrative } from "./StoryNarrative";
 
@@ -18,7 +17,7 @@ const founder = profiles["akshat-modi"];
 /**
  * The /story page — a static route, so it wins over the dynamic profile route
  * at app/[slug]/page.tsx (no "story" profile exists). All copy lives in
- * `storyPage` in lib/site.ts; the values section is shared with the homepage.
+ * `storyPage` in lib/site.ts.
  */
 export default function StoryPage() {
   return (
@@ -53,9 +52,6 @@ export default function StoryPage() {
         </section>
 
         <StoryNarrative paragraphs={storyPage.paragraphs} />
-
-        {/* Philosophy and principles that shape the AURJA way */}
-        <ValuesSection />
 
         <section className="mx-auto max-w-7xl px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24">
           <div className="mx-auto grid max-w-5xl items-center gap-10 border-y border-stone-200 py-10 motion-safe:animate-fade-up sm:py-14 lg:grid-cols-[0.65fr_1fr] lg:gap-20">
