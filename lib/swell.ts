@@ -1,0 +1,2001 @@
+import { cache } from "react";
+
+const SWELL_API_URL = "https://api.swell.store";
+const CATALOG_REVALIDATE_SECONDS = 300;
+
+type SwellRequestOptions = Omit<RequestInit, "body"> & {
+  body?: unknown;
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
+  /**
+   * Authenticate with SWELL_SECRET_KEY instead of the public key. Swell
+  * rejects the public key on admin/write endpoints (e.g. account, category,
+  * product management, and order creation).
+   */
+  useSecretKey?: boolean;
+};
+
+function getSwellCredentials(useSecretKey = false) {
+  const storeId = process.env.SWELL_STORE_ID;
+  const apiKey = useSecretKey
+    ? process.env.SWELL_SECRET_KEY
+    : process.env.SWELL_PUBLIC_KEY || process.env.SWELL_SECRET_KEY;
+
+  if (!storeId || !apiKey) {
+    const keyName = useSecretKey
+      ? "SWELL_SECRET_KEY"
+      : "SWELL_PUBLIC_KEY or SWELL_SECRET_KEY";
+    throw new Error(
+      `Missing Swell configuration. Set SWELL_STORE_ID and ${keyName}.`,
+    );
+  }
+
+  return { storeId, apiKey };
+}
+
+/**
+ * Make an authenticated request to the Swell REST API. Pass
+ * `useSecretKey: true` for account and admin/write endpoints that require the
+ * secret key.
+ *
+ * Keep this helper on the server. Do not expose the credentials through
+ * client-side code or NEXT_PUBLIC_* environment variables.
+ */
+export async function swellFetch<T>(
+  path: string,
+  options: SwellRequestOptions = {},
+): Promise<T> {
+  const { useSecretKey = false, body, headers, ...requestOptions } = options;
+  const { storeId, apiKey } = getSwellCredentials(useSecretKey);
+  const auth = Buffer.from(`${storeId}:${apiKey}`).toString("base64");
+  const startedAt = performance.now();
+  let status = "network-error";
+
+  try {
+    const response = await fetch(`${SWELL_API_URL}${path}`, {
+      ...requestOptions,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Basic ${auth}`,
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...headers,
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+    status = String(response.status);
+
+    const responseText = await response.text();
+    let responseData: unknown = null;
+
+    if (responseText) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = responseText;
+      }
+    }
+
+    if (!response.ok) {
+      const responseMessage =
+        responseData !== null &&
+        typeof responseData === "object" &&
+        "message" in responseData &&
+        typeof responseData.message === "string"
+          ? responseData.message
+          : responseData !== null &&
+              typeof responseData === "object" &&
+              "error" in responseData &&
+              typeof responseData.error === "string"
+            ? responseData.error
+            : undefined;
+      const error = new Error(
+        `Swell API request failed for ${path} with status ${response.status}${responseMessage ? `: ${responseMessage}` : "."}`,
+      );
+      Object.assign(error, {
+        status: response.status,
+        data: responseData,
+      });
+      throw error;
+    }
+
+    return responseData as T;
+  } finally {
+    if (process.env.NODE_ENV !== "production") {
+      const resource = new URL(path, SWELL_API_URL).pathname.split("/")[1] || "/";
+      console.info(
+        `[Swell] ${requestOptions.method ?? "GET"} ${status} ${resource} ${Math.round(performance.now() - startedAt)}ms`,
+      );
+    }
+  }
+}
+
+export interface SwellProductOptionValue {
+  id?: string | null;
+  name?: string;
+  price?: number | null;
+  shipment_weight?: number;
+  active?: boolean;
+}
+
+export interface SwellProductOption {
+  id?: string | null;
+  name?: string;
+  active?: boolean;
+  values: SwellProductOptionValue[];
+}
+
+export interface ProductStoneDetail {
+  type?: string;
+  shape?: string;
+  size?: string;
+  weight?: string;
+  color?: string;
+  clarity?: string;
+  pieces?: string;
+}
+
+export interface JewelryProduct {
+  name: string;
+  slug: string;
+  sku?: string;
+  price_inr: number;
+  stock_level?: number;
+  images: string[];
+  description?: string;
+  variant_options?: SwellProductOption[];
+  stone_details?: ProductStoneDetail[];
+  attributes: {
+    metal_type: string;
+    metal_color?: string;
+    metal_weight_gms: number;
+    youtube_id?: string;
+    size?: string;
+    gemstone_type: string;
+    diamond_carat: number;
+    diamond_clarity: string;
+    price_usd: number;
+    product_story?: string;
+    delivery_text?: string;
+    certificate?: string;
+    collection?: string;
+    stone_shape?: string;
+    setting_type?: string;
+    ring_size?: string;
+    price_breakup?: string;
+    design_code?: string;
+    gross_weight_gms?: string;
+    occasion?: string;
+    gold_purity?: string;
+    jewelry_type?: string;
+    product_category?: string;
+    shop_for?: string;
+    karatage?: string;
+    gold_weight_gms?: string;
+    gold_color?: string;
+    diamond_count?: string;
+    diamond_cut?: string;
+    diamond_color?: string;
+    shipping_text?: string;
+    exchange_policy?: string;
+    return_policy?: string;
+  };
+}
+
+function coercePrice(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
+}
+
+function coerceOptionalNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
+function readRecordValue(value: unknown, key: string): unknown {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function normalizeStoneDetails(input: unknown): ProductStoneDetail[] {
+  const entries = Array.isArray(input)
+    ? input
+    : input !== null && typeof input === "object"
+      ? Object.values(input)
+      : [];
+  if (entries.length === 0) {
+    return [];
+  }
+
+  const toText = (value: unknown): string | undefined =>
+    typeof value === "string" || typeof value === "number"
+      ? String(value)
+      : undefined;
+
+  return entries.flatMap((entry) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      return [];
+    }
+
+    const detail = entry as Record<string, unknown>;
+    const normalized: ProductStoneDetail = {
+      type: toText(detail.type ?? detail.stone),
+      shape: toText(detail.shape),
+      size: toText(detail.size),
+      weight: toText(detail.weight ?? detail.carats),
+      color: toText(detail.color),
+      clarity: toText(detail.clarity),
+      pieces: toText(detail.pieces ?? detail.pcs),
+    };
+
+    return Object.values(normalized).some(Boolean) ? [normalized] : [];
+  });
+}
+
+function normalizeProductOptions(input: unknown): SwellProductOption[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return input
+    .filter((option): option is Record<string, unknown> => Boolean(option) && typeof option === "object")
+    .map((option) => {
+      const values = Array.isArray(option.values)
+        ? option.values.filter(
+            (value): value is Record<string, unknown> =>
+              value !== null && typeof value === "object",
+          )
+        : [];
+
+      return {
+        id: typeof option.id === "string" ? option.id : undefined,
+        name:
+          typeof option.name === "string" && option.name.trim()
+            ? option.name
+            : "Option",
+        active: option.active !== false,
+        values: values.map((value) => {
+          const shipmentWeight = coerceOptionalNumber(value.shipment_weight);
+          return {
+            id: typeof value.id === "string" ? value.id : undefined,
+            name:
+              typeof value.name === "string" && value.name.trim()
+                ? value.name
+                : "Value",
+            price: coercePrice(value.price),
+            ...(shipmentWeight !== undefined
+              ? { shipment_weight: shipmentWeight }
+              : {}),
+            active: value.active !== false,
+          };
+        }),
+      };
+    })
+    .filter((option) => option.values.length > 0 && option.active !== false);
+}
+
+export function getProductOptionValuePrice(
+  optionValue: Pick<SwellProductOptionValue, "price"> | undefined,
+): number {
+  return optionValue ? coercePrice(optionValue.price) : 0;
+}
+
+export function getDefaultVariantSelections(
+  options: SwellProductOption[] = [],
+): Record<string, string> {
+  const selections: Record<string, string> = {};
+
+  for (const option of options) {
+    const optionName = option.name?.trim() || "Option";
+    if (!option.values.length) {
+      continue;
+    }
+
+    const lowestValue = [...option.values]
+      .filter((value) => value.active !== false)
+      .sort(
+        (first, second) =>
+          getProductOptionValuePrice(first) - getProductOptionValuePrice(second),
+      )[0];
+
+    if (lowestValue?.name) {
+      selections[optionName] = lowestValue.name;
+    }
+  }
+
+  return selections;
+}
+
+export function resolveSelectedVariantId(
+  product: Pick<SwellProduct, "options" | "variants"> | null | undefined,
+  selections: Record<string, string> = {},
+): string | undefined {
+  const activeVariants = (product?.variants?.results ?? []).filter(
+    (variant) => variant.active !== false,
+  );
+  if (!activeVariants.length) {
+    return undefined;
+  }
+
+  const selectedPairs = Object.entries(selections).filter(([, value]) => value?.trim());
+  if (selectedPairs.length === 0) {
+    return activeVariants[0]?.id;
+  }
+
+  const selectedValueIds: string[] = [];
+  if (product?.options?.length) {
+    for (const option of product.options) {
+      const optionName = option.name?.trim() || "";
+      const selectedName = optionName ? selections[optionName] : undefined;
+      if (!selectedName) {
+        continue;
+      }
+
+      const matchingValue = option.values.find(
+        (value) =>
+          value.active !== false &&
+          value.name &&
+          value.name.trim().toLowerCase() === selectedName.trim().toLowerCase(),
+      );
+
+      if (matchingValue?.id) {
+        selectedValueIds.push(matchingValue.id);
+      }
+    }
+  }
+
+  if (selectedValueIds.length > 0) {
+    const resolvedVariant = activeVariants.find((variant) => {
+      const variantValueIds = variant.option_value_ids ?? [];
+      if (!variantValueIds.length) {
+        return false;
+      }
+      return (
+        variantValueIds.length >= selectedValueIds.length &&
+        selectedValueIds.every((id) => variantValueIds.includes(id))
+      );
+    });
+
+    if (resolvedVariant) {
+      return resolvedVariant.id;
+    }
+  }
+
+  return activeVariants[0]?.id;
+}
+
+export function getSelectedVariantPrice(
+  options: SwellProductOption[] = [],
+  selections: Record<string, string> = {},
+): number {
+  let total = 0;
+
+  for (const option of options) {
+    const optionName = option.name?.trim() || "";
+    const selectionName = optionName ? selections[optionName] : undefined;
+    if (!selectionName) {
+      continue;
+    }
+
+    const selectedValue = option.values.find(
+      (value) =>
+        value.active !== false &&
+        value.name &&
+        value.name.trim().toLowerCase() === selectionName.trim().toLowerCase(),
+    );
+
+    if (selectedValue) {
+      total += getProductOptionValuePrice(selectedValue);
+    }
+  }
+
+  return total;
+}
+
+export function getSelectionNameKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+export function isNaturalGemstoneSelection(
+  options: SwellProductOption[] = [],
+  selections: Record<string, string> = {},
+): boolean {
+  const gemstoneOption = options.find((option) => {
+    const optionName = option.name ?? "";
+    return (
+      getSelectionNameKey(optionName) === "gemstone" ||
+      getSelectionNameKey(optionName) === "gem stone"
+    );
+  });
+
+  if (!gemstoneOption) {
+    return false;
+  }
+
+  const optionName = gemstoneOption.name ?? "";
+  const selectedValueName = optionName ? selections[optionName] : undefined;
+  const selectedValue = gemstoneOption.values.find(
+    (value) =>
+      value.active !== false &&
+      value.name &&
+      value.name === selectedValueName,
+  );
+
+  return selectedValue?.name?.toLowerCase() === "natural";
+}
+
+export function getVariantSelectionSummary(
+  optionGroups: SwellProductOption[] = [],
+  selections: Record<string, string> = {},
+): string[] {
+  return optionGroups
+    .map((option) => {
+      const optionName = option.name ?? "";
+      const selectedValueName = optionName ? selections[optionName] : undefined;
+      if (!selectedValueName) {
+        return null;
+      }
+
+      const selectedValue = option.values.find(
+        (value) =>
+          value.active !== false &&
+          value.name &&
+          value.name.toLowerCase() === selectedValueName.toLowerCase(),
+      );
+
+      if (!selectedValue?.name) {
+        return null;
+      }
+
+      return `${optionName}: ${selectedValue.name}`;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+export function getItemOptionSummary(
+  product: Pick<JewelryProduct, "variant_options"> | undefined,
+  itemOptions: SwellCartItemOption[] = [],
+): string[] {
+  const lookup = new Map<string, string>();
+  for (const option of itemOptions) {
+    if (!option.name || !option.value) {
+      continue;
+    }
+    lookup.set(getSelectionNameKey(option.name), String(option.value));
+  }
+
+  if (!product?.variant_options?.length) {
+    return Array.from(lookup.entries()).map(([name, value]) => `${name}: ${value}`);
+  }
+
+  return product.variant_options
+    .map((option) => {
+      const optionName = option.name ?? "";
+      if (!optionName) {
+        return null;
+      }
+      const value = lookup.get(getSelectionNameKey(optionName));
+      if (!value) {
+        return null;
+      }
+      return `${optionName}: ${value}`;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+export function isNaturalGemstoneItemOption(
+  itemOptions: SwellCartItemOption[] = [],
+): boolean {
+  return itemOptions.some(
+    (option) =>
+      option.name &&
+      (getSelectionNameKey(option.name) === "gemstone" ||
+        getSelectionNameKey(option.name) === "gem stone") &&
+      String(option.value).toLowerCase() === "natural",
+  );
+}
+
+export function getLowestActiveVariantPrice(
+  product: Pick<SwellProduct, "price" | "options" | "variants">,
+): number {
+  const optionGroups = normalizeProductOptions(product.options);
+  if (optionGroups.length === 0) {
+    return coercePrice(product.price);
+  }
+
+  const lowestVariantPrice = optionGroups.reduce((sum, option) => {
+    const candidateValues = option.values.filter((value) => value.active !== false);
+    if (!candidateValues.length) {
+      return sum;
+    }
+
+    const lowestValuePrice = candidateValues.reduce(
+      (min, value) => Math.min(min, getProductOptionValuePrice(value)),
+      Number.POSITIVE_INFINITY,
+    );
+
+    return sum + (Number.isFinite(lowestValuePrice) ? lowestValuePrice : 0);
+  }, 0);
+
+  return lowestVariantPrice > 0 ? lowestVariantPrice : coercePrice(product.price);
+}
+
+/** Catalog feed for the storefront, filtered by a Swell category slug. */
+function firstAttributeValue(
+  attributes: Record<string, unknown> | undefined,
+  keys: string[],
+): string | undefined {
+  function readPath(path: string): unknown {
+    const literalValue = attributes?.[path];
+    if (literalValue !== undefined) return literalValue;
+
+    return path.split(".").reduce<unknown>((value, segment) => {
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
+        return (value as Record<string, unknown>)[segment];
+      }
+      return undefined;
+    }, attributes);
+  }
+
+  for (const key of keys) {
+    const value =
+      readPath(key) ??
+      (key.startsWith("content.") ? readPath(key.slice("content.".length)) : undefined) ??
+      readPath(`content.${key}`);
+    const firstValue = Array.isArray(value) ? value[0] : value;
+    if (typeof firstValue === "string" || typeof firstValue === "number") {
+      return String(firstValue);
+    }
+  }
+  return undefined;
+}
+
+export function extractImageUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => extractImageUrls(entry));
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const trimmed = value.trim();
+    if (
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    ) {
+      try {
+        return extractImageUrls(JSON.parse(trimmed));
+      } catch {
+        return [trimmed];
+      }
+    }
+    return [trimmed];
+  }
+
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+
+    if ("urls" in record) {
+      return extractImageUrls(record.urls);
+    }
+
+    if ("url" in record && typeof record.url === "string" && record.url.trim()) {
+      return [record.url];
+    }
+
+    return Object.values(record).flatMap((entry) => extractImageUrls(entry));
+  }
+
+  return [];
+}
+
+export function getFirstImageUrl(value: unknown): string | null {
+  const [firstUrl] = extractImageUrls(value);
+  return firstUrl ?? null;
+}
+
+export function mapSwellProduct(
+  product: SwellProduct,
+  imageLimit?: number,
+): JewelryProduct {
+  const attributes = {
+    ...product.attributes,
+    ...product.content,
+    content: product.content ?? product.attributes?.content,
+  };
+  const normalizedOptions = normalizeProductOptions(product.options);
+  const variantPriceUsd = getLowestActiveVariantPrice(product);
+  const priceUsd = variantPriceUsd > 0 ? variantPriceUsd : coercePrice(product.price);
+  const metalType =
+    firstAttributeValue(product.content, ["metal"]) ??
+    firstAttributeValue(attributes, ["metal_type", "metal"]);
+  const gemstoneType = firstAttributeValue(attributes, [
+    "gemstone_type",
+    "gemstone",
+  ]);
+  const imageKitValue =
+    product.content?.imagekit_urls ??
+    product.attributes?.imagekit_urls ??
+    product.content?.imagekitUrls ??
+    product.attributes?.imagekitUrls;
+  const imageKitImages = extractImageUrls(imageKitValue);
+  const images =
+    imageKitImages.length > 0
+      ? imageKitImages
+      : (product.images ?? [])
+          .map((image) => image.file?.url)
+          .filter((url): url is string => Boolean(url));
+
+  return {
+    name: product.name ?? product.slug ?? "Untitled product",
+    slug: product.slug ?? product.id,
+    sku:
+      product.sku ??
+      firstAttributeValue(attributes, ["sku", "product_sku"]) ??
+      undefined,
+    price_inr: Math.round(priceUsd * 83),
+    stock_level: product.stock_level,
+    images: imageLimit === undefined ? images : images.slice(0, imageLimit),
+    description:
+      product.description ||
+      firstAttributeValue(attributes, ["description", "product_story", "story"]),
+    variant_options: normalizedOptions,
+    stone_details: normalizeStoneDetails(
+      product.content?.stone_details ??
+        product.attributes?.stone_details ??
+        readRecordValue(product.attributes?.content, "stone_details"),
+    ),
+    attributes: {
+      metal_type: metalType ?? "Gold",
+      metal_color:
+        firstAttributeValue(attributes, ["metal_color", "color"]) ?? undefined,
+      metal_weight_gms: Number(
+        firstAttributeValue(attributes, ["metal_weight_gms", "metal_weight"]) ??
+          0,
+      ),
+      youtube_id: firstAttributeValue(attributes, ["youtube_id"]),
+      size: firstAttributeValue(product.content, ["size"]) ?? undefined,
+      gemstone_type: gemstoneType ?? "None",
+      diamond_carat: Number(
+        firstAttributeValue(attributes, ["diamond_carat"]) ?? 0,
+      ),
+      diamond_clarity:
+        firstAttributeValue(attributes, ["diamond_clarity"]) ?? "N/A",
+      price_usd: priceUsd,
+      product_story:
+        firstAttributeValue(attributes, ["product_story", "story"]) ??
+        undefined,
+      delivery_text:
+        firstAttributeValue(attributes, [
+          "delivery_text",
+          "delivery_window",
+          "shipping_message",
+        ]) ?? undefined,
+      certificate:
+        firstAttributeValue(attributes, ["certificate", "certification"]) ??
+        undefined,
+      collection:
+        firstAttributeValue(attributes, ["collection", "collection_name"]) ??
+        undefined,
+      stone_shape:
+        firstAttributeValue(attributes, ["stone_shape", "shape"]) ?? undefined,
+      setting_type:
+        firstAttributeValue(attributes, ["setting_type", "setting"]) ??
+        undefined,
+      ring_size:
+        firstAttributeValue(attributes, ["ring_size", "size"]) ?? undefined,
+      price_breakup:
+        firstAttributeValue(attributes, ["price_breakup"]) ?? undefined,
+      design_code:
+        firstAttributeValue(attributes, ["design_code", "style_code"]) ??
+        undefined,
+      gross_weight_gms:
+        firstAttributeValue(attributes, ["gross_weight_gms", "gross_weight"]) ??
+        undefined,
+      occasion:
+        firstAttributeValue(attributes, ["occasion"]) ?? undefined,
+      gold_purity:
+        firstAttributeValue(attributes, ["gold_purity", "purity"]) ?? undefined,
+      jewelry_type:
+        firstAttributeValue(attributes, [
+          "jewelry_type",
+          "jewellery_type",
+          "product_type",
+        ]) ?? undefined,
+      product_category:
+        firstAttributeValue(attributes, [
+          "product_category",
+          "category",
+          "category_name",
+        ]) ?? undefined,
+      shop_for:
+        firstAttributeValue(attributes, [
+          "shop_for",
+          "target_gender",
+          "gender",
+        ]) ?? undefined,
+      karatage:
+        firstAttributeValue(attributes, ["karatage", "gold_purity", "purity"]) ??
+        undefined,
+      gold_weight_gms:
+        firstAttributeValue(attributes, ["gold_weight_gms"]) ?? undefined,
+      gold_color:
+        firstAttributeValue(attributes, ["gold_color"]) ?? undefined,
+      diamond_count:
+        firstAttributeValue(attributes, ["diamond_count"]) ?? undefined,
+      diamond_cut:
+        firstAttributeValue(attributes, ["diamond_cut", "stone_shape"]) ??
+        undefined,
+      diamond_color:
+        firstAttributeValue(attributes, ["diamond_color"]) ?? undefined,
+      shipping_text:
+        firstAttributeValue(attributes, ["shipping_text"]) ?? undefined,
+      exchange_policy:
+        firstAttributeValue(attributes, ["exchange_policy"]) ?? undefined,
+      return_policy:
+        firstAttributeValue(attributes, ["return_policy"]) ?? undefined,
+    },
+  };
+}
+
+async function fetchJewelryProductPage(
+  categorySlug: string | undefined,
+  page: number,
+  limit: number,
+  compact = false,
+  countActiveProducts = false,
+): Promise<{
+  products: JewelryProduct[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}> {
+  let categoryId: string | undefined;
+  if (categorySlug) {
+    const categories = await swellFetch<SwellCategoryListResult>(
+      "/categories?limit=100",
+      {
+        useSecretKey: true,
+        next: { revalidate: 3600, tags: ["swell-categories"] },
+      },
+    );
+    categoryId = categories.results.find(
+      (category) => category.slug === categorySlug,
+    )?.id;
+  }
+
+  const params = new URLSearchParams({
+    limit: String(limit),
+    page: String(page),
+    where: JSON.stringify({ active: true }),
+  });
+  if (categoryId) {
+    params.set("categories", categoryId);
+  }
+
+  const activeCountParams = new URLSearchParams({
+    fields: "id,active",
+    page: "all",
+  });
+  if (categoryId) {
+    activeCountParams.set("categories", categoryId);
+  }
+
+  const [result, activeCountResult] = await Promise.all([
+    swellFetch<SwellProductListResult>(
+      `/products?${params.toString()}`,
+      {
+        useSecretKey: true,
+        next: {
+          revalidate: CATALOG_REVALIDATE_SECONDS,
+          tags: ["swell-products"],
+        },
+      },
+    ),
+    countActiveProducts
+      ? swellFetch<SwellProductListResult>(
+          `/products?${activeCountParams.toString()}`,
+          {
+            useSecretKey: true,
+            next: {
+              revalidate: CATALOG_REVALIDATE_SECONDS,
+              tags: ["swell-products"],
+            },
+          },
+        )
+      : Promise.resolve(null),
+  ]);
+  const mappedProducts = result.results
+    .filter((product) => product.active === true)
+    .map((product) => mapSwellProduct(product, 2));
+  const total = activeCountResult
+    ? activeCountResult.results.filter((product) => product.active === true)
+        .length
+    : result.count;
+  const products =
+    compact
+      ? mappedProducts.map((product) => ({
+          ...product,
+          attributes: {
+            metal_type: product.attributes.metal_type,
+            metal_color: product.attributes.metal_color,
+            metal_weight_gms: product.attributes.metal_weight_gms,
+            size: product.attributes.size,
+            gemstone_type: product.attributes.gemstone_type,
+            diamond_carat: product.attributes.diamond_carat,
+            diamond_clarity: product.attributes.diamond_clarity,
+            price_usd: product.attributes.price_usd,
+            ring_size: product.attributes.ring_size,
+            jewelry_type: product.attributes.jewelry_type,
+            product_category: product.attributes.product_category,
+            shop_for: product.attributes.shop_for,
+            collection: product.attributes.collection,
+            karatage: product.attributes.karatage,
+            gold_purity: product.attributes.gold_purity,
+          },
+        }))
+      : mappedProducts;
+  return {
+    products,
+    total,
+    page,
+    hasMore: page * limit < total,
+  };
+}
+
+/** Fetch one page of active Swell products for the storefront PLP. */
+export async function getJewelryProductPage(
+  categorySlug: string | undefined,
+  page = 1,
+  limit = 24,
+): Promise<{
+  products: JewelryProduct[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}> {
+  return fetchJewelryProductPage(
+    categorySlug,
+    Math.max(1, Math.floor(page)),
+    Math.min(100, Math.max(1, Math.floor(limit))),
+    true,
+    true,
+  );
+}
+
+/** Fetch the complete active catalog for existing search and wishlist views. */
+export async function getJewelryProducts(
+  categorySlug?: string,
+): Promise<JewelryProduct[]> {
+  const result = await fetchJewelryProductPage(categorySlug, 1, 100);
+  return result.products;
+}
+
+/** Category shape consumed by the storefront header navigation. */
+export interface StoreCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parentId?: string | null;
+}
+
+/**
+ * Header navigation categories for the storefront, sourced from the Swell
+ * categories API. Includes parent relationships so the header can render
+ * nested categories. Server-only: this call requires the store credentials.
+ */
+export async function getStoreCategories(): Promise<StoreCategory[]> {
+  try {
+    const result = await swellFetch<SwellCategoryListResult>(
+      "/categories?limit=100",
+      {
+        useSecretKey: true,
+        next: { revalidate: 3600, tags: ["swell-categories"] },
+      },
+    );
+    return result.results
+      .filter((category) => category.active !== false)
+      .map(({ id, name, slug, parent_id }) => ({
+        id,
+        name,
+        slug,
+        parentId: parent_id ?? null,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export interface CustomQuoteRequest {
+  productSlug: string;
+  name: string;
+  email: string;
+  phone?: string;
+  message?: string;
+}
+
+/** Temporary enquiry handler until an email or CRM destination is configured. */
+export async function submitCustomQuoteRequest(
+  request: CustomQuoteRequest,
+): Promise<{ ok: true }> {
+  void request;
+  return { ok: true };
+}
+
+export interface SwellAccount {
+  id: string;
+  email: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  email_optin?: boolean;
+  date_created?: string;
+  date_updated?: string;
+}
+
+export function isSwellDuplicateEmailError(error: unknown): boolean {
+  if (!(error instanceof Error) || !("status" in error) || error.status !== 400) {
+    return false;
+  }
+
+  const serialized = JSON.stringify(
+    "data" in error ? (error.data ?? {}) : {},
+  ).toLowerCase();
+  return (
+    serialized.includes("email") &&
+    (serialized.includes("exist") ||
+      serialized.includes("already") ||
+      serialized.includes("duplicate") ||
+      serialized.includes("taken"))
+  );
+}
+
+export type SwellAccountInput = {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+};
+
+/**
+ * Create an account in the Swell store. Server-only: this call requires the
+ * store credentials.
+ */
+export async function createSwellAccount(
+  input: SwellAccountInput,
+): Promise<SwellAccount> {
+  return swellFetch<SwellAccount>("/accounts", {
+    method: "POST",
+    body: input,
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Find a Swell customer by email. The result is checked against the exact
+ * normalized email before it is returned.
+ */
+export async function getSwellAccountByEmail(
+  email: string,
+): Promise<SwellAccount | null> {
+  const normalizedEmail = email.toLowerCase();
+  const query = new URLSearchParams({
+    limit: "1",
+    where: JSON.stringify({ email: normalizedEmail }),
+  });
+  const result = await swellFetch<{ results: SwellAccount[] }>(
+    `/accounts?${query.toString()}`,
+    {
+      useSecretKey: true,
+      cache: "no-store",
+    },
+  );
+  return (
+    result.results.find(
+      (account) => account.email.toLowerCase() === normalizedEmail,
+    ) ?? null
+  );
+}
+
+/**
+ * Retrieve an account by id. Server-only: this call requires the store
+ * credentials.
+ */
+export async function getSwellAccount(
+  accountId: string,
+): Promise<SwellAccount | null> {
+  const account = await swellFetch<SwellAccount | null>(
+    `/accounts/${encodeURIComponent(accountId)}`,
+    { useSecretKey: true },
+  );
+  return account ?? null;
+}
+
+/**
+ * Update an account's profile fields by id. Server-only: this call requires
+ * the store credentials.
+ */
+export async function updateSwellAccount(
+  accountId: string,
+  input: Partial<SwellAccountInput>,
+): Promise<SwellAccount> {
+  return swellFetch<SwellAccount>(
+    `/accounts/${encodeURIComponent(accountId)}`,
+    {
+      method: "PUT",
+      body: input,
+      useSecretKey: true,
+    },
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Variants — https://developers.swell.is/backend-api/variants
+ *
+ * Variants are namespaced under `products:variants` (the colon is a literal
+ * path segment, same convention as the `:login` pseudo-id on accounts).
+ * Server-only: these calls require the store credentials.
+ * ------------------------------------------------------------------------- */
+
+export interface SwellVariantPriceRule {
+  /** Conditional price; required within each rule. */
+  price: number;
+  /** Restrict the rule to an account group. */
+  account_group?: string;
+  /** Apply the rule up to this quantity (inclusive). */
+  quantity_max?: number;
+  /** Apply the rule from this quantity (inclusive). */
+  quantity_min?: number;
+}
+
+export interface SwellVariantImage {
+  id?: string;
+  caption?: string;
+  file?: Record<string, unknown>;
+}
+
+export interface SwellVariantInput {
+  /** Human-friendly label; defaults to the combined option names. */
+  name?: string;
+  /** The parent product's id. Required when creating a variant. */
+  parent_id: string;
+  /** Whether the variant is visible on the storefront. */
+  active?: boolean;
+  /** Custom attribute values; overrides the product's attributes. */
+  attributes?: Record<string, unknown>;
+  /** Cost of goods, for margin calculations. */
+  cost?: number;
+  images?: SwellVariantImage[];
+  /** Option value ids that make up this variant. */
+  option_value_ids?: string[];
+  /** Default list price. */
+  price?: number;
+  /** Conditional price rules (account group / quantity breaks). */
+  prices?: SwellVariantPriceRule[];
+  /** Whether the sale price applies. */
+  sale?: boolean;
+  /** Used when `sale` is true. */
+  sale_price?: number;
+  /** Overrides the product's shipping weight. */
+  shipment_weight?: number;
+  /** Warehouse inventory code. */
+  sku?: string;
+}
+
+export interface SwellVariant extends SwellVariantInput {
+  id: string;
+  code?: string;
+  /** Three-letter ISO code; defaults to the store base currency. */
+  currency?: string;
+  date_created?: string;
+  date_updated?: string;
+  /** Non-sale price. */
+  orig_price?: number;
+  stock_level?: number;
+  stock_level_in_locations?: number;
+}
+
+export interface SwellVariantFetchOptions {
+  /** Related records to expand, e.g. ["parent", "prices"]. */
+  expand?: string[];
+  /** Fields to limit the response to, e.g. ["name", "price"]. id is always returned. */
+  fields?: string[];
+}
+
+/**
+ * Query params accepted by the variant list endpoint. `where` is passed
+ * through to Swell's filter syntax (e.g. { active: true, price: { $gt: 100 } }).
+ */
+export interface SwellVariantListQuery extends SwellVariantFetchOptions {
+  /** Filter object, e.g. { active: true }. Supports $eq, $ne, $gt, ... operators. */
+  where?: Record<string, unknown>;
+  /** Full-text search across variant fields. */
+  search?: string;
+  /** Page size between 1 and 1000. Defaults to 15 server-side. */
+  limit?: number;
+  /** 1-based page number. */
+  page?: number;
+  /** SQL-like sort expression, e.g. "name asc". */
+  sort?: string;
+  /** Related records to include, e.g. ["parent"]. */
+  include?: string[];
+}
+
+export interface SwellVariantListResult {
+  count: number;
+  page: number;
+  pages: Record<string, { start: number; end: number }>;
+  results: SwellVariant[];
+}
+
+/**
+ * Update payload for PUT /products:variants/:id — the call merges, so only
+ * changed fields are needed. parent_id can't change after creation.
+ */
+export type SwellVariantUpdateInput = Partial<
+  Omit<SwellVariantInput, "parent_id">
+> & {
+  /**
+   * Replace fields wholesale instead of merging. Required to explicitly
+   * override array fields — e.g. { $set: { option_value_ids: [...] } }
+   * replaces the option values instead of merging them.
+   */
+  $set?: Partial<Omit<SwellVariantInput, "parent_id">>;
+};
+
+/**
+ * Create a variant under its parent product. Server-only: this call
+ * requires the store's secret key.
+ */
+export async function createSwellVariant(
+  input: SwellVariantInput,
+): Promise<SwellVariant> {
+  return swellFetch<SwellVariant>("/products:variants", {
+    method: "POST",
+    body: input,
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Serialize variant fetch/list params into a query string. Nested objects and
+ * arrays use bracket notation — `where[active]=true`, `expand[0]=parent` —
+ * matching how Swell's own JS clients serialize params, rather than
+ * JSON-encoding whole values.
+ */
+function buildSwellVariantQuery(
+  params: SwellVariantFetchOptions | SwellVariantListQuery,
+): string {
+  const search = new URLSearchParams();
+
+  const appendParam = (name: string, value: unknown): void => {
+    if (value === undefined || value === null) {
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => appendParam(`${name}[${index}]`, item));
+    } else if (typeof value === "object") {
+      for (const [key, item] of Object.entries(value)) {
+        appendParam(`${name}[${key}]`, item);
+      }
+    } else {
+      search.set(name, String(value));
+    }
+  };
+
+  for (const [key, value] of Object.entries(params)) {
+    appendParam(key, value);
+  }
+
+  const query = search.toString();
+  return query ? `?${query}` : "";
+}
+
+/**
+ * Retrieve a variant by id, or null when the id does not match any variant.
+ * Server-only: this call requires the store credentials.
+ */
+export async function getSwellVariant(
+  variantId: string,
+  options: SwellVariantFetchOptions = {},
+): Promise<SwellVariant | null> {
+  const query = buildSwellVariantQuery(options);
+  const variant = await swellFetch<SwellVariant | null>(
+    `/products:variants/${encodeURIComponent(variantId)}${query}`,
+  );
+  return variant ?? null;
+}
+
+/**
+ * Update a variant by id. Updating performs a merge operation, so pass only
+ * the fields that change; to explicitly override values such as arrays, use
+ * the $set operator — e.g. { $set: { option_value_ids: [...] } } replaces the
+ * option values instead of merging them. Server-only: this call requires the
+ * store's secret key.
+ */
+export async function updateSwellVariant(
+  variantId: string,
+  input: SwellVariantUpdateInput,
+): Promise<SwellVariant> {
+  return swellFetch<SwellVariant>(
+    `/products:variants/${encodeURIComponent(variantId)}`,
+    {
+      method: "PUT",
+      body: input,
+      useSecretKey: true,
+    },
+  );
+}
+
+/**
+ * List all variants with optional filtering, search, and pagination. Returns
+ * Swell's paginated collection envelope. Server-only: this call requires the
+ * store credentials.
+ */
+export async function listSwellVariants(
+  options: SwellVariantListQuery = {},
+): Promise<SwellVariantListResult> {
+  const query = buildSwellVariantQuery(options);
+  return swellFetch<SwellVariantListResult>(`/products:variants${query}`, {
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Delete a variant by id and return the deleted record. Try to avoid
+ * deleting variants that have been sold to a customer, as the link to
+ * existing orders will be broken. Server-only: this call requires the
+ * store's secret key.
+ */
+export async function deleteSwellVariant(
+  variantId: string,
+): Promise<SwellVariant> {
+  return swellFetch<SwellVariant>(
+    `/products:variants/${encodeURIComponent(variantId)}`,
+    { method: "DELETE", useSecretKey: true },
+  );
+}
+
+/**
+ * Serialize query params for the Swell REST API. Structured values (objects,
+ * arrays) are JSON-encoded to match how the API expects them, e.g.
+ * `where={"active":true}`.
+ */
+function buildSwellQuery(
+  params:
+    | SwellCategoryFetchOptions
+    | SwellCategoryListOptions
+    | SwellCartFetchOptions
+    | SwellCartListOptions,
+): string {
+  const search = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) {
+      continue;
+    }
+    search.set(
+      key,
+      Array.isArray(value)
+        ? value.join(",")
+        : typeof value === "object"
+          ? JSON.stringify(value)
+          : String(value),
+    );
+  }
+
+  const query = search.toString();
+  return query ? `?${query}` : "";
+}
+
+export type SwellCategorySorting =
+  | "popularity"
+  | "price_asc"
+  | "price_desc"
+  | "date_asc"
+  | "date_desc";
+
+/**
+ * Shared image record as returned by the Swell API. On responses the file is
+ * already uploaded and carries a CDN-hosted URL (cdn.swell.store).
+ */
+export interface SwellImage {
+  id?: string;
+  caption?: string;
+  file?: {
+    id?: string;
+    filename?: string;
+    url?: string;
+    width?: number;
+    height?: number;
+    length?: number;
+    content_type?: string;
+    md5?: string;
+  };
+}
+
+/** Category record as returned by the Swell API. */
+export interface SwellCategory {
+  id: string;
+  name: string;
+  slug: string;
+  active?: boolean;
+  description?: string;
+  parent_id?: string;
+  images?: SwellImage[];
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  sort?: number;
+  sorting?: SwellCategorySorting;
+  theme_template?: string;
+  attributes?: Record<string, unknown>;
+  date_created?: string;
+  date_updated?: string;
+}
+
+/** Writable category fields; `name` is the only one Swell requires. */
+export interface SwellCategoryInput {
+  name: string;
+  slug?: string;
+  active?: boolean;
+  description?: string;
+  parent_id?: string;
+  images?: SwellImage[];
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  sort?: number;
+  sorting?: SwellCategorySorting;
+  theme_template?: string;
+  attributes?: Record<string, unknown>;
+}
+
+export interface SwellCategoryFetchOptions {
+  /** Related records to expand, e.g. ["parent", "children"]. */
+  expand?: string[];
+  /** Fields to limit the response to, e.g. ["name", "slug"]. id is always returned. */
+  fields?: string[];
+}
+
+export interface SwellCategoryListOptions extends SwellCategoryFetchOptions {
+  /** Filter object, e.g. { active: true }. Supports $eq, $ne, $gt, ... operators. */
+  where?: Record<string, unknown>;
+  /** Full-text search across category fields. */
+  search?: string;
+  /** Page size between 1 and 1000. Defaults to 15 server-side. */
+  limit?: number;
+  /** 1-based page number. */
+  page?: number;
+  /** SQL-like sort expression, e.g. "name asc". */
+  sort?: string;
+}
+
+export interface SwellCategoryListResult {
+  count: number;
+  page: number;
+  pages: Record<string, { start: number; end: number }>;
+  results: SwellCategory[];
+}
+
+/**
+ * Create a category in the Swell store. The slug defaults to a hyphenated,
+ * lowercased name (prefixed with the parent slug when nested). Server-only:
+ * this call requires the store's secret key.
+ */
+export async function createSwellCategory(
+  input: SwellCategoryInput,
+): Promise<SwellCategory> {
+  return swellFetch<SwellCategory>("/categories", {
+    method: "POST",
+    body: input,
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Retrieve a category by id, or null when the id does not match any
+ * category. Server-only: this call requires the store credentials.
+ */
+export async function getSwellCategory(
+  categoryId: string,
+  options: SwellCategoryFetchOptions = {},
+): Promise<SwellCategory | null> {
+  const query = buildSwellQuery(options);
+  const category = await swellFetch<SwellCategory | null>(
+    `/categories/${encodeURIComponent(categoryId)}${query}`,
+  );
+  return category ?? null;
+}
+
+/**
+ * Update a category by id (same writable fields as creation). Server-only:
+ * this call requires the store's secret key.
+ */
+export async function updateSwellCategory(
+  categoryId: string,
+  input: Partial<SwellCategoryInput>,
+): Promise<SwellCategory> {
+  return swellFetch<SwellCategory>(
+    `/categories/${encodeURIComponent(categoryId)}`,
+    {
+      method: "PUT",
+      body: input,
+      useSecretKey: true,
+    },
+  );
+}
+
+/**
+ * List all categories with optional filtering, search, and pagination.
+ * Returns Swell's paginated collection envelope. Server-only: this call
+ * requires the store credentials.
+ */
+export async function listSwellCategories(
+  options: SwellCategoryListOptions = {},
+): Promise<SwellCategoryListResult> {
+  const query = buildSwellQuery(options);
+  return swellFetch<SwellCategoryListResult>(`/categories${query}`);
+}
+
+/**
+ * Delete a category by id. Returns the deleted record. Server-only: this
+ * call requires the store's secret key.
+ */
+export async function deleteSwellCategory(
+  categoryId: string,
+): Promise<SwellCategory> {
+  return swellFetch<SwellCategory>(
+    `/categories/${encodeURIComponent(categoryId)}`,
+    { method: "DELETE", useSecretKey: true },
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Products — https://developers.swell.is/backend-api/products
+ *
+ * Minimal product surface for linking catalog slugs to Swell product ids
+ * (cart items reference products by id). Extend into a full products model
+ * when the storefront reads its catalog from Swell.
+ * Server-only: these calls require the store credentials.
+ * ------------------------------------------------------------------------- */
+
+/** Minimal product record; the storefront catalog ships richer fields. */
+export interface SwellProduct {
+  id: string;
+  name?: string;
+  slug?: string;
+  description?: string;
+  sku?: string;
+  price?: number;
+  stock_level?: number;
+  currency?: string;
+  active?: boolean;
+  attributes?: Record<string, unknown>;
+  content?: Record<string, unknown>;
+  images?: SwellImage[] | null;
+  variable?: boolean;
+  options?: SwellProductOption[];
+  variants?: {
+    results?: SwellProductVariant[];
+  };
+}
+
+export interface SwellProductVariant {
+  id: string;
+  active?: boolean;
+  option_value_ids?: string[];
+}
+
+export interface SwellProductInput {
+  name: string;
+  slug?: string;
+  price?: number;
+  currency?: string;
+  active?: boolean;
+}
+
+export interface SwellProductListResult {
+  count: number;
+  results: SwellProduct[];
+  page?: number;
+}
+
+/**
+ * Create a product in the Swell store. Server-only: this call requires the
+ * store's secret key.
+ */
+export async function createSwellProduct(
+  input: SwellProductInput,
+): Promise<SwellProduct> {
+  return swellFetch<SwellProduct>("/products", {
+    method: "POST",
+    body: input,
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Find a product by its catalog slug, or null when no product matches.
+ * Server-only: this call requires the store credentials.
+ */
+export async function findSwellProductBySlug(
+  slug: string,
+): Promise<SwellProduct | null> {
+  try {
+    const product = await swellFetch<SwellProduct | null>(
+      `/products/${encodeURIComponent(slug)}?expand=variants:100`,
+      {
+        useSecretKey: true,
+        next: {
+          revalidate: CATALOG_REVALIDATE_SECONDS,
+          tags: ["swell-products"],
+        },
+      },
+    );
+    if (!product) {
+      return null;
+    }
+    return product.active === true ? product : null;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      (error as Error & { status?: number }).status === 404
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function findSwellProductById(
+  productId: string,
+): Promise<SwellProduct | null> {
+  try {
+    const product = await swellFetch<SwellProduct | null>(
+      `/products/${encodeURIComponent(productId)}?expand=variants:100`,
+      {
+        useSecretKey: true,
+        next: {
+          revalidate: CATALOG_REVALIDATE_SECONDS,
+          tags: ["swell-products"],
+        },
+      },
+    );
+    if (!product) {
+      return null;
+    }
+    return product.active === true ? product : null;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      (error as Error & { status?: number }).status === 404
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/** Retrieve and normalize one live Swell product for the storefront PDP. */
+export const getJewelryProductBySlug = cache(
+  async (slug: string): Promise<JewelryProduct | null> => {
+    const product = await findSwellProductBySlug(slug);
+    return product ? mapSwellProduct(product) : null;
+  },
+);
+
+export async function getJewelryProductsBySkus(
+  skus: readonly string[],
+): Promise<{ sku: string; product: JewelryProduct }[]> {
+  return Promise.all(
+    skus.map(async (sku) => {
+      const params = new URLSearchParams({
+        search: sku,
+        limit: "100",
+        where: JSON.stringify({ active: true }),
+      });
+      const products = await swellFetch<SwellProductListResult>(
+        `/products?${params.toString()}`,
+        {
+          useSecretKey: true,
+          next: {
+            revalidate: CATALOG_REVALIDATE_SECONDS,
+            tags: ["swell-products"],
+          },
+        },
+      );
+      const matchedProduct = products.results.find(
+        (product) =>
+          product.active === true &&
+          (product.sku ??
+            firstAttributeValue(product.attributes, ["sku", "product_sku"]))?.toUpperCase() ===
+          sku.toUpperCase(),
+      );
+
+      if (!matchedProduct) {
+        throw new Error(`No active Swell product found for SKU "${sku}".`);
+      }
+
+      return { sku, product: mapSwellProduct(matchedProduct, 2) };
+    }),
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Carts — https://developers.swell.is/backend-api/carts
+ *
+ * A cart holds the items a shopper intends to buy plus billing/shipping
+ * info, coupons, and running totals. Carts start "active", are abandoned
+ * after roughly 3h of inactivity, and become orders via
+ * convertSwellCartToOrder (which marks the cart "converted").
+ * Server-only: these calls require the store credentials.
+ * ------------------------------------------------------------------------- */
+
+export type SwellCartStatus = "active" | "converted" | "abandoned" | "recovered";
+
+/** Option selection on a cart item; match by id or name, case-insensitive. */
+export interface SwellCartItemOption {
+  id?: string;
+  name?: string;
+  /** Selected value id or name. */
+  value: string;
+  /** Resolved variant; present on cart item responses. */
+  variant?: unknown;
+}
+
+/**
+ * Item payload for cart create/update calls. When adding an item,
+ * `product_id` is required; when updating an item already in the cart,
+ * reference it by its `id` — not the product id — per the Swell docs.
+ */
+export interface SwellCartItemInput {
+  id?: string;
+  product_id?: string;
+  /** Resolved from the item's options when omitted. */
+  variant_id?: string;
+  /** Defaults to 1. */
+  quantity?: number;
+  options?: SwellCartItemOption[];
+  /** Custom price override. */
+  price?: number;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/** Cart item record as returned by the Swell API. */
+export interface SwellCartItem {
+  id: string;
+  product_id: string;
+  variant_id?: string;
+  quantity: number;
+  price: number;
+  /** Line total (price × quantity, net of item discounts/taxes). */
+  price_total: number;
+  orig_price?: number;
+  discount_each?: number;
+  discount_total?: number;
+  tax_each?: number;
+  tax_total?: number;
+  delivery?: boolean;
+  shipment_weight?: number;
+  options?: SwellCartItemOption[];
+  product_name?: string;
+  /** Expanded product record when requested with `items.product`. */
+  product?: SwellProduct;
+  bundle_items?: SwellCartItem[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface SwellCartAddress {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  phone?: string;
+}
+
+/** Shipping address plus the selected delivery service. */
+export interface SwellCartShipping extends SwellCartAddress {
+  /** Service code, e.g. "standard". */
+  service?: string;
+  service_name?: string;
+  price?: number;
+}
+
+/** Writable cart fields (POST /carts). */
+export interface SwellCartInput {
+  items?: SwellCartItemInput[];
+  billing?: SwellCartAddress;
+  shipping?: SwellCartShipping;
+  coupon_code?: string;
+  account_id?: string;
+  currency?: string;
+  /** Giftcards to apply toward the total. */
+  giftcards?: Array<{ id: string; amount?: number }>;
+  /** Whether the order is a gift. */
+  gift?: boolean;
+  gift_message?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/** Cart record as returned by the Swell API. */
+export interface SwellCart {
+  id: string;
+  errors?: Record<
+    string,
+    {
+      message?: string;
+      code?: string;
+    }
+  >;
+  status?: SwellCartStatus;
+  number?: string;
+  currency?: string;
+  /** Linked Swell Checkout session, when one exists. */
+  checkout_id?: string;
+  checkout_url?: string;
+  items?: SwellCartItem[];
+  /** Total number of items across the cart. */
+  item_quantity?: number;
+  sub_total?: number;
+  discount_total?: number;
+  tax_total?: number;
+  grand_total?: number;
+  item_discount?: number;
+  item_tax?: number;
+  item_shipment_weight?: number;
+  shipment_price?: number;
+  shipment_discount?: number;
+  shipment_total?: number;
+  giftcard_total?: number;
+  auth_total?: number;
+  capture_total?: number;
+  account_id?: string;
+  guest?: boolean;
+  account_logged_in?: boolean;
+  account_info_saved?: boolean;
+  billing?: SwellCartAddress;
+  shipping?: SwellCartShipping;
+  coupon_code?: string;
+  coupon_id?: string;
+  /** Set once the cart is converted into an order. */
+  target_order_id?: string;
+  draft?: boolean;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+  date_created?: string;
+  date_updated?: string;
+  date_abandoned?: string;
+}
+
+/**
+ * Update payload for PUT /carts/:id — the call merges, so only changed
+ * fields are needed.
+ */
+export interface SwellCartUpdateInput {
+  /**
+   * Merge into the items array; existing items are matched by their `id`
+   * (not their product id), e.g. { items: [{ id, quantity: 3 }] }.
+   */
+  items?: SwellCartItemInput[];
+  billing?: SwellCartAddress;
+  shipping?: SwellCartShipping;
+  coupon_code?: string;
+  account_id?: string;
+  currency?: string;
+  metadata?: Record<string, unknown>;
+  /**
+   * Replace fields wholesale instead of merging. Required to override
+   * arrays — e.g. { $set: { items: [...] } } replaces every cart item.
+   */
+  $set?: Partial<SwellCartInput>;
+}
+
+export interface SwellCartFetchOptions {
+  /** Related records to expand, e.g. ["items.product"]. */
+  expand?: string[];
+  /** Fields to limit the response to, e.g. ["id", "items"]. id is always returned. */
+  fields?: string[];
+  /** Related records to include, e.g. ["items"]. */
+  include?: string[];
+}
+
+export interface SwellCartListOptions extends SwellCartFetchOptions {
+  /** Filter object, e.g. { status: "active" }. Supports $eq, $ne, $gt, ... operators. */
+  where?: Record<string, unknown>;
+  /** Full-text search across cart fields. */
+  search?: string;
+  /** Page size between 1 and 1000. Defaults to 15 server-side. */
+  limit?: number;
+  /** 1-based page number. */
+  page?: number;
+  /** SQL-like sort expression, e.g. "date_created desc". */
+  sort?: string;
+}
+
+export interface SwellCartListResult {
+  count: number;
+  page: number;
+  pages: Record<string, { start: number; end: number }>;
+  results: SwellCart[];
+}
+
+/**
+ * Order record as returned by POST /orders when converting a cart — a
+ * minimal slice of the orders model
+ * (https://developers.swell.is/backend-api/orders). Extend it when the app
+ * grows a full orders model.
+ */
+export interface SwellOrder {
+  id: string;
+  number?: string;
+  /** Order lifecycle status — "payment_pending" right after conversion. */
+  status?: string;
+  cart_id?: string;
+  account_id?: string;
+  currency?: string;
+  items?: SwellCartItem[];
+  billing?: SwellCartAddress;
+  shipping?: SwellCartShipping;
+  sub_total?: number;
+  discount_total?: number;
+  tax_total?: number;
+  grand_total?: number;
+  item_quantity?: number;
+  item_discount?: number;
+  item_tax?: number;
+  item_shipment_weight?: number;
+  shipment_price?: number;
+  shipment_total?: number;
+  coupon_code?: string;
+  paid?: boolean;
+  payment_balance?: number;
+  payment_total?: number;
+  refund_total?: number;
+  refunded?: boolean;
+  delivered?: boolean;
+  date_created?: string;
+}
+
+/**
+ * Create a cart in the Swell store. Each item needs a product_id; quantity
+ * defaults to 1 and variant_id is resolved from the item's options when
+ * omitted. New carts start with status "active". Server-only: this call
+ * requires the store credentials.
+ */
+export async function createSwellCart(
+  input: SwellCartInput,
+): Promise<SwellCart> {
+  return swellFetch<SwellCart>("/carts", {
+    method: "POST",
+    body: input,
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Retrieve a cart by id, or null when the id does not match any cart.
+ * Server-only: this call requires the store credentials.
+ */
+export async function getSwellCart(
+  cartId: string,
+  options: SwellCartFetchOptions = {},
+): Promise<SwellCart | null> {
+  const query = buildSwellQuery(options);
+  const cart = await swellFetch<SwellCart | null>(
+    `/carts/${encodeURIComponent(cartId)}${query}`,
+    { useSecretKey: true, cache: "no-store" },
+  );
+  return cart ?? null;
+}
+
+/**
+ * Update a cart by id. PUT merges, so pass only the fields that change;
+ * wrap arrays like items in the $set operator to replace them wholesale.
+ * Reference existing items by their cart item id, not their product id.
+ * Server-only: this call requires the store credentials.
+ */
+export async function updateSwellCart(
+  cartId: string,
+  input: SwellCartUpdateInput,
+): Promise<SwellCart> {
+  return swellFetch<SwellCart>(
+    `/carts/${encodeURIComponent(cartId)}`,
+    { method: "PUT", body: input, useSecretKey: true },
+  );
+}
+
+/**
+ * Convert a cart into an order. POST /orders with the cart's id maps the
+ * cart's items and properties onto a new order — status "payment_pending" —
+ * and marks the cart as converted. Order creation is an admin operation
+ * (the cart calls above also use the secret key), so this requires the
+ * store's secret key. Throws when required order properties are missing or
+ * stock is unavailable. Server-only.
+ */
+export async function convertSwellCartToOrder(
+  cartId: string,
+): Promise<SwellOrder> {
+  return swellFetch<SwellOrder>("/orders", {
+    method: "POST",
+    body: { cart_id: cartId },
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Retrieve an order by id — the confirmation record after converting a
+ * cart — or null when the id does not match any order. Server-only: this
+ * call requires the store credentials.
+ */
+export async function getSwellOrder(
+  orderId: string,
+): Promise<SwellOrder | null> {
+  const order = await swellFetch<SwellOrder | null>(
+    `/orders/${encodeURIComponent(orderId)}`,
+    { useSecretKey: true },
+  );
+  return order ?? null;
+}
+
+/**
+ * List all carts with optional filtering, search, and pagination. Returns
+ * Swell's paginated collection envelope. Server-only: this call requires
+ * the store credentials.
+ */
+export async function listSwellCarts(
+  options: SwellCartListOptions = {},
+): Promise<SwellCartListResult> {
+  const query = buildSwellQuery(options);
+  return swellFetch<SwellCartListResult>(`/carts${query}`, {
+    useSecretKey: true,
+  });
+}
+
+/**
+ * Delete a cart by id. Returns the deleted record. Server-only: this call
+ * requires the store credentials.
+ */
+export async function deleteSwellCart(
+  cartId: string,
+): Promise<SwellCart> {
+  return swellFetch<SwellCart>(
+    `/carts/${encodeURIComponent(cartId)}`,
+    { method: "DELETE", useSecretKey: true },
+  );
+}
