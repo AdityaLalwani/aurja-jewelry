@@ -29,7 +29,9 @@ webhook. Each request is saved to an `Order Enquiries` tab with a `Pending
 Enquiry` status, the customer's contact and shipping details, customization
 notes, and a snapshot of the cart items and displayed total. The Apps Script
 also sends a confirmation email to the customer and a full request notification
-to the sales team. No payment is collected by this workflow.
+to the sales team. Both emails list each item's SKU and selected variant options,
+when present, without specifications or prices. No payment is collected by this
+workflow.
 
 Add an `AURJA_SALES_EMAIL` script property containing the sales team's
 notification addresses, separated by commas or semicolons (for example,
@@ -50,8 +52,11 @@ and email. The server looks up the product by its catalog slug and sends its
 current name, price, image, and available specifications to the same
 authenticated Apps Script webhook. Product requests are saved to a
 `Product Enquiries` tab and emailed to the addresses in `AURJA_SALES_EMAIL`.
-After updating the Apps Script, redeploy a new version of the existing web app
-so the product enquiry handler is available.
+The email's Specifications field contains the product SKU instead of catalog
+attributes. On the product detail page, selected variant options are included
+in both the sales email and the `Selected Options JSON` sheet column. After
+updating the Apps Script, redeploy a new version of the existing web app so the
+handler includes these details.
 
 Keep the spreadsheet restricted to the Aurja team: the order enquiries tab
 contains customer contact and delivery information. The webhook authenticates

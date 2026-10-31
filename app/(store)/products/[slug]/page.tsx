@@ -70,7 +70,7 @@ export default async function ProductPage(props: ProductPageProps) {
       : []),
   ];
   return (
-    <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-32 pt-8 sm:px-6 lg:px-10">
+    <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-0 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10">
       <nav
         aria-label="Breadcrumb"
         className="mb-7 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-neutral-500"
@@ -88,7 +88,7 @@ export default async function ProductPage(props: ProductPageProps) {
         </span>
       </nav>
 
-      <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
+      <div className="grid min-w-0 grid-cols-1 gap-8 lg:min-h-0 lg:flex-1 lg:grid-cols-[1.08fr_0.92fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch">
         <div className="min-w-0 space-y-4">
           <ProductGallery
             images={product.images}
@@ -99,7 +99,7 @@ export default async function ProductPage(props: ProductPageProps) {
 
         </div>
 
-        <div className="min-w-0 flex flex-col gap-8 pt-2">
+        <div className="min-w-0 flex flex-col gap-8 pb-32 pt-2 lg:min-h-0 lg:overflow-y-auto">
           <ProductVariantSelector
             product={product}
             description={description}

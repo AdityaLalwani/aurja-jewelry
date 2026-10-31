@@ -17,10 +17,14 @@ const enquiryLabelClasses =
 export function ProductEnquiryDialog({
   product,
   currency,
+  priceLabel,
+  selectedOptions = {},
   onClose,
 }: {
   product: JewelryProduct;
   currency: Currency;
+  priceLabel?: string;
+  selectedOptions?: Record<string, string>;
   onClose: () => void;
 }) {
   const { markEnquired } = useStore();
@@ -95,7 +99,7 @@ export function ProductEnquiryDialog({
           <div>
             <p className="font-medium text-neutral-900">{product.name}</p>
             <p className="mt-1 text-sm text-neutral-500">
-              {formatPrice(product, currency)}
+              {priceLabel ?? formatPrice(product, currency)}
             </p>
           </div>
         </div>
@@ -118,6 +122,25 @@ export function ProductEnquiryDialog({
             <input type="hidden" name="requestId" value={requestId} />
             <input type="hidden" name="slug" value={product.slug} />
             <input type="hidden" name="currency" value={currency} />
+            <input
+              type="hidden"
+              name="selectedOptions"
+              value={JSON.stringify(selectedOptions)}
+            />
+            {Object.entries(selectedOptions).length > 0 ? (
+              <div className="rounded-xl bg-neutral-50 p-4 text-sm">
+                <p className="text-xs font-medium uppercase tracking-[0.15em] text-neutral-500">
+                  Selected options
+                </p>
+                <ul className="mt-2 space-y-1 text-neutral-700">
+                  {Object.entries(selectedOptions).map(([option, value]) => (
+                    <li key={option}>
+                      {option}: {value}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <div>
               <label
                 htmlFor={`product-enquiry-name-${product.slug}`}

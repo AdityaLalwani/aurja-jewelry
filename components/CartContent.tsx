@@ -154,17 +154,7 @@ export function CartContent({
                         {item.name}
                       </p>
                     )}
-                    {item.attributes ? (
-                      <p className="mt-1 text-xs leading-5 text-neutral-500">
-                        {[
-                          item.attributes.metal_color,
-                          item.attributes.metal_type,
-                        ]
-                          .filter(Boolean)
-                          .join(" ") || "Metal"}
-                        {" "}· {item.attributes.metal_weight_gms} g
-                      </p>
-                    ) : null}
+                    
                     {item.variantSummary.length > 0 ? (
                       <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
                         {item.variantSummary.join(" · ")}

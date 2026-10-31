@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { ProductActions } from "@/components/ProductActions";
 import { ProductSpecifications } from "@/components/ProductSpecifications";
 import { ProductStoneDetails } from "@/components/ProductStoneDetails";
@@ -16,6 +16,12 @@ import {
   type JewelryProduct,
 } from "@/lib/swell";
 
+const ProductEnquiryDialog = lazy(() =>
+  import("@/components/ProductEnquiryDialog").then((module) => ({
+    default: module.ProductEnquiryDialog,
+  })),
+);
+
 type ProductSpecification = {
   label: string;
   value: string;
@@ -30,7 +36,8 @@ export function ProductVariantSelector({
   description?: string;
   specifications: ProductSpecification[];
 }) {
-  const { currency } = useStore();
+  const { currency, enquiredSlugs } = useStore();
+  const [enquiryOpen, setEnquiryOpen] = useState(false);
   const defaultSelections = useMemo(
     () => getDefaultVariantSelections(product.variant_options ?? []),
     [product.variant_options],
@@ -67,6 +74,7 @@ export function ProductVariantSelector({
     }),
     [product, variantPriceUsd],
   );
+  const enquired = enquiredSlugs.includes(product.slug);
 
   const selectedVariantValues = useMemo(
     () =>
@@ -194,12 +202,41 @@ export function ProductVariantSelector({
         </div>
       ) : null}
 
+      <button
+        type="button"
+        onClick={() => setEnquiryOpen(true)}
+        disabled={enquired}
+        className={`w-full rounded-full px-6 py-3 text-sm font-medium transition-colors ${
+          enquired
+            ? "cursor-default bg-neutral-100 text-neutral-500"
+            : "bg-gold text-white hover:bg-gold-dark"
+        }`}
+      >
+        {enquired ? "Enquiry Sent ✓" : "Get in Touch"}
+      </button>
+
       <ProductActions
         product={product}
         variantPrice={variantPriceUsd}
         showPriceOnRequest={isNaturalGemstone}
         selectedOptions={selectedValues}
       />
+
+      {enquiryOpen ? (
+        <Suspense fallback={null}>
+          <ProductEnquiryDialog
+            product={displayProduct}
+            currency={currency}
+            priceLabel={
+              isNaturalGemstone
+                ? "Price on request"
+                : formatPrice(displayProduct, currency)
+            }
+            selectedOptions={selectedValues}
+            onClose={() => setEnquiryOpen(false)}
+          />
+        </Suspense>
+      ) : null}
 
       {description ? (
         <section aria-labelledby="product-description">

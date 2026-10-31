@@ -76,7 +76,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       translate="no"
       className={`${playfair.variable} ${jost.variable} ${cinzel.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="h-full min-h-full flex flex-col">
         <StoreProvider
           initialCurrency={initialCurrency}
           detectCurrencyFromBrowser={!country}

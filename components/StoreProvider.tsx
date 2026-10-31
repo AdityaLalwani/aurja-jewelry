@@ -13,6 +13,34 @@ import type { JewelryProduct } from "@/lib/swell";
 
 export type Currency = "INR" | "USD";
 
+const ENQUIRED_COOKIE_NAME = "aurja_enquired_products";
+const ENQUIRED_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+function readEnquiredCookie(): string[] {
+  const entry = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${ENQUIRED_COOKIE_NAME}=`));
+  if (!entry) return [];
+
+  try {
+    const parsed: unknown = JSON.parse(
+      decodeURIComponent(entry.slice(ENQUIRED_COOKIE_NAME.length + 1)),
+    );
+    return Array.isArray(parsed)
+      ? parsed.filter((slug): slug is string => typeof slug === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveEnquiredCookie(slugs: string[]) {
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${ENQUIRED_COOKIE_NAME}=${encodeURIComponent(
+    JSON.stringify(slugs),
+  )}; Path=/; Max-Age=${ENQUIRED_COOKIE_MAX_AGE}; SameSite=Lax${secure}`;
+}
+
 type StoreContextValue = {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
@@ -78,6 +106,18 @@ export function StoreProvider({
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
+      const savedSlugs = readEnquiredCookie();
+      if (savedSlugs.length === 0) return;
+      setEnquiredSlugs((slugs) =>
+        [...new Set([...slugs, ...savedSlugs])],
+      );
+    }, 0);
+
+    return () => window.clearTimeout(hydration);
+  }, []);
+
+  useEffect(() => {
+    const hydration = window.setTimeout(() => {
       try {
         const saved = window.localStorage.getItem("aurja_wishlist");
         if (saved) {
@@ -106,11 +146,17 @@ export function StoreProvider({
     }
   }, [wishlistHydrated, wishlistSlugs]);
 
-  const markEnquired = useCallback((slug: string) => {
-    setEnquiredSlugs((slugs) =>
-      slugs.includes(slug) ? slugs : [...slugs, slug],
-    );
-  }, []);
+  const markEnquired = useCallback(
+    (slug: string) => {
+      if (enquiredSlugs.includes(slug)) return;
+      const nextSlugs = [
+        ...new Set([...enquiredSlugs, ...readEnquiredCookie(), slug]),
+      ];
+      saveEnquiredCookie(nextSlugs);
+      setEnquiredSlugs(nextSlugs);
+    },
+    [enquiredSlugs],
+  );
 
   const toggleWishlist = useCallback((slug: string) => {
     setWishlistSlugs((slugs) =>

@@ -10,6 +10,7 @@ import {
   getJewelryProductBySlug,
   findSwellProductBySlug,
   getSelectedVariantPrice,
+  isNaturalGemstoneSelection,
   getSwellCart,
   resolveSelectedVariantId,
   updateSwellCart,
@@ -467,9 +468,30 @@ export async function submitProductEnquiryAction(
   const email = readField(formData, "email").toLowerCase();
   const phone = readField(formData, "phone");
   const currency = readField(formData, "currency");
+  const selectedOptionsJson = readField(formData, "selectedOptions");
 
   if (!/^[0-9a-f-]{36}$/i.test(requestId)) {
     return { error: "Please reopen the form and try again." };
+  }
+  if (selectedOptionsJson.length > 4000) {
+    return { error: "Please refresh the page and try again." };
+  }
+  let submittedOptions: Record<string, unknown> = {};
+  if (selectedOptionsJson) {
+    try {
+      const parsed: unknown = JSON.parse(selectedOptionsJson);
+      if (
+        !parsed ||
+        typeof parsed !== "object" ||
+        Array.isArray(parsed) ||
+        Object.keys(parsed).length > 20
+      ) {
+        return { error: "Please refresh the page and try again." };
+      }
+      submittedOptions = parsed as Record<string, unknown>;
+    } catch {
+      return { error: "Please refresh the page and try again." };
+    }
   }
   if (!slug || slug.length > 200) {
     return { error: "This piece is no longer available." };
@@ -501,23 +523,64 @@ export async function submitProductEnquiryAction(
       return { error: "This piece is no longer available." };
     }
 
-    const specifications = [
-      product.attributes.metal_type,
-      product.attributes.metal_color,
-      product.attributes.gold_purity,
-      product.attributes.metal_weight_gms
-        ? `${product.attributes.metal_weight_gms} g`
-        : undefined,
-      product.attributes.ring_size ?? product.attributes.size,
-      product.attributes.gemstone_type,
-      product.attributes.diamond_carat
-        ? `${product.attributes.diamond_carat} ct diamond`
-        : undefined,
-      product.attributes.diamond_clarity,
-    ].filter(
-      (value): value is string =>
-        typeof value === "string" && value.length > 0 && value !== "N/A",
+    const selectedOptions: { name: string; value: string }[] = [];
+    const normalizedSelectedOptions: Record<string, string> = {};
+    for (const [optionName, rawValue] of Object.entries(submittedOptions)) {
+      if (
+        !optionName.trim() ||
+        optionName.length > 100 ||
+        typeof rawValue !== "string" ||
+        !rawValue.trim() ||
+        rawValue.length > 100
+      ) {
+        return { error: "Please refresh the page and try again." };
+      }
+      const option = product.variant_options?.find(
+        (candidate) =>
+          (candidate.name ?? "Option").trim().toLowerCase() ===
+          optionName.trim().toLowerCase(),
+      );
+      const value = option?.values.find(
+        (candidate) =>
+          candidate.active !== false &&
+          (candidate.name ?? "Value").trim().toLowerCase() ===
+            rawValue.trim().toLowerCase(),
+      );
+      if (!option || !value) {
+        return { error: "Please refresh the page and try again." };
+      }
+      selectedOptions.push({
+        name: (option.name ?? "Option").trim(),
+        value: (value.name ?? "Value").trim(),
+      });
+      normalizedSelectedOptions[option.name ?? "Option"] =
+        value.name ?? "Value";
+    }
+
+    const options = product.variant_options ?? [];
+    const naturalGemstoneSelected = isNaturalGemstoneSelection(
+      options,
+      normalizedSelectedOptions,
     );
+    const selectedVariantPrice = getSelectedVariantPrice(
+      options,
+      normalizedSelectedOptions,
+    );
+    const priceUsd = naturalGemstoneSelected
+      ? 0
+      : selectedVariantPrice > 0
+        ? selectedVariantPrice
+        : product.attributes.price_usd;
+    const price =
+      selectedOptions.length > 0
+        ? currency === "INR"
+          ? Math.round(priceUsd * 83)
+          : priceUsd
+        : currency === "INR"
+          ? product.price_inr
+          : product.attributes.price_usd;
+
+    const specifications = product.sku ? [`SKU: ${product.sku}`] : [];
     const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
     const webhookSecret = process.env.GOOGLE_SHEETS_WEBHOOK_SECRET;
     if (!webhookUrl || !webhookSecret) {
@@ -540,12 +603,11 @@ export async function submitProductEnquiryAction(
         product: {
           name: product.name,
           slug: product.slug,
-          price: currency === "INR"
-            ? product.price_inr
-            : product.attributes.price_usd,
+          price,
           currency,
           image: product.images[0] ?? "",
           specifications,
+          selectedOptions,
         },
         secret: webhookSecret,
       }),
@@ -704,6 +766,26 @@ export async function submitCartEnquiryAction(
           ? viewItem.priceInr ?? viewItem.price * 83
           : viewItem.priceUsd ?? viewItem.price;
       const attributes = viewItem.attributes;
+      const selectedOptionsFromCart = (cartItem.options ?? [])
+        .flatMap((option) => {
+          const optionName = option.name?.trim();
+          const value = String(option.value).trim();
+          return optionName && value
+            ? [{ name: optionName, value }]
+            : [];
+        });
+      const selectedOptions =
+        selectedOptionsFromCart.length > 0
+          ? selectedOptionsFromCart
+          : viewItem.variantSummary.flatMap((selection) => {
+              const separator = selection.indexOf(":");
+              if (separator <= 0) {
+                return [];
+              }
+              const name = selection.slice(0, separator).trim();
+              const value = selection.slice(separator + 1).trim();
+              return name && value ? [{ name, value }] : [];
+            });
       const specifications = [
         attributes?.metal_color,
         attributes?.metal_type,
@@ -727,15 +809,13 @@ export async function submitCartEnquiryAction(
       return {
         name: viewItem.name,
         productId: viewItem.productId,
+        sku: cartItem.product?.sku?.trim() ?? "",
         ...(cartItem.variant_id ? { variantId: cartItem.variant_id } : {}),
         specifications,
         quantity: viewItem.quantity,
         unitPrice,
         lineTotal: unitPrice * viewItem.quantity,
-        options: (cartItem.options ?? []).map((option) => ({
-          name: option.name ?? "",
-          value: option.value,
-        })),
+        selectedOptions,
       };
     });
     const total = items.reduce((sum, item) => sum + item.lineTotal, 0);

@@ -143,6 +143,7 @@ function handleOrderEnquiry(body) {
   items.forEach(function (item) {
     if (!item || typeof item.name !== "string" || !item.name ||
         item.name.length > 200 ||
+        typeof item.sku !== "string" || item.sku.length > 100 ||
         !Number.isInteger(item.quantity) || item.quantity < 1 ||
         item.quantity > 99 ||
         !Number.isFinite(Number(item.unitPrice)) || Number(item.unitPrice) < 0 ||
@@ -151,6 +152,15 @@ function handleOrderEnquiry(body) {
         item.specifications.length > 20 ||
         item.specifications.some(function (detail) {
           return typeof detail !== "string" || detail.length > 200;
+        }) ||
+        !Array.isArray(item.selectedOptions) ||
+        item.selectedOptions.length > 20 ||
+        item.selectedOptions.some(function (selection) {
+          return !selection ||
+            typeof selection.name !== "string" || !selection.name.trim() ||
+            selection.name.length > 100 ||
+            typeof selection.value !== "string" || !selection.value.trim() ||
+            selection.value.length > 100;
         })) {
       throw new Error("Invalid item in order enquiry");
     }
@@ -187,12 +197,13 @@ function handleOrderEnquiry(body) {
   }
 
   const itemSummary = items.map(function (item) {
-    const variant = item.variantId ? " [variant " + item.variantId + "]" : "";
-    const specifications = item.specifications.length
-      ? " — " + item.specifications.join(", ")
+    const selectedOptions = item.selectedOptions.length
+      ? " — Selected options: " + item.selectedOptions.map(function (selection) {
+        return selection.name + ": " + selection.value;
+      }).join(", ")
       : "";
-    return "- " + item.name + variant + specifications + " x " + item.quantity +
-      " (" + currency + " " + item.lineTotal + ")";
+    return "- " + item.name + " (SKU: " + (item.sku || "Not available") + ")" +
+      selectedOptions + " x " + item.quantity;
   }).join("\n");
   const addressSummary = [address1, address2, city, state, postalCode, country]
     .filter(Boolean)
@@ -203,7 +214,7 @@ function handleOrderEnquiry(body) {
     "Thank you for your interest in Aurja. We have received your order request:\n\n" +
     itemSummary + "\n\n" +
     "Our atelier specialist will reach out within 24 hours to discuss your piece, " +
-    "availability, and production timeline. No payment is due with this request.\n\n" +
+    "availability, and production timeline.\n\n" +
     "With care,\nAurja Atelier";
 
   if (String(sheet.getRange(rowNumber, 16).getValue()) !== "Sent") {
@@ -230,7 +241,6 @@ function handleOrderEnquiry(body) {
       "Phone: " + phone + "\n" +
       "Shipping address: " + addressSummary + "\n\n" +
       "Items:\n" + itemSummary + "\n\n" +
-      "Total: " + currency + " " + total + "\n" +
       "Customization notes: " + (notes || "None");
     try {
       MailApp.sendEmail({
@@ -267,6 +277,9 @@ function handleProductEnquiry(body) {
   const specifications = Array.isArray(product.specifications)
     ? product.specifications
     : [];
+  const selectedOptions = Array.isArray(product.selectedOptions)
+    ? product.selectedOptions
+    : [];
 
   if (!/^[0-9a-f-]{36}$/i.test(requestId)) {
     return jsonResponse({ ok: false, error: "Invalid request ID" }, 400);
@@ -286,6 +299,14 @@ function handleProductEnquiry(body) {
       specifications.length > 20 ||
       specifications.some(function (detail) {
         return typeof detail !== "string" || detail.length > 200;
+      }) ||
+      selectedOptions.length > 20 ||
+      selectedOptions.some(function (selection) {
+        return !selection ||
+          typeof selection.name !== "string" || !selection.name.trim() ||
+          selection.name.length > 100 ||
+          typeof selection.value !== "string" || !selection.value.trim() ||
+          selection.value.length > 100;
       })) {
     return jsonResponse({ ok: false, error: "Invalid product details" }, 400);
   }
@@ -306,9 +327,13 @@ function handleProductEnquiry(body) {
   const headers = [
     "Created At", "Status", "Request ID", "Full Name", "Email", "Phone",
     "Product Name", "Product Slug", "Price", "Currency", "Product Image",
-    "Specifications JSON", "Sales Email"
+    "Specifications JSON", "Sales Email", "Selected Options JSON"
   ];
-  if (sheet.getLastRow() === 0) sheet.appendRow(headers);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+  } else if (!sheet.getRange(1, headers.length).getValue()) {
+    sheet.getRange(1, headers.length).setValue(headers[headers.length - 1]);
+  }
 
   const rows = sheet.getDataRange().getValues();
   let rowNumber = rows.findIndex(function (row, index) {
@@ -330,7 +355,8 @@ function handleProductEnquiry(body) {
       currency,
       safeSheetText(image),
       JSON.stringify(specifications),
-      "Pending"
+      "Pending",
+      JSON.stringify(selectedOptions)
     ]);
     rowNumber = sheet.getLastRow();
   }
@@ -347,7 +373,10 @@ function handleProductEnquiry(body) {
       "Product page path: /products/" + slug + "\n" +
       "Price: " + currency + " " + price + "\n" +
       "Product image: " + (image || "Not available") + "\n" +
-      "Specifications: " + (specifications.join(", ") || "Not available");
+      "Specifications: " + (specifications.join(", ") || "Not available") + "\n" +
+      "Selected options: " + (selectedOptions.map(function (selection) {
+        return selection.name + ": " + selection.value;
+      }).join(", ") || "None selected");
     try {
       MailApp.sendEmail({
         to: salesEmails.join(","),
