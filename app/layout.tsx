@@ -7,9 +7,14 @@ import { StoreProvider } from "@/components/StoreProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CartSnapshot } from "./CartSnapshot";
 import { Suspense } from "react";
-import { getStoreCategories, type StoreCategory } from "@/lib/swell";
+import {
+  getJewelryProductsBySkus,
+  getStoreCategories,
+  type StoreCategory,
+} from "@/lib/swell";
 import { headers } from "next/headers";
 import { CookiePreferences } from "@/components/CookiePreferences";
+import { getSessionAccountId } from "@/lib/session";
 
 async function getNavigationCategories(): Promise<StoreCategory[]> {
   const categories = await getStoreCategories();
@@ -24,6 +29,8 @@ async function getNavigationCategories(): Promise<StoreCategory[]> {
     { id: "men", name: "Men", slug: "men", parentId: null },
   ];
 }
+
+const bestSellerSkus = ["ASR001", "ASER001", "ASN001", "ASB001"] as const;
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -46,14 +53,17 @@ export const metadata: Metadata = {
     default: `${site.name} — ${site.tagline}`,
     template: `%s`,
   },
-  description: `${site.name} — ${site.tagline}. Crafted jewellery, made to be treasured.`,
+  description: `${site.name} — ${site.tagline}. Crafted jewelry, made to be treasured.`,
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [categories, requestHeaders] = await Promise.all([
-    getNavigationCategories(),
-    headers(),
-  ]);
+  const [categories, bestSellerProducts, requestHeaders, accountId] =
+    await Promise.all([
+      getNavigationCategories(),
+      getJewelryProductsBySkus(bestSellerSkus),
+      headers(),
+      getSessionAccountId(),
+    ]);
   const country =
     requestHeaders.get("x-vercel-ip-country") ??
     requestHeaders.get("cf-ipcountry") ??
@@ -71,7 +81,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           initialCurrency={initialCurrency}
           detectCurrencyFromBrowser={!country}
         >
-          <SiteHeader categories={categories} />
+          <SiteHeader
+            categories={categories}
+            bestSellers={bestSellerProducts.map(({ product }) => product)}
+            isAuthenticated={accountId !== null}
+          />
           <Suspense fallback={null}>
             <CartSnapshot />
           </Suspense>

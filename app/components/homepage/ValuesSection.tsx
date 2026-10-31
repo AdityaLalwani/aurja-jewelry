@@ -15,7 +15,7 @@ const icons: Record<ValueConfig["icon"], typeof ShieldIcon> = {
 };
 
 /**
- * Four cards that express the principles behind AURJA jewellery.
+ * Four cards that express the principles behind AURJA jewelry.
  */
 export function ValuesSection() {
   const { values } = home;
@@ -43,7 +43,7 @@ export function ValuesSection() {
               <span className="h-1.5 w-1.5 rotate-45 bg-amber-700" />
             </div>
             <p className="mt-5 max-w-sm text-xs leading-relaxed text-stone-600 sm:mt-8 sm:text-sm">
-              We believe jewellery should feel personal, be made with care, and
+              We believe jewelry should feel personal, be made with care, and
               stay meaningful long after the moment it marks.
             </p>
           </div>

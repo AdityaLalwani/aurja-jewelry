@@ -168,7 +168,7 @@ export interface JewelryProduct {
     gross_weight_gms?: string;
     occasion?: string;
     gold_purity?: string;
-    jewellery_type?: string;
+    jewelry_type?: string;
     product_category?: string;
     shop_for?: string;
     karatage?: string;
@@ -722,10 +722,10 @@ export function mapSwellProduct(
         firstAttributeValue(attributes, ["occasion"]) ?? undefined,
       gold_purity:
         firstAttributeValue(attributes, ["gold_purity", "purity"]) ?? undefined,
-      jewellery_type:
+      jewelry_type:
         firstAttributeValue(attributes, [
-          "jewellery_type",
           "jewelry_type",
+          "jewellery_type",
           "product_type",
         ]) ?? undefined,
       product_category:
@@ -852,7 +852,7 @@ async function fetchJewelryProductPage(
             diamond_clarity: product.attributes.diamond_clarity,
             price_usd: product.attributes.price_usd,
             ring_size: product.attributes.ring_size,
-            jewellery_type: product.attributes.jewellery_type,
+            jewelry_type: product.attributes.jewelry_type,
             product_category: product.attributes.product_category,
             shop_for: product.attributes.shop_for,
             collection: product.attributes.collection,

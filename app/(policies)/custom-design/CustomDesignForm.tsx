@@ -116,7 +116,7 @@ export function CustomDesignForm() {
           name="details"
           rows={4}
           maxLength={1500}
-          placeholder="Style, jewellery type, materials, size or anything else we should know"
+          placeholder="Style, jewelry type, materials, size or anything else we should know"
           className="mt-2 w-full resize-y rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-amber-700 focus:ring-2 focus:ring-amber-700/15"
         />
       </div>

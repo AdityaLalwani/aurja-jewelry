@@ -9,7 +9,7 @@ import { VisitTeaser } from "./components/homepage/VisitTeaser";
 import { SiteFooter } from "./components/homepage/SiteFooter";
 
 export const metadata: Metadata = {
-  description: `${site.name} — ${site.tagline}. Discover fine jewellery thoughtfully crafted in Surat, India.`,
+  description: `${site.name} — ${site.tagline}. Discover fine jewelry thoughtfully crafted in Surat, India.`,
 };
 
 export default function HomePage() {

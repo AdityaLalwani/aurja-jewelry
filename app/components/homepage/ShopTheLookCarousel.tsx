@@ -164,7 +164,7 @@ export function ShopTheLookCarousel({
           unoptimized
           sizes="100vw"
           aria-hidden
-          className="pointer-events-none object-cover object-center max-md:object-[58%_center]"
+          className="pointer-events-none object-cover object-top max-md:object-[58%_top]"
         />
         <div
           aria-hidden
@@ -234,12 +234,9 @@ export function ShopTheLookCarousel({
               <p className="line-clamp-2 font-display text-sm leading-snug text-kajal max-sm:text-left max-sm:text-xs">
                 {activeProduct.product.name}
               </p>
-              <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sindoori max-sm:text-left max-sm:text-[9px]">
-                SKU: {activeProduct.sku}
-              </p>
-              <p className="mt-1 font-medium text-aurja-gold">
+              {/* <p className="mt-1 font-medium text-aurja-gold">
                 {formatPrice(activeProduct.product, currency)}
-              </p>
+              </p> */}
             </div>
           </Link>
           <button

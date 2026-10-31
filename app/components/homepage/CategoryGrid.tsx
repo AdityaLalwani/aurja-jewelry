@@ -54,7 +54,7 @@ export function CategoryGrid() {
           href="/products"
           className="mt-5 inline-flex h-11 items-center justify-center rounded-full border border-stone-300 px-7 text-xs font-medium uppercase tracking-[0.16em] text-stone-700 transition-colors hover:border-amber-700 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/60"
         >
-          Shop all jewellery
+          Shop all jewelry
         </Link>
       </div>
     </section>

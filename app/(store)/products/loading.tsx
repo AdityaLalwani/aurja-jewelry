@@ -2,7 +2,7 @@ export default function ProductsLoading() {
   return (
     <div
       role="status"
-      aria-label="Loading the jewellery collection"
+      aria-label="Loading the jewelry collection"
       className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-20 pt-8 sm:px-6 lg:px-10"
     >
       <div className="mb-7 animate-pulse">

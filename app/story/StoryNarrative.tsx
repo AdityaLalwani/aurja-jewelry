@@ -145,7 +145,7 @@ export function StoryNarrative({ paragraphs }: { paragraphs: string[] }) {
                   <div className="relative hidden aspect-[4/5] overflow-hidden rounded-[1rem] border border-stone-200 bg-stone-100 lg:block">
                     <Image
                       src="/ringsetting.webp"
-                      alt="A close study of form and jewellery detail"
+                      alt="A close study of form and jewelry detail"
                       fill
                       sizes="180px"
                       className="object-cover grayscale transition-transform duration-700 group-hover:scale-105"

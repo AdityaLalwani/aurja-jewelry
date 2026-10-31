@@ -474,7 +474,7 @@ export function FrameFilm() {
     <section
       ref={sectionRef}
       className="frame-film"
-      aria-label="A diamond's journey from stone to jewellery"
+      aria-label="A diamond's journey from stone to jewelry"
     >
       <div ref={stageRef} className="frame-film__stage">
         <Image

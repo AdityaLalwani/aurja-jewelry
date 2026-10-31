@@ -4,7 +4,7 @@ import { CustomDesignForm } from "./CustomDesignForm";
 
 export const metadata: Metadata = {
   title: `Custom Design | ${site.name}`,
-  description: `Share your jewellery idea with ${site.name} and request a custom quote.`,
+  description: `Share your jewelry idea with ${site.name} and request a custom quote.`,
 };
 
 export default function CustomDesignPage() {

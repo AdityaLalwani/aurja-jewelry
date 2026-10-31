@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 import { ProductActions } from "@/components/ProductActions";
 import { ProductSpecifications } from "@/components/ProductSpecifications";
 import { ProductStoneDetails } from "@/components/ProductStoneDetails";
+import {
+  BookOpenIcon,
+  ClipboardListIcon,
+} from "@/app/components/icons";
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import {
   getDefaultVariantSelections,
@@ -127,14 +131,14 @@ export function ProductVariantSelector({
         <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
           {product.sku ?? "SKU unavailable"}
         </p>
-        <h1 className="mt-3 font-display text-4xl uppercase leading-[1.05] tracking-[0.04em] text-neutral-900 sm:text-[2.8rem]">
+        <h1 className="mt-3 min-w-0 break-words font-display text-3xl uppercase leading-[1.05] tracking-[0.04em] text-neutral-900 sm:text-[2.8rem]">
           {product.name}
         </h1>
       </div>
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="font-display text-[2.75rem] leading-none tracking-[-0.04em] text-neutral-900">
+          <p className="font-display text-3xl leading-tight tracking-[-0.04em] text-neutral-900 sm:text-[2.75rem]">
             {isNaturalGemstone ? "Price on request" : formatPrice(displayProduct, currency)}
           </p>
           <p className="mt-2 text-sm text-neutral-500">
@@ -201,9 +205,10 @@ export function ProductVariantSelector({
         <section aria-labelledby="product-description">
           <h2
             id="product-description"
-            className="text-xs uppercase tracking-[0.2em] text-neutral-500"
+            className="flex items-center gap-2 text-sm font-medium text-neutral-800"
           >
-            Product description
+            <BookOpenIcon className="h-4 w-4" />
+            Product Description
           </h2>
           <p className="mt-3 whitespace-pre-line text-sm leading-7 text-neutral-700">
             {description}
@@ -218,9 +223,10 @@ export function ProductVariantSelector({
       >
         <h2
           id="product-specifications-heading"
-          className="mb-4 text-xs uppercase tracking-[0.2em] text-neutral-500"
+          className="mb-5 flex items-center gap-2 text-sm font-medium text-neutral-800"
         >
-          Product specifications
+          <ClipboardListIcon className="h-4 w-4" />
+          Product Specifications
         </h2>
         <ProductSpecifications specifications={resolvedSpecifications} />
       </section>

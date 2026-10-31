@@ -6,7 +6,7 @@ import { BlogGrid } from "./BlogGrid";
 export const metadata: Metadata = {
   title: "Blogs — AURJA",
   description:
-    "The Aurja Journal: stories about jewellery, personal style, conscious craft and the details that make every piece meaningful.",
+    "The Aurja Journal: stories about jewelry, personal style, conscious craft and the details that make every piece meaningful.",
 };
 
 export default function BlogsPage() {
@@ -26,7 +26,7 @@ export default function BlogsPage() {
               <span className="h-1.5 w-1.5 rotate-45 bg-amber-700" />
             </div>
             <p className="mt-8 max-w-xl motion-safe:animate-fade-up [animation-delay:300ms] text-base leading-relaxed text-stone-600 sm:text-lg">
-              Reflections on jewellery, expression, care and the small details
+              Reflections on jewelry, expression, care and the small details
               that give a piece its meaning.
             </p>
           </div>

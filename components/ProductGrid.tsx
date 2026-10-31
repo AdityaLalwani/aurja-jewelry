@@ -9,7 +9,7 @@ import {
 import type { JewelryProduct } from "@/lib/swell";
 
 type FacetKey =
-  | "jewelleryType"
+  | "jewelryType"
   | "productCategory"
   | "shopFor"
   | "diamondClarity"
@@ -23,7 +23,7 @@ type SortOrder =
   | "price-high";
 
 const FACETS: { key: FacetKey; label: string }[] = [
-  { key: "jewelleryType", label: "Jewellery Type" },
+  { key: "jewelryType", label: "Jewelry Type" },
   { key: "productCategory", label: "Product Category" },
   { key: "shopFor", label: "Shop For" },
   { key: "diamondClarity", label: "Diamond Clarity" },
@@ -45,8 +45,8 @@ function shuffleProducts(products: JewelryProduct[]) {
 function getFacetValue(product: JewelryProduct, key: FacetKey): string | null {
   const { attributes } = product;
   switch (key) {
-    case "jewelleryType":
-      return attributes.jewellery_type ?? null;
+    case "jewelryType":
+      return attributes.jewelry_type ?? null;
     case "productCategory":
       return attributes.product_category ?? null;
     case "shopFor":
@@ -97,7 +97,7 @@ export function ProductGrid({
   const [selectedFacets, setSelectedFacets] = useState<
     Record<FacetKey, string[]>
   >({
-    jewelleryType: [],
+    jewelryType: [],
     productCategory: [],
     shopFor: [],
     diamondClarity: [],
@@ -187,7 +187,7 @@ export function ProductGrid({
 
   function clearFilters() {
     setSelectedFacets({
-      jewelleryType: [],
+      jewelryType: [],
       productCategory: [],
       shopFor: [],
       diamondClarity: [],

@@ -209,6 +209,43 @@ export function DiamondIcon({ className }: IconProps) {
   );
 }
 
+export function ClipboardListIcon({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <rect x="5" y="4" width="14" height="18" rx="2" />
+      <path d="M9 4.5h6a1 1 0 0 0-1-1h-1a1 1 0 0 0-2 0h-1a1 1 0 0 0-1 1Z" />
+      <path d="M9 11h6M9 15h6M9 19h3" />
+    </svg>
+  );
+}
+
+export function BookOpenIcon({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M12 7v14" />
+      <path d="M3 18V5a1 1 0 0 1 1-1h4a4 4 0 0 1 4 4 4 4 0 0 1 4-4h4a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-4a4 4 0 0 0-4 2 4 4 0 0 0-4-2H4a1 1 0 0 1-1-1Z" />
+    </svg>
+  );
+}
+
 export function TruckIcon({ className }: IconProps) {
   return (
     <svg

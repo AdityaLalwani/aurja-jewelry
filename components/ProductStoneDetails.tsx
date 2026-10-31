@@ -31,7 +31,34 @@ export function ProductStoneDetails({
         <DiamondIcon className="h-4 w-4" />
         Stone Details
       </h2>
-      <div className="overflow-x-auto">
+      <div className="sm:hidden">
+        {details.map((detail, index) => (
+          <table
+            key={`${detail.type ?? "stone"}-${detail.shape ?? "shape"}-${index}`}
+            className="w-full border-collapse text-left text-sm"
+          >
+            <tbody>
+              {columns.map((column) => (
+                <tr
+                  key={column.value}
+                  className="border-b border-neutral-200 last:border-b-0"
+                >
+                  <th
+                    scope="row"
+                    className="w-1/2 py-2 pr-4 text-left font-normal text-neutral-500"
+                  >
+                    {column.label}
+                  </th>
+                  <td className="py-2 text-neutral-900">
+                    {detail[column.value] ?? ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[34rem] border-collapse text-left text-xs">
           <thead>
             <tr className="border-b border-neutral-300">

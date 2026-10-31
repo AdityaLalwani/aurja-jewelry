@@ -1,6 +1,6 @@
 # AURJA — Shaped for Stories
 
-Storefront and brand site for a Surat-based jewellery atelier. Built with Next.js (App Router), React, TypeScript and Tailwind CSS v4.
+Storefront and brand site for a Surat-based jewelry atelier. Built with Next.js (App Router), React, TypeScript and Tailwind CSS v4.
 
 ## Getting started
 

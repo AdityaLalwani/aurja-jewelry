@@ -20,7 +20,7 @@ export function HomeManifesto() {
 
       <div className="home-manifesto__footer">
         <p className="home-manifesto__note">
-          Jewellery with a little more meaning, from the first sketch to the
+          Jewelry with a little more meaning, from the first sketch to the
           stories that come after.
         </p>
         <div className="home-manifesto__principles">

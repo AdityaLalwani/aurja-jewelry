@@ -55,7 +55,7 @@ export function ProductGallery({
     <>
       <div className="space-y-3">
         {visibleImages.length > 0 || validYoutubeId ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:overflow-visible">
             {visibleImages
               .slice(0, validYoutubeId ? 1 : 2)
               .map((image, index) => (
@@ -66,7 +66,7 @@ export function ProductGallery({
                     setActiveIndex(index);
                     setIsExpanded(true);
                   }}
-                  className="relative aspect-[5/6] overflow-hidden bg-[#efefeb]"
+                  className="relative aspect-[5/6] w-full shrink-0 snap-center overflow-hidden bg-[#efefeb] sm:w-auto"
                   aria-label={`Open image ${index + 1}${index === 0 && stockLevel === 1 ? ", only 1 left" : ""}`}
                 >
                   <Image
@@ -75,7 +75,7 @@ export function ProductGallery({
                     alt={`${name} — view ${index + 1}`}
                     fill
                     priority={index === 0}
-                    sizes="(min-width: 1024px) 26vw, 50vw"
+                    sizes="(min-width: 1024px) 26vw, (min-width: 640px) 50vw, 90vw"
                     className="object-cover transition-transform duration-300 hover:scale-[1.02]"
                   />
                   {index === 0 && stockLevel === 1 ? (
@@ -86,7 +86,7 @@ export function ProductGallery({
                 </button>
               ))}
             {validYoutubeId ? (
-              <div className="relative aspect-[5/6] overflow-hidden bg-[#efefeb]">
+              <div className="relative aspect-[5/6] w-full shrink-0 snap-center overflow-hidden bg-[#efefeb] sm:w-auto">
                 <iframe
                   src={`https://www.youtube-nocookie.com/embed/${validYoutubeId}?autoplay=1&mute=1&loop=1&playlist=${validYoutubeId}&rel=0&playsinline=1`}
                   title={`${name} video`}
@@ -139,7 +139,7 @@ export function ProductGallery({
 
       {isExpanded && (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/65 p-4"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/65 p-2 sm:p-4"
           onClick={() => setIsExpanded(false)}
         >
           <div
@@ -158,7 +158,7 @@ export function ProductGallery({
               ×
             </button>
 
-            <div className="flex w-16 shrink-0 flex-col items-center gap-2 overflow-y-auto py-2">
+            <div className="hidden w-16 shrink-0 flex-col items-center gap-2 overflow-y-auto py-2 sm:flex">
               {galleryImages.map((image, index) => (
                 <button
                   key={`preview-${image}-${index}`}

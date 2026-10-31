@@ -97,7 +97,7 @@ export function SiteHeader() {
             href="/products"
             className="inline-flex h-10 shrink-0 items-center rounded-full bg-stone-900 px-5 text-xs font-medium uppercase tracking-[0.2em] text-amber-50 transition-colors hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/50"
           >
-            Shop Jewellery
+            Shop Jewelry
           </Link>
         </div>
       </header>

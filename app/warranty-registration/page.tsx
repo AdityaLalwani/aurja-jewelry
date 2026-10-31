@@ -6,7 +6,7 @@ import { WarrantyEmbed } from "./WarrantyEmbed";
 export const metadata: Metadata = {
   title: "Warranty Registration — AURJA",
   description:
-    "Register your AURJA jewellery warranty and keep your piece protected.",
+    "Register your AURJA jewelry warranty and keep your piece protected.",
 };
 
 export default function WarrantyRegistrationPage() {

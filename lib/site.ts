@@ -13,7 +13,7 @@ export const site = {
   /** Instagram handle, without the @ — used for profile links across the site. */
   instagram: "aurja.co",
   /** Announcement bar copy above the header. */
-  announcement: "Fine jewellery, shaped for stories",
+  announcement: "Fine jewelry, shaped for stories",
   /** Shared contact details for the storefront. */
   contact: {
     /** WhatsApp number in international format, digits only (used for wa.me links). */
@@ -63,7 +63,7 @@ export const profiles: Record<string, Profile> = {
     company: site.name,
     initials: "AM",
     photo: "/team/akshat.png",
-    bio: "Curating timeless jewellery at AURJA.",
+    bio: "Curating timeless jewelry at AURJA.",
     whatsapp: "917485922448",
     phoneDisplay: "+91 74859 22448",
     instagram: "aurja.co",
@@ -174,10 +174,10 @@ export type HomeConfig = {
 export const home: HomeConfig = {
   hero: {
     tagline: "Shaped for Stories",
-    constantWord: "Jewellery",
+    constantWord: "Jewelry",
     srText:
-      "Fine jewellery for everyday moments, big beginnings and everything in between.",
-    primaryCta: { label: "Shop Jewellery", href: "/products" },
+      "Fine jewelry for everyday moments, big beginnings and everything in between.",
+    primaryCta: { label: "Shop Jewelry", href: "/products" },
     secondaryCta: { label: "Our Philosophy", href: "/story#philosophy" },
   },
   nav: [
@@ -241,10 +241,10 @@ export const home: HomeConfig = {
     title: "Some stories begin with a moment, Ours began with a feeling.",
     paragraphs: [
       "A feeling that beauty and responsibility need not exist apart.",
-      "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewellery house creating pieces with intention.",
+      "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewelry house creating pieces with intention.",
       "We believe in relationships before transactions — choosing trusted sources, working closely with our partners, and continually moving towards more conscious ways of creating.",
       "Our inspiration comes from the world around us: the quiet forms of nature, the character of distant places, unexpected colours, and the movement found in everything living.",
-      "These inspirations become shapes, textures and details — translated into jewellery that feels modern, effortless and personal. We don't believe in creating simply for the sake of more.",
+      "These inspirations become shapes, textures and details — translated into jewelry that feels modern, effortless and personal. We don't believe in creating simply for the sake of more.",
       "We create pieces with the hope that, over time, they become part of something bigger — your moments, your milestones, your memories.",
       "This is Aurja, Shaped for Stories.",
     ],
@@ -279,7 +279,7 @@ export const home: HomeConfig = {
         icon: "truck",
         title: "Built to endure",
         description:
-          "We stand behind the enduring quality of our jewellery and complimentary insured shipping across World.",
+          "We stand behind the enduring quality of our jewelry and complimentary insured shipping across World.",
       },
     ],
   },
@@ -361,10 +361,10 @@ export const storyPage: StoryPageConfig = {
   title: "Some stories begin with a moment. Ours began with a feeling.",
   paragraphs: [
     "A feeling that beauty and responsibility need not exist apart.",
-    "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewellery house creating pieces with intention.",
+    "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewelry house creating pieces with intention.",
     "We believe in relationships before transactions — choosing trusted sources, working closely with our partners, and continually moving towards more conscious ways of creating.",
     "Our inspiration comes from the world around us: the quiet forms of nature, the character of distant places, unexpected colours, and the movement found in everything living.",
-    "These inspirations become shapes, textures and details — translated into jewellery that feels modern, effortless and personal.",
+    "These inspirations become shapes, textures and details — translated into jewelry that feels modern, effortless and personal.",
     "We don't believe in creating simply for the sake of more.",
     "We create pieces with the hope that, over time, they become part of something bigger — your moments, your milestones, your memories.",
     "This is Aurja. Shaped for Stories.",

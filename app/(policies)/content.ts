@@ -107,14 +107,14 @@ export const refundPolicy: InformationDocument = {
 
 export const careGuide: InformationDocument = {
   eyebrow: "Keep it beautiful",
-  title: "Jewellery Care Guide",
+  title: "Jewelry Care Guide",
   intro:
-    "A little everyday care helps your jewellery stay ready for the moments that matter. Because stones and finishes can have different needs, follow any care advice provided with your specific piece.",
+    "A little everyday care helps your jewelry stay ready for the moments that matter. Because stones and finishes can have different needs, follow any care advice provided with your specific piece.",
   sections: [
     {
       heading: "Everyday care",
       bullets: [
-        "Put jewellery on after applying perfume, lotions, hairspray and cosmetics; remove it before swimming, bathing, exercising or household work.",
+        "Put jewelry on after applying perfume, lotions, hairspray and cosmetics; remove it before swimming, bathing, exercising or household work.",
         "Keep pieces away from chlorine, bleach, cleaning products and other harsh chemicals.",
         "Wipe gently with a clean, soft, lint-free cloth after wearing.",
         "Store each piece separately in a dry, lined pouch or box to reduce scratches and tangling.",
@@ -223,7 +223,7 @@ export const frequentlyAskedQuestions: InformationDocument = {
     "Need a hand with a piece, a size or a custom idea? Start here, or contact our atelier if you would like help with something specific.",
   questions: [
     {
-      question: "Can you create jewellery from my design?",
+      question: "Can you create jewelry from my design?",
       answer:
         "Yes. Use our Custom Design page to tell us what you have in mind and upload a reference image or PDF. Our team will review it and contact you with a quote based on the design and specifications.",
     },
@@ -233,14 +233,14 @@ export const frequentlyAskedQuestions: InformationDocument = {
         "It depends on the detail and information needed to assess the design. We will contact you if we need clarification; we do not promise a fixed response time.",
     },
     {
-      question: "How do I know my jewellery size?",
+      question: "How do I know my jewelry size?",
       answer:
         "See the Size Guide for at-home measuring tips. For a particular design or a size between measurements, contact us before ordering.",
     },
     {
-      question: "How should I care for my jewellery?",
+      question: "How should I care for my jewelry?",
       answer:
-        "Follow the Jewellery Care Guide and any instructions for your specific piece. If you are unsure whether a cleaning method is safe for its materials or stones, ask us first.",
+        "Follow the Jewelry Care Guide and any instructions for your specific piece. If you are unsure whether a cleaning method is safe for its materials or stones, ask us first.",
     },
     {
       question: "What if I need a return, exchange or refund?",

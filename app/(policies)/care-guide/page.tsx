@@ -3,8 +3,8 @@ import { InfoPage } from "../InfoPage";
 import { careGuide } from "../content";
 
 export const metadata: Metadata = {
-  title: "Jewellery Care Guide | AURJA",
-  description: "Simple care tips for your AURJA jewellery.",
+  title: "Jewelry Care Guide | AURJA",
+  description: "Simple care tips for your AURJA jewelry.",
 };
 
 export default function CareGuidePage() {

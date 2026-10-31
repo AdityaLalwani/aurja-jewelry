@@ -83,11 +83,13 @@ export default async function ProductPage(props: ProductPageProps) {
           Product
         </Link>
         <span className="text-neutral-300">&gt;</span>
-        <span className="text-neutral-700">{product.name.toUpperCase()}</span>
+        <span className="min-w-0 truncate text-neutral-700">
+          {product.name.toUpperCase()}
+        </span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-        <div className="space-y-4">
+      <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
+        <div className="min-w-0 space-y-4">
           <ProductGallery
             images={product.images}
             name={product.name}
@@ -97,7 +99,7 @@ export default async function ProductPage(props: ProductPageProps) {
 
         </div>
 
-        <div className="flex flex-col gap-8 pt-2">
+        <div className="min-w-0 flex flex-col gap-8 pt-2">
           <ProductVariantSelector
             product={product}
             description={description}
