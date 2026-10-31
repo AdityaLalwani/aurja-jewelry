@@ -93,18 +93,18 @@ export function SiteFooter() {
 
           <div aria-hidden className="my-8 h-px bg-gradient-to-r from-transparent via-amber-200/30 to-transparent" />
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
             {footer.linkColumns.map((column) => (
               <div key={column.heading}>
                 <h3 className="text-[0.7rem] font-medium uppercase tracking-[0.28em] text-amber-100/80">
                   {column.heading}
                 </h3>
-                <ul className="mt-4 space-y-3">
+                <ul className="mt-4 flex flex-wrap gap-2 sm:flex-col sm:gap-3">
                   {column.links.map((link) => (
                     <li key={link.label}>
                       <a
                         href={link.href}
-                        className="text-sm text-stone-400 transition-colors duration-200 hover:text-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+                        className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-stone-400 transition-colors duration-200 hover:text-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-sm"
                       >
                         {link.label}
                       </a>

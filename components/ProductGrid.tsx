@@ -11,10 +11,8 @@ import type { JewelryProduct } from "@/lib/swell";
 type FacetKey =
   | "jewelleryType"
   | "productCategory"
-  | "diamondCarat"
   | "shopFor"
   | "diamondClarity"
-  | "metalColor"
   | "style";
 
 type SortOrder =
@@ -27,10 +25,8 @@ type SortOrder =
 const FACETS: { key: FacetKey; label: string }[] = [
   { key: "jewelleryType", label: "Jewellery Type" },
   { key: "productCategory", label: "Product Category" },
-  { key: "diamondCarat", label: "Diamond Carat" },
   { key: "shopFor", label: "Shop For" },
   { key: "diamondClarity", label: "Diamond Clarity" },
-  { key: "metalColor", label: "Metal Color" },
   { key: "style", label: "Style" },
 ];
 
@@ -53,18 +49,12 @@ function getFacetValue(product: JewelryProduct, key: FacetKey): string | null {
       return attributes.jewellery_type ?? null;
     case "productCategory":
       return attributes.product_category ?? null;
-    case "diamondCarat":
-      return attributes.diamond_carat > 0
-        ? String(attributes.diamond_carat)
-        : null;
     case "shopFor":
       return attributes.shop_for ?? null;
     case "diamondClarity":
       return attributes.diamond_clarity === "N/A"
         ? null
         : attributes.diamond_clarity;
-    case "metalColor":
-      return attributes.metal_color || null;
     case "style":
       return attributes.collection ?? null;
   }
@@ -77,11 +67,7 @@ function getFacetOptions(products: JewelryProduct[], key: FacetKey) {
         .map((product) => getFacetValue(product, key))
         .filter((value): value is string => Boolean(value)),
     ),
-  ).sort((first, second) =>
-    key === "diamondCarat"
-      ? Number(first) - Number(second)
-      : first.localeCompare(second),
-  );
+  ).sort((first, second) => first.localeCompare(second));
 }
 
 export function ProductGrid({
@@ -113,10 +99,8 @@ export function ProductGrid({
   >({
     jewelleryType: [],
     productCategory: [],
-    diamondCarat: [],
     shopFor: [],
     diamondClarity: [],
-    metalColor: [],
     style: [],
   });
   const [minimumPrice, setMinimumPrice] = useState("");
@@ -205,10 +189,8 @@ export function ProductGrid({
     setSelectedFacets({
       jewelleryType: [],
       productCategory: [],
-      diamondCarat: [],
       shopFor: [],
       diamondClarity: [],
-      metalColor: [],
       style: [],
     });
     setMinimumPrice("");

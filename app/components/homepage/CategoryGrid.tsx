@@ -47,7 +47,7 @@ export function CategoryGrid() {
         ))}
       </div>
       <div className="mt-12 text-center sm:mt-16">
-        <p className="font-display text-lg font-normal text-stone-600 sm:text-xl">
+        <p className="font-display text-lg font-semibold text-stone-900 sm:text-xl">
           Can&apos;t decide? Browse the entire edit.
         </p>
         <Link
