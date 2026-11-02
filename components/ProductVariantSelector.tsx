@@ -39,7 +39,15 @@ export function ProductVariantSelector({
   const { currency, enquiredSlugs } = useStore();
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const defaultSelections = useMemo(
-    () => getDefaultVariantSelections(product.variant_options ?? []),
+    () =>
+      Object.fromEntries(
+        Object.entries(
+          getDefaultVariantSelections(product.variant_options ?? []),
+        ).filter(
+          ([optionName]) =>
+            !/(^|[^a-z])(color|colour)([^a-z]|$)/i.test(optionName),
+        ),
+      ),
     [product.variant_options],
   );
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>(
@@ -133,6 +141,29 @@ export function ProductVariantSelector({
     }));
   }
 
+  function getColorButtonStyle(optionName: string, valueName: string) {
+    if (!/(^|[^a-z])(color|colour)([^a-z]|$)/i.test(optionName)) {
+      return undefined;
+    }
+
+    const colorName = valueName.trim().toLowerCase();
+    const colorMap: Record<string, string> = {
+      rose: "#DEA193",
+      yellow: "#e2bb3a",
+      white: "#E4E5E2",
+    };
+    const backgroundColor = colorMap[colorName];
+    if (!backgroundColor) {
+      return undefined;
+    }
+
+    return {
+      backgroundColor,
+      borderColor: "#000000",
+      color: "#282826",
+    };
+  }
+
   return (
     <>
       <div>
@@ -172,6 +203,9 @@ export function ProductVariantSelector({
                     .map((value) => {
                       const valueName = value.name ?? "Value";
                       const isSelected = selectedValues[optionName] === valueName;
+                      const colorButtonStyle = isSelected
+                        ? getColorButtonStyle(optionName, valueName)
+                        : undefined;
                       return (
                         <button
                           key={`${optionName}-${valueName}`}
@@ -180,9 +214,12 @@ export function ProductVariantSelector({
                           className={[
                             "rounded-full border px-3 py-2 text-sm transition-colors",
                             isSelected
-                              ? "border-neutral-900 bg-neutral-900 text-white"
+                              ? colorButtonStyle
+                                ? ""
+                                : "border-neutral-900 bg-neutral-900 text-white"
                               : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-900 hover:text-neutral-900",
                           ].join(" ")}
+                          style={colorButtonStyle}
                         >
                           <span>{valueName}</span>
                           {value.price && value.price > 0 ? (
