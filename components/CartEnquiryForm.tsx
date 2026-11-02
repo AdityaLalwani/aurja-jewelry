@@ -7,11 +7,20 @@ import {
   type CartFormState,
 } from "@/lib/cart-actions";
 import type { Currency } from "@/components/StoreProvider";
+import { WhatsAppIcon } from "@/app/components/icons";
+import { site } from "@/lib/site";
 
 interface CartContactDetails {
   name: string;
   email: string;
   phone: string;
+}
+
+interface CartEnquiryItem {
+  name: string;
+  sku: string | null;
+  quantity: number;
+  variantSummary: string[];
 }
 
 const inputClasses =
@@ -23,9 +32,11 @@ const labelClasses =
 export function CartEnquiryForm({
   currency,
   contactDetails,
+  items,
 }: {
   currency: Currency;
   contactDetails: CartContactDetails;
+  items: CartEnquiryItem[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [requestId, setRequestId] = useState("");
@@ -33,6 +44,21 @@ export function CartEnquiryForm({
     submitCartEnquiryAction,
     undefined,
   );
+  const whatsappMessage = [
+    "Hi Aurja, I just submitted an order request.",
+    `Request reference: ${requestId}`,
+    "",
+    "Items:",
+    ...items.map((item) => {
+      const options = item.variantSummary.length
+        ? `; selected options: ${item.variantSummary.join(", ")}`
+        : "";
+      return `- ${item.name} (SKU: ${item.sku || "Not available"}) x ${item.quantity}${options}`;
+    }),
+    "",
+    "Could you please help me with my order?",
+  ].join("\n");
+  const whatsappHref = `https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <>
@@ -87,13 +113,24 @@ export function CartEnquiryForm({
                 <p role="status" className="text-sm leading-6 text-neutral-800">
                   {state.success}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="mt-5 rounded-full bg-gold px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark"
-                >
-                  Done
-                </button>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-full bg-gold px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark"
+                  >
+                    Done
+                  </button>
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#1DA851]"
+                  >
+                    <WhatsAppIcon className="h-4 w-4" />
+                    Get in touch now
+                  </a>
+                </div>
               </div>
             ) : (
               <form action={formAction} className="mt-7 space-y-6">

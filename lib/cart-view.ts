@@ -22,6 +22,7 @@ export interface CartItemView {
   /** Catalog slug when the item maps to a storefront product, else null. */
   slug: string | null;
   name: string;
+  sku: string | null;
   image: string | null;
   attributes: JewelryProduct["attributes"] | null;
   variantSummary: string[];
@@ -132,6 +133,7 @@ function buildCartItemView(
     productId: item.product_id,
     slug,
     name: product?.name ?? item.product_name ?? "Piece from the collection",
+    sku: product?.sku ?? null,
     image: metadataImage ?? product?.images[0] ?? fallbackImages[0] ?? null,
     attributes: product?.attributes ?? null,
     variantSummary,

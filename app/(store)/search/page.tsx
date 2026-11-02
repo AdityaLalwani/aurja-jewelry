@@ -1,8 +1,12 @@
 import { SearchExperience } from "@/components/SearchExperience";
-import { getJewelryProducts } from "@/lib/swell";
+import { BEST_SELLER_SKUS } from "@/lib/site";
+import { getJewelryProducts, getJewelryProductsBySkus } from "@/lib/swell";
 
 export default async function SearchPage() {
-  const products = await getJewelryProducts();
+  const [products, bestSellerProducts] = await Promise.all([
+    getJewelryProducts(),
+    getJewelryProductsBySkus(BEST_SELLER_SKUS),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20 pt-10 sm:px-6">
@@ -13,12 +17,12 @@ export default async function SearchPage() {
         <h1 className="mt-3 font-display text-3xl leading-tight text-neutral-900 sm:text-4xl">
           Find your piece
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-neutral-500">
-          Search the Aurja catalogue by name, metal, or stone.
-        </p>
       </div>
 
-      <SearchExperience products={products} />
+      <SearchExperience
+        products={products}
+        popularProducts={bestSellerProducts.map(({ product }) => product)}
+      />
     </div>
   );
 }

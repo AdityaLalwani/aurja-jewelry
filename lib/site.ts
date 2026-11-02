@@ -124,6 +124,17 @@ export type FooterLinkColumn = {
   links: NavLink[];
 };
 
+export const BEST_SELLER_SKUS = [
+  "ASR001",
+  "ASER001",
+  "ASN001",
+  "ASB001",
+  "ASR002",
+  "ASER002",
+  "ASN002",
+  "ASR003",
+] as const;
+
 export type HomeConfig = {
   hero: {
     tagline: string;

@@ -217,7 +217,11 @@ export function CartContent({
               {formatDisplayAmount(total, currency)}
             </p>
           </div>
-          <CartEnquiryForm currency={currency} contactDetails={contactDetails} />
+          <CartEnquiryForm
+            currency={currency}
+            contactDetails={contactDetails}
+            items={view.items}
+          />
           <p className="mt-4 text-center text-xs leading-5 text-neutral-500">
             Prices shown in {currency === "INR" ? "₹ (INR)" : "$ (USD)"}. Each
             piece is made to order in the Aurja atelier.

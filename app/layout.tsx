@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Jost, Playfair_Display } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import { site } from "@/lib/site";
+import { BEST_SELLER_SKUS, site } from "@/lib/site";
 import { StoreProvider } from "@/components/StoreProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CartSnapshot } from "./CartSnapshot";
@@ -29,8 +29,6 @@ async function getNavigationCategories(): Promise<StoreCategory[]> {
     { id: "men", name: "Men", slug: "men", parentId: null },
   ];
 }
-
-const bestSellerSkus = ["ASR001", "ASER001", "ASN001", "ASB001"] as const;
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -60,7 +58,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const [categories, bestSellerProducts, requestHeaders, accountId] =
     await Promise.all([
       getNavigationCategories(),
-      getJewelryProductsBySkus(bestSellerSkus),
+      getJewelryProductsBySkus(BEST_SELLER_SKUS),
       headers(),
       getSessionAccountId(),
     ]);
