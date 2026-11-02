@@ -116,9 +116,18 @@ function matchesQuery(product: JewelryProduct, query: string) {
   if (terms.length === 0) return true;
   const haystack = [
     product.name,
+    product.description,
+    product.attributes.product_story,
     product.attributes.metal_type,
     product.attributes.metal_color,
     product.attributes.gemstone_type,
+    product.attributes.diamond_clarity,
+    product.attributes.diamond_carat,
+    product.attributes.stone_shape,
+    product.attributes.diamond_cut,
+    ...(product.stone_details ?? []).flatMap((detail) =>
+      Object.values(detail),
+    ),
   ]
     .join(" ")
     .toLowerCase();
