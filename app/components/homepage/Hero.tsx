@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { home } from "@/lib/site";
 import { ChevronDownIcon } from "../icons";
+import { HeroVideo } from "./HeroVideo";
 
 export function Hero() {
   const { hero } = home;
@@ -10,28 +11,7 @@ export function Hero() {
       data-hero
       className="relative flex h-[100svh] min-h-[100svh] items-end overflow-hidden bg-stone-950 text-white"
     >
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
-        className="absolute inset-0 hidden h-full w-full object-cover md:block"
-      >
-        <source src="/desktop.mp4" type="video/mp4" />
-      </video>
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover md:hidden"
-      >
-        <source src="/mobile.mp4" type="video/mp4" />
-      </video>
+      <HeroVideo />
 
       <div
         aria-hidden="true"

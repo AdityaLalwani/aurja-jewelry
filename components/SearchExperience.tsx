@@ -23,6 +23,8 @@ type CategoryIllustrationName =
   | "pendant"
   | "bracelet"
   | "necklace"
+  | "pendant-chain"
+  | "pendant-set"
   | "silver"
   | "solitaire";
 
