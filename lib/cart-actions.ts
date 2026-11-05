@@ -8,6 +8,7 @@ import {
   getDefaultVariantSelections,
   getFirstImageUrl,
   getJewelryProductBySlug,
+  getJewelryProductsByIds,
   findSwellProductBySlug,
   getSelectedVariantPrice,
   isNaturalGemstoneSelection,
@@ -574,7 +575,10 @@ export async function submitProductEnquiryAction(
     const price =
       selectedOptions.length > 0
         ? currency === "INR"
-          ? Math.round(priceUsd * 83)
+          ? naturalGemstoneSelected
+            ? 0
+            : getSelectedVariantPrice(options, normalizedSelectedOptions, "INR") ||
+              product.price_inr
           : priceUsd
         : currency === "INR"
           ? product.price_inr
@@ -755,15 +759,30 @@ export async function submitCartEnquiryAction(
       return { error: "Your cart is empty." };
     }
 
-    const cartView = buildCartView(resolved.cart);
+    const localizedProducts = await getJewelryProductsByIds(
+      cartItems.map((item) => item.product_id),
+    );
+    const productLookup = Object.fromEntries(
+      localizedProducts.map((product) => [product.slug, product]),
+    );
+    const cartView = buildCartView(resolved.cart, productLookup);
     const items = cartView.items.map((viewItem) => {
       const cartItem = cartItems.find((item) => item.id === viewItem.id);
       if (!cartItem) {
         throw new Error("Cart item details could not be matched.");
       }
+      if (
+        currency === "INR" &&
+        viewItem.priceInr === null &&
+        !viewItem.showPriceOnRequest
+      ) {
+        throw new Error(
+          `Could not load the INR price for ${viewItem.name} from Swell.`,
+        );
+      }
       const unitPrice =
         currency === "INR"
-          ? viewItem.priceInr ?? viewItem.price * 83
+          ? viewItem.priceInr ?? 0
           : viewItem.priceUsd ?? viewItem.price;
       const attributes = viewItem.attributes;
       const selectedOptionsFromCart = (cartItem.options ?? [])

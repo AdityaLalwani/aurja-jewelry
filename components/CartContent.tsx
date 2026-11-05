@@ -82,15 +82,24 @@ export function CartContent({
     );
   }
 
-  const amountForCurrency = (item: CartView["items"][number]) =>
+  const amountForCurrency = (
+    item: CartView["items"][number],
+  ): number | null =>
     currency === "INR"
-      ? item.priceInr ?? item.price * 83
+      ? item.priceInr
       : item.priceUsd ?? item.price;
-  const total = view.items.reduce(
-    (sum, item) =>
-      item.showPriceOnRequest ? sum : sum + amountForCurrency(item) * item.quantity,
-    0,
+  const hasUnavailablePrice = view.items.some(
+    (item) => !item.showPriceOnRequest && amountForCurrency(item) === null,
   );
+  const total = hasUnavailablePrice
+    ? null
+    : view.items.reduce(
+        (sum, item) =>
+          item.showPriceOnRequest
+            ? sum
+            : sum + (amountForCurrency(item) ?? 0) * item.quantity,
+        0,
+      );
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-10 sm:px-6">
@@ -163,7 +172,9 @@ export function CartContent({
                     <p className="mt-1 text-xs text-neutral-500">
                       {item.showPriceOnRequest
                         ? "Price on request"
-                        : `${formatDisplayAmount(itemAmount, currency)} each`}
+                        : itemAmount === null
+                          ? "Price unavailable"
+                          : `${formatDisplayAmount(itemAmount, currency)} each`}
                     </p>
                     {item.slug ? (
                       <WishlistButton
@@ -180,7 +191,9 @@ export function CartContent({
                     lineTotal={
                       item.showPriceOnRequest
                         ? "Price on request"
-                        : formatDisplayAmount(itemAmount * item.quantity, currency)
+                        : itemAmount === null
+                          ? "Price unavailable"
+                          : formatDisplayAmount(itemAmount * item.quantity, currency)
                     }
                   />
                 </li>
@@ -197,7 +210,9 @@ export function CartContent({
             <div className="flex items-center justify-between">
               <dt className="text-neutral-500">Subtotal</dt>
               <dd className="font-medium text-neutral-900">
-                {formatDisplayAmount(total, currency)}
+                {total === null
+                  ? "Price unavailable"
+                  : formatDisplayAmount(total, currency)}
               </dd>
             </div>
             <div className="flex items-center justify-between">
@@ -214,7 +229,9 @@ export function CartContent({
           <div className="mt-4 flex items-center justify-between border-t border-neutral-200/80 pt-4">
             <p className="font-display text-lg text-neutral-900">Total</p>
             <p className="font-display text-2xl text-neutral-900">
-              {formatDisplayAmount(total, currency)}
+              {total === null
+                ? "Price unavailable"
+                : formatDisplayAmount(total, currency)}
             </p>
           </div>
           <CartEnquiryForm

@@ -3,10 +3,9 @@ import { getCartIdFromCookie } from "@/lib/cart-session";
 import { buildCartView } from "@/lib/cart-view";
 import { getSessionAccountId } from "@/lib/session";
 import {
-  findSwellProductById,
+  getJewelryProductsByIds,
   getSwellAccount,
   getSwellCart,
-  mapSwellProduct,
 } from "@/lib/swell";
 
 async function getExpandedCart(cartId: string) {
@@ -36,21 +35,11 @@ export default async function CartPage() {
   ]);
   const { cart, loadError: cartLoadError } = cartResult;
 
+  const products = await getJewelryProductsByIds(
+    (cart?.items ?? []).map((item) => item.product_id),
+  );
   const productLookup = Object.fromEntries(
-    (
-      await Promise.all(
-        (cart?.items ?? []).map(async (item) => {
-          const product = await findSwellProductById(item.product_id);
-          if (!product) {
-            return null;
-          }
-          return [item.product_id, mapSwellProduct(product)];
-        }),
-      )
-    ).filter(
-      (entry): entry is [string, ReturnType<typeof mapSwellProduct>] =>
-        Boolean(entry),
-    ),
+    products.map((product) => [product.slug, product]),
   );
 
   const view = buildCartView(cart, productLookup);

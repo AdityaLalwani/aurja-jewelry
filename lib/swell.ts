@@ -115,6 +115,7 @@ export interface SwellProductOptionValue {
   id?: string | null;
   name?: string;
   price?: number | null;
+  price_inr?: number | null;
   shipment_weight?: number;
   active?: boolean;
 }
@@ -280,6 +281,12 @@ function normalizeProductOptions(input: unknown): SwellProductOption[] {
         active: option.active !== false,
         values: values.map((value) => {
           const shipmentWeight = coerceOptionalNumber(value.shipment_weight);
+          const currencyPrices = readRecordValue(value, "$currency");
+          const inrPrice =
+            coerceOptionalNumber(value.price_inr) ??
+            coerceOptionalNumber(
+              readRecordValue(readRecordValue(currencyPrices, "INR"), "price"),
+            );
           return {
             id: typeof value.id === "string" ? value.id : undefined,
             name:
@@ -287,6 +294,7 @@ function normalizeProductOptions(input: unknown): SwellProductOption[] {
                 ? value.name
                 : "Value",
             price: coercePrice(value.price),
+            ...(inrPrice !== undefined ? { price_inr: inrPrice } : {}),
             ...(shipmentWeight !== undefined
               ? { shipment_weight: shipmentWeight }
               : {}),
@@ -299,9 +307,16 @@ function normalizeProductOptions(input: unknown): SwellProductOption[] {
 }
 
 export function getProductOptionValuePrice(
-  optionValue: Pick<SwellProductOptionValue, "price"> | undefined,
+  optionValue: Pick<SwellProductOptionValue, "price" | "price_inr"> | undefined,
+  currency: "USD" | "INR" = "USD",
 ): number {
-  return optionValue ? coercePrice(optionValue.price) : 0;
+  if (!optionValue) {
+    return 0;
+  }
+
+  return currency === "INR"
+    ? coercePrice(optionValue.price_inr)
+    : coercePrice(optionValue.price);
 }
 
 export function getDefaultVariantSelections(
@@ -391,6 +406,7 @@ export function resolveSelectedVariantId(
 export function getSelectedVariantPrice(
   options: SwellProductOption[] = [],
   selections: Record<string, string> = {},
+  currency: "USD" | "INR" = "USD",
 ): number {
   let total = 0;
 
@@ -409,7 +425,7 @@ export function getSelectedVariantPrice(
     );
 
     if (selectedValue) {
-      total += getProductOptionValuePrice(selectedValue);
+      total += getProductOptionValuePrice(selectedValue, currency);
     }
   }
 
@@ -520,11 +536,14 @@ export function isNaturalGemstoneItemOption(
 }
 
 export function getLowestActiveVariantPrice(
-  product: Pick<SwellProduct, "price" | "options" | "variants">,
+  product: Pick<SwellProduct, "price" | "price_inr" | "options" | "variants">,
+  currency: "USD" | "INR" = "USD",
 ): number {
   const optionGroups = normalizeProductOptions(product.options);
   if (optionGroups.length === 0) {
-    return coercePrice(product.price);
+    return currency === "INR"
+      ? coercePrice(product.price_inr)
+      : coercePrice(product.price);
   }
 
   const lowestVariantPrice = optionGroups.reduce((sum, option) => {
@@ -534,14 +553,18 @@ export function getLowestActiveVariantPrice(
     }
 
     const lowestValuePrice = candidateValues.reduce(
-      (min, value) => Math.min(min, getProductOptionValuePrice(value)),
+      (min, value) => Math.min(min, getProductOptionValuePrice(value, currency)),
       Number.POSITIVE_INFINITY,
     );
 
     return sum + (Number.isFinite(lowestValuePrice) ? lowestValuePrice : 0);
   }, 0);
 
-  return lowestVariantPrice > 0 ? lowestVariantPrice : coercePrice(product.price);
+  return lowestVariantPrice > 0
+    ? lowestVariantPrice
+    : currency === "USD"
+      ? coercePrice(product.price)
+      : coercePrice(product.price_inr);
 }
 
 /** Catalog feed for the storefront, filtered by a Swell category slug. */
@@ -632,6 +655,7 @@ export function mapSwellProduct(
   const normalizedOptions = normalizeProductOptions(product.options);
   const variantPriceUsd = getLowestActiveVariantPrice(product);
   const priceUsd = variantPriceUsd > 0 ? variantPriceUsd : coercePrice(product.price);
+  const variantPriceInr = getLowestActiveVariantPrice(product, "INR");
   const metalType =
     firstAttributeValue(product.content, ["metal"]) ??
     firstAttributeValue(attributes, ["metal_type", "metal"]);
@@ -659,7 +683,10 @@ export function mapSwellProduct(
       product.sku ??
       firstAttributeValue(attributes, ["sku", "product_sku"]) ??
       undefined,
-    price_inr: Math.round(priceUsd * 83),
+    price_inr:
+      variantPriceInr > 0
+        ? variantPriceInr
+        : coercePrice(product.price_inr),
     stock_level: product.stock_level,
     images: imageLimit === undefined ? images : images.slice(0, imageLimit),
     description:
@@ -831,9 +858,13 @@ async function fetchJewelryProductPage(
         )
       : Promise.resolve(null),
   ]);
-  const mappedProducts = result.results
-    .filter((product) => product.active === true)
-    .map((product) => mapSwellProduct(product, 2));
+  const activeProducts = result.results.filter(
+    (product) => product.active === true,
+  );
+  const localizedProducts = await addInrPricesToProducts(activeProducts);
+  const mappedProducts = localizedProducts.map((product) =>
+    mapSwellProduct(product, 2),
+  );
   const total = activeCountResult
     ? activeCountResult.results.filter((product) => product.active === true)
         .length
@@ -1495,6 +1526,7 @@ export interface SwellProduct {
   description?: string;
   sku?: string;
   price?: number;
+  price_inr?: number;
   stock_level?: number;
   currency?: string;
   active?: boolean;
@@ -1526,6 +1558,142 @@ export interface SwellProductListResult {
   count: number;
   results: SwellProduct[];
   page?: number;
+}
+
+interface SwellLocalizedProductOptions {
+  data?: {
+    products?: {
+      results?: Array<{
+        id: string;
+        price?: number | null;
+        options?: Array<{
+          id?: string | null;
+          name?: string;
+          values?: Array<{
+            id?: string | null;
+            name?: string;
+            price?: number | null;
+          }>;
+        }> | null;
+      }>;
+    } | null;
+  };
+  errors?: Array<{ message: string }>;
+}
+
+async function addInrPricesToProducts(
+  products: SwellProduct[],
+): Promise<SwellProduct[]> {
+  if (products.length === 0) {
+    return [];
+  }
+
+  const storeId = process.env.SWELL_STORE_ID;
+  const publicKey = process.env.SWELL_PUBLIC_KEY;
+  if (!storeId || !publicKey) {
+    throw new Error(
+      "Missing Swell configuration. Set SWELL_STORE_ID and SWELL_PUBLIC_KEY to load INR prices.",
+    );
+  }
+
+  const response = await fetch(`https://${storeId}.swell.store/graphql/v2`, {
+    method: "POST",
+    headers: {
+      Authorization: publicKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: `query ProductPricesInr($where: JSON!) {
+        products(where: $where, limit: 1000, _currency: "INR") {
+          results {
+            id
+            price
+            options {
+              id
+              name
+              values {
+                id
+                name
+                price
+              }
+            }
+          }
+        }
+      }`,
+      variables: {
+        where: { id: { $in: products.map(({ id }) => id) } },
+      },
+    }),
+    next: {
+      revalidate: CATALOG_REVALIDATE_SECONDS,
+      tags: ["swell-products"],
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Swell INR pricing request failed with status ${response.status}.`,
+    );
+  }
+
+  const result = (await response.json()) as SwellLocalizedProductOptions;
+  if (result.errors?.length) {
+    throw new Error(
+      `Swell INR pricing request failed: ${result.errors.map((error) => error.message).join("; ")}`,
+    );
+  }
+
+  const localizedProducts = new Map(
+    (result.data?.products?.results ?? []).map((localized) => [
+      localized.id,
+      localized,
+    ]),
+  );
+  return products.map((product) => {
+    const localizedProduct = localizedProducts.get(product.id);
+    if (!localizedProduct) {
+      throw new Error(
+        `Swell did not return INR prices for product ${product.slug ?? product.id}.`,
+      );
+    }
+
+    const localizedOptionFor = (option: SwellProductOption) =>
+      localizedProduct.options?.find(
+        (localized) => option.id && localized.id === option.id,
+      ) ??
+      localizedProduct.options?.find(
+        (localized) =>
+          localized.name?.trim().toLowerCase() === option.name?.trim().toLowerCase(),
+      );
+
+    return {
+      ...product,
+      ...(coerceOptionalNumber(localizedProduct.price) !== undefined
+        ? { price_inr: coerceOptionalNumber(localizedProduct.price) }
+        : {}),
+      options: product.options?.map((option) => {
+        const localizedOption = localizedOptionFor(option);
+        return {
+          ...option,
+          values: option.values.map((value) => {
+            const localizedValue =
+              localizedOption?.values?.find(
+                (localized) => value.id && localized.id === value.id,
+              ) ??
+              localizedOption?.values?.find(
+                (localized) =>
+                  localized.name?.trim().toLowerCase() ===
+                  value.name?.trim().toLowerCase(),
+              );
+            const priceInr = coerceOptionalNumber(localizedValue?.price);
+            return priceInr === undefined
+              ? value
+              : { ...value, price_inr: priceInr };
+          }),
+        };
+      }),
+    };
+  });
 }
 
 /**
@@ -1610,14 +1778,46 @@ export async function findSwellProductById(
 export const getJewelryProductBySlug = cache(
   async (slug: string): Promise<JewelryProduct | null> => {
     const product = await findSwellProductBySlug(slug);
-    return product ? mapSwellProduct(product) : null;
+    return product
+      ? mapSwellProduct((await addInrPricesToProducts([product]))[0])
+      : null;
   },
 );
+
+export async function getJewelryProductsByIds(
+  productIds: readonly string[],
+): Promise<JewelryProduct[]> {
+  const ids = [...new Set(productIds.filter(Boolean))];
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const params = new URLSearchParams({
+    limit: String(Math.min(ids.length, 1000)),
+    where: JSON.stringify({ id: { $in: ids } }),
+  });
+  const products = await swellFetch<SwellProductListResult>(
+    `/products?${params.toString()}`,
+    {
+      useSecretKey: true,
+      next: {
+        revalidate: CATALOG_REVALIDATE_SECONDS,
+        tags: ["swell-products"],
+      },
+    },
+  );
+  const activeProducts = products.results.filter(
+    (product) => product.active === true,
+  );
+  return (await addInrPricesToProducts(activeProducts)).map((product) =>
+    mapSwellProduct(product),
+  );
+}
 
 export async function getJewelryProductsBySkus(
   skus: readonly string[],
 ): Promise<{ sku: string; product: JewelryProduct }[]> {
-  return Promise.all(
+  const matchedProducts = await Promise.all(
     skus.map(async (sku) => {
       const params = new URLSearchParams({
         search: sku,
@@ -1646,9 +1846,16 @@ export async function getJewelryProductsBySkus(
         throw new Error(`No active Swell product found for SKU "${sku}".`);
       }
 
-      return { sku, product: mapSwellProduct(matchedProduct, 2) };
+      return { sku, product: matchedProduct };
     }),
   );
+  const localizedProducts = await addInrPricesToProducts(
+    matchedProducts.map(({ product }) => product),
+  );
+  return matchedProducts.map(({ sku }, index) => ({
+    sku,
+    product: mapSwellProduct(localizedProducts[index], 2),
+  }));
 }
 
 /* ---------------------------------------------------------------------------

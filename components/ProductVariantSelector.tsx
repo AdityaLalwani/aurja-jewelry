@@ -11,6 +11,7 @@ import {
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import {
   getDefaultVariantSelections,
+  getProductOptionValuePrice,
   getSelectedVariantPrice,
   isNaturalGemstoneSelection,
   type JewelryProduct,
@@ -70,17 +71,29 @@ export function ProductVariantSelector({
     );
     return selectedTotal > 0 ? selectedTotal : product.attributes.price_usd;
   }, [isNaturalGemstone, product.attributes.price_usd, product.variant_options, selectedValues]);
+  const variantPriceInr = useMemo(() => {
+    if (isNaturalGemstone) {
+      return 0;
+    }
+
+    const selectedTotal = getSelectedVariantPrice(
+      product.variant_options ?? [],
+      selectedValues,
+      "INR",
+    );
+    return selectedTotal > 0 ? selectedTotal : product.price_inr;
+  }, [isNaturalGemstone, product.price_inr, product.variant_options, selectedValues]);
 
   const displayProduct = useMemo(
     () => ({
       ...product,
-      price_inr: Math.round(variantPriceUsd * 83),
+      price_inr: variantPriceInr,
       attributes: {
         ...product.attributes,
         price_usd: variantPriceUsd,
       },
     }),
-    [product, variantPriceUsd],
+    [product, variantPriceInr, variantPriceUsd],
   );
   const enquired = enquiredSlugs.includes(product.slug);
 
@@ -222,11 +235,11 @@ export function ProductVariantSelector({
                           style={colorButtonStyle}
                         >
                           <span>{valueName}</span>
-                          {value.price && value.price > 0 ? (
+                          {getProductOptionValuePrice(value, currency) > 0 ? (
                             <span className="ml-2 text-xs opacity-80">
                               {currency === "INR"
-                                ? `₹${new Intl.NumberFormat("en-IN").format(Math.round(value.price * 83))}`
-                                : `$${new Intl.NumberFormat("en-US").format(value.price)}`}
+                                ? `₹${new Intl.NumberFormat("en-IN").format(getProductOptionValuePrice(value, "INR"))}`
+                                : `$${new Intl.NumberFormat("en-US").format(getProductOptionValuePrice(value, "USD"))}`}
                             </span>
                           ) : null}
                         </button>
@@ -255,6 +268,7 @@ export function ProductVariantSelector({
       <ProductActions
         product={product}
         variantPrice={variantPriceUsd}
+        variantPriceInr={variantPriceInr}
         showPriceOnRequest={isNaturalGemstone}
         selectedOptions={selectedValues}
       />

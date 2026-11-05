@@ -207,11 +207,13 @@ function ProductInformation({
 export function ProductActions({
   product,
   variantPrice,
+  variantPriceInr,
   showPriceOnRequest = false,
   selectedOptions = {},
 }: {
   product: JewelryProduct;
   variantPrice?: number;
+  variantPriceInr?: number;
   showPriceOnRequest?: boolean;
   selectedOptions?: Record<string, string>;
 }) {
@@ -230,7 +232,7 @@ export function ProductActions({
       ? product
       : {
           ...product,
-          price_inr: Math.round(variantPrice * 83),
+          price_inr: variantPriceInr ?? product.price_inr,
           attributes: {
             ...product.attributes,
             price_usd: variantPrice,

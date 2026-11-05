@@ -1,6 +1,7 @@
 import {
   getFirstImageUrl,
   getItemOptionSummary,
+  getSelectedVariantPrice,
   isNaturalGemstoneItemOption,
   mapSwellProduct,
   type JewelryProduct,
@@ -127,6 +128,27 @@ function buildCartItemView(
       /^gem\s*stone:\s*natural$/i.test(selection),
     );
   const resolvedPrice = item.price > 0 ? item.price : product ? product.attributes.price_usd : 0;
+  const selectedOptions = Object.fromEntries(
+    (item.options ?? []).flatMap((option) =>
+      option.name && option.value
+        ? [[option.name, String(option.value)]]
+        : [],
+    ),
+  );
+  for (const selection of variantSummary) {
+    const separator = selection.indexOf(":");
+    if (separator > 0) {
+      selectedOptions[selection.slice(0, separator).trim()] =
+        selection.slice(separator + 1).trim();
+    }
+  }
+  const selectedPriceInr = product
+    ? getSelectedVariantPrice(
+        product.variant_options ?? [],
+        selectedOptions,
+        "INR",
+      )
+    : 0;
 
   return {
     id: item.id,
@@ -139,7 +161,11 @@ function buildCartItemView(
     variantSummary,
     showPriceOnRequest,
     price: resolvedPrice,
-    priceInr: showPriceOnRequest ? null : resolvedPrice * 83,
+    priceInr: showPriceOnRequest
+      ? null
+      : selectedPriceInr > 0
+        ? selectedPriceInr
+        : product?.price_inr ?? null,
     priceUsd: showPriceOnRequest ? null : resolvedPrice,
     quantity: item.quantity,
   };
