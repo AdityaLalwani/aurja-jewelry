@@ -1786,32 +1786,30 @@ export const getJewelryProductBySlug = cache(
 
 export async function getJewelryProductsByIds(
   productIds: readonly string[],
-): Promise<JewelryProduct[]> {
+): Promise<{ id: string; product: JewelryProduct }[]> {
   const ids = [...new Set(productIds.filter(Boolean))];
   if (ids.length === 0) {
     return [];
   }
 
-  const params = new URLSearchParams({
-    limit: String(Math.min(ids.length, 1000)),
-    where: JSON.stringify({ id: { $in: ids } }),
-  });
-  const products = await swellFetch<SwellProductListResult>(
-    `/products?${params.toString()}`,
-    {
-      useSecretKey: true,
-      next: {
-        revalidate: CATALOG_REVALIDATE_SECONDS,
-        tags: ["swell-products"],
-      },
-    },
+  const products = (
+    await Promise.all(
+      ids.map(async (id) => {
+        const product = await findSwellProductById(id);
+        return product ? { id, product } : null;
+      }),
+    )
+  ).filter(
+    (entry): entry is { id: string; product: SwellProduct } =>
+      entry !== null,
   );
-  const activeProducts = products.results.filter(
-    (product) => product.active === true,
+  const localizedProducts = await addInrPricesToProducts(
+    products.map(({ product }) => product),
   );
-  return (await addInrPricesToProducts(activeProducts)).map((product) =>
-    mapSwellProduct(product),
-  );
+  return products.map(({ id }, index) => ({
+    id,
+    product: mapSwellProduct(localizedProducts[index]),
+  }));
 }
 
 export async function getJewelryProductsBySkus(

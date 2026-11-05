@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
+import { SiteFooter } from "@/app/components/homepage/SiteFooter";
 import { getJewelryProductBySlug } from "@/lib/swell";
 
 type ProductPageProps = {
@@ -70,43 +71,48 @@ export default async function ProductPage(props: ProductPageProps) {
       : []),
   ];
   return (
-    <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-0 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10">
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-7 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-neutral-500"
-      >
-        <Link href="/" className="transition-colors hover:text-gold-link">
-          Home
-        </Link>
-        <span className="text-neutral-300">&gt;</span>
-        <Link href="/products" className="transition-colors hover:text-gold-link">
-          Product
-        </Link>
-        <span className="text-neutral-300">&gt;</span>
-        <span className="min-w-0 truncate text-neutral-700">
-          {product.name.toUpperCase()}
-        </span>
-      </nav>
+    <>
+      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-56 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10 lg:pb-0">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-7 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-neutral-500"
+        >
+          <Link href="/" className="transition-colors hover:text-gold-link">
+            Home
+          </Link>
+          <span className="text-neutral-300">&gt;</span>
+          <Link
+            href="/products"
+            className="transition-colors hover:text-gold-link"
+          >
+            Product
+          </Link>
+          <span className="text-neutral-300">&gt;</span>
+          <span className="min-w-0 truncate text-neutral-700">
+            {product.name.toUpperCase()}
+          </span>
+        </nav>
 
-      <div className="grid min-w-0 grid-cols-1 gap-8 lg:min-h-0 lg:flex-1 lg:grid-cols-[1.08fr_0.92fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch">
-        <div className="min-w-0 space-y-4">
-          <ProductGallery
-            images={product.images}
-            name={product.name}
-            stockLevel={product.stock_level}
-            youtubeId={attributes.youtube_id}
-          />
+        <div className="grid min-w-0 grid-cols-1 gap-8 lg:min-h-0 lg:flex-1 lg:grid-cols-[1.08fr_0.92fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch">
+          <div className="min-w-0 space-y-4">
+            <ProductGallery
+              images={product.images}
+              name={product.name}
+              stockLevel={product.stock_level}
+              youtubeId={attributes.youtube_id}
+            />
+          </div>
 
-        </div>
-
-        <div className="min-w-0 flex flex-col gap-8 pb-32 pt-2 lg:min-h-0 lg:overflow-y-auto">
-          <ProductVariantSelector
-            product={product}
-            description={description}
-            specifications={specifications}
-          />
+          <div className="min-w-0 flex flex-col gap-8 pb-0 pt-2 lg:min-h-0 lg:overflow-y-auto lg:pb-56">
+            <ProductVariantSelector
+              product={product}
+              description={description}
+              specifications={specifications}
+            />
+          </div>
         </div>
       </div>
-    </div>
+      <SiteFooter />
+    </>
   );
 }

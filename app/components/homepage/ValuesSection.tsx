@@ -64,46 +64,45 @@ export function ValuesSection() {
       >
         <defs>
           <linearGradient id="aurja-values-sky" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#c69691" />
-            <stop offset="44%" stopColor="#765c6b" />
-            <stop offset="100%" stopColor="#302631" />
+            <stop offset="0%" stopColor="#f1c99f" />
+            <stop offset="44%" stopColor="#d99562" />
+            <stop offset="100%" stopColor="#a95732" />
           </linearGradient>
           <linearGradient id="aurja-values-hills" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#453543" />
-            <stop offset="100%" stopColor="#211b25" />
+            <stop offset="0%" stopColor="#b76d42" />
+            <stop offset="100%" stopColor="#783c23" />
           </linearGradient>
         </defs>
         <rect width="1440" height="760" fill="url(#aurja-values-sky)" />
         <path
           d="M0 278 110 310 235 276 350 305 490 264 620 285 790 237 925 257 1100 187 1220 205 1360 157 1440 172V760H0Z"
-          fill="#392f3d"
-          opacity=".58"
+          fill="#d29460"
+          opacity=".9"
         />
         <path
           d="m0 350 130-37 108 30 134-62 137 25 153-45 117 17 138-70 118 16 122-72 130-32 153 38v602H0Z"
           fill="url(#aurja-values-hills)"
-          opacity=".8"
+          opacity=".94"
         />
         <path
           d="m0 466 145-38 118 27 146-48 147 36 137-30 170 38 139-52 147 25 123-53 168 41v348H0Z"
-          fill="#241e28"
-          opacity=".76"
+          fill="#814326"
+          opacity=".96"
         />
-        <rect width="1440" height="760" fill="#281f2b" opacity=".14" />
       </svg>
       <div className="relative mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24 lg:py-28">
         <header className="mx-auto max-w-4xl text-center">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-[#f3d6c6]">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-[#60381f]">
             {values.eyebrow}
           </p>
-          <h2 className="mt-4 whitespace-nowrap font-display text-[clamp(1.05rem,5.4vw,3.6rem)] font-normal leading-tight tracking-[-0.045em] text-[#fff5eb] sm:mt-5">
+          <h2 className="mt-4 whitespace-nowrap font-display text-[clamp(1.05rem,5.4vw,3.6rem)] font-normal leading-tight tracking-[-0.045em] text-[#4c2b1a] sm:mt-5">
             {values.title}
           </h2>
           <span
             aria-hidden
-            className="mx-auto mt-6 block h-px w-14 bg-[#f0c7a9]/70 sm:mt-7"
+            className="mx-auto mt-6 block h-px w-14 bg-[#78482b]/65 sm:mt-7"
           />
-          <p className="mt-5 font-display text-sm italic leading-relaxed text-[#f6e1d4]/90 sm:text-lg">
+          <p className="mt-5 font-display text-sm italic leading-relaxed text-[#60381f]/90 sm:text-lg">
             {values.subtitle}
           </p>
         </header>
@@ -115,9 +114,6 @@ export function ValuesSection() {
               className="motion-safe:animate-fade-up flex flex-col items-center text-center"
               style={{ animationDelay: `${index * 120}ms` }}
             >
-              <span className="mb-2 text-[0.65rem] tracking-[0.16em] text-[#e9c5ae]/75 sm:mb-3 sm:text-xs">
-                {String(index + 1).padStart(2, "0")}
-              </span>
               <span className="text-[#fff0e2]">
                 <PrincipleIcon icon={item.icon} />
               </span>

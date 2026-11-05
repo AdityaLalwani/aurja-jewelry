@@ -13,7 +13,8 @@ type FacetKey =
   | "productCategory"
   | "shopFor"
   | "diamondClarity"
-  | "style";
+  | "style"
+  | "occasion";
 
 type SortOrder =
   | "featured"
@@ -28,6 +29,7 @@ const FACETS: { key: FacetKey; label: string }[] = [
   { key: "shopFor", label: "Shop For" },
   { key: "diamondClarity", label: "Diamond Clarity" },
   { key: "style", label: "Style" },
+  { key: "occasion", label: "Occasion" },
 ];
 
 function shuffleProducts(products: JewelryProduct[]) {
@@ -57,6 +59,8 @@ function getFacetValue(product: JewelryProduct, key: FacetKey): string | null {
         : attributes.diamond_clarity;
     case "style":
       return attributes.collection ?? null;
+    case "occasion":
+      return attributes.occasion ?? null;
   }
 }
 
@@ -102,6 +106,7 @@ export function ProductGrid({
     shopFor: [],
     diamondClarity: [],
     style: [],
+    occasion: [],
   });
   const [minimumPrice, setMinimumPrice] = useState("");
   const [maximumPrice, setMaximumPrice] = useState("");
@@ -192,6 +197,7 @@ export function ProductGrid({
       shopFor: [],
       diamondClarity: [],
       style: [],
+      occasion: [],
     });
     setMinimumPrice("");
     setMaximumPrice("");

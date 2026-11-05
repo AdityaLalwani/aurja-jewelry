@@ -503,6 +503,10 @@ body.frame-film-header-hidden .site-header-shell {
   isolation: isolate;
 }
 
+.home-page {
+  overflow-x: clip;
+}
+
 .home-page .home-categories::before,
 .home-page .home-values::before,
 .home-page #social::before,

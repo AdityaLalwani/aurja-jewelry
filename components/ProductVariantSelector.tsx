@@ -6,6 +6,7 @@ import { ProductSpecifications } from "@/components/ProductSpecifications";
 import { ProductStoneDetails } from "@/components/ProductStoneDetails";
 import {
   BookOpenIcon,
+  ChevronDownIcon,
   ClipboardListIcon,
 } from "@/app/components/icons";
 import { formatPrice, useStore } from "@/components/StoreProvider";
@@ -306,17 +307,24 @@ export function ProductVariantSelector({
 
       <section
         id="product-specifications"
-        className="scroll-mt-24 border-t border-neutral-200"
+        className="scroll-mt-24"
         aria-labelledby="product-specifications-heading"
       >
-        <h2
-          id="product-specifications-heading"
-          className="mb-5 flex items-center gap-2 text-sm font-medium text-neutral-800"
-        >
-          <ClipboardListIcon className="h-4 w-4" />
-          Product Specifications
-        </h2>
-        <ProductSpecifications specifications={resolvedSpecifications} />
+        <details className="group border-t border-neutral-200">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
+            <h2
+              id="product-specifications-heading"
+              className="flex items-center gap-2 text-sm font-medium text-neutral-800"
+            >
+              <ClipboardListIcon className="h-4 w-4" />
+              Product Specifications
+            </h2>
+            <ChevronDownIcon className="h-4 w-4 shrink-0 text-neutral-600 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="pb-3">
+            <ProductSpecifications specifications={resolvedSpecifications} />
+          </div>
+        </details>
       </section>
       <ProductStoneDetails details={product.stone_details ?? []} />
     </>

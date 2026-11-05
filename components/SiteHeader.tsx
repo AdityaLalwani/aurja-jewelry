@@ -25,6 +25,9 @@ export function SiteHeader({
   const isHomePage = pathname === "/";
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(
+    null,
+  );
   const overVideo = isHomePage && !isScrolled;
   const iconLinkClass = overVideo
     ? "relative rounded-full border border-white/35 p-1.5 text-white transition-colors hover:border-white hover:bg-white/10 sm:p-2"
@@ -238,7 +241,7 @@ export function SiteHeader({
           role="dialog"
           aria-modal="true"
           aria-label="Shop Aurja"
-          className={`absolute inset-y-0 left-0 flex w-full max-w-5xl flex-col overflow-y-auto bg-cream px-5 pb-8 pt-3 shadow-2xl transition-transform duration-300 ease-out sm:px-8 ${
+          className={`absolute inset-y-0 left-0 flex w-full sm:max-w-md flex-col overflow-y-auto bg-cream px-5 pb-8 pt-3 shadow-2xl transition-transform duration-300 ease-out sm:px-8 ${
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -298,7 +301,7 @@ export function SiteHeader({
             </div>
           </div>
 
-          <div className="grid gap-6 py-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
+          <div className="grid gap-6 py-6">
             <div>
               <nav aria-label="Shop categories">
                 <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-500">
@@ -309,10 +312,39 @@ export function SiteHeader({
                     const subcategories = categories.filter(
                       (subcategory) => subcategory.parentId === category.id,
                     );
+                    const hasSubcategories = subcategories.length > 0;
+                    const isExpanded = expandedCategoryId === category.id;
+                    const subcategoryListId = `category-${category.id}-subcategories`;
 
                     return (
                       <li key={category.id} className="py-3">
-                        {category.name.toLowerCase() === "collections" ? (
+                        {hasSubcategories ? (
+                          <button
+                            type="button"
+                            aria-expanded={isExpanded}
+                            aria-controls={subcategoryListId}
+                            onClick={() =>
+                              setExpandedCategoryId(
+                                isExpanded ? null : category.id,
+                              )
+                            }
+                            className="flex w-full items-center justify-between gap-3 py-1 text-left font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                          >
+                            {category.name}
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              className={`h-5 w-5 shrink-0 transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                              aria-hidden="true"
+                            >
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          </button>
+                        ) : category.name.toLowerCase() === "collections" ? (
                           <span className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900">
                             {category.name}
                           </span>
@@ -325,8 +357,13 @@ export function SiteHeader({
                             {category.name}
                           </Link>
                         )}
-                        {subcategories.length > 0 && (
-                          <ul className="mt-1 grid grid-cols-3 gap-x-5 gap-y-2 pl-3">
+                        {hasSubcategories && (
+                          <ul
+                            id={subcategoryListId}
+                            className={`mt-2 grid grid-cols-2 gap-x-5 gap-y-3 border-l border-neutral-200 pl-3 ${
+                              isExpanded ? "" : "hidden"
+                            }`}
+                          >
                             {subcategories.map((subcategory) => (
                               <li key={subcategory.id}>
                                 <Link

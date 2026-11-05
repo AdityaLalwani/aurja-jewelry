@@ -3,7 +3,7 @@ export default function ProductLoading() {
     <div
       role="status"
       aria-label="Loading product details"
-      className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-32 pt-8 sm:px-6 lg:px-10"
+      className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-56 pt-8 sm:px-6 lg:px-10 lg:pb-0"
     >
       <div className="mb-7 h-3 w-72 animate-pulse rounded bg-neutral-200" />
       <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">

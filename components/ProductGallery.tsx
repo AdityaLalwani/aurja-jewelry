@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 export function ProductGallery({
@@ -21,6 +21,10 @@ export function ProductGallery({
   const visibleImages = galleryImages.slice(0, validYoutubeId ? 5 : 6);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const mobileGalleryRef = useRef<HTMLDivElement>(null);
+  const [mobileActiveIndex, setMobileActiveIndex] = useState(0);
+  const mobileItemCount = visibleImages.length + (validYoutubeId ? 1 : 0);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -55,7 +59,129 @@ export function ProductGallery({
     <>
       <div className="space-y-3">
         {visibleImages.length > 0 || validYoutubeId ? (
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:overflow-visible">
+          <div
+            ref={mobileGalleryRef}
+            onScroll={(event) => {
+              const carousel = event.currentTarget;
+              const left = carousel.getBoundingClientRect().left;
+              let closestIndex = 0;
+              let closestDistance = Number.POSITIVE_INFINITY;
+
+              Array.from(carousel.children).forEach((child, index) => {
+                const distance = Math.abs(
+                  child.getBoundingClientRect().left - left,
+                );
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestIndex = index;
+                }
+              });
+
+              setMobileActiveIndex(closestIndex);
+            }}
+            className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+          >
+            {visibleImages.slice(0, 1).map((image, index) => (
+              <button
+                key={`${image}-${index}`}
+                type="button"
+                onClick={() => {
+                  setActiveIndex(index);
+                  setIsExpanded(true);
+                }}
+                className="relative aspect-[5/6] w-full shrink-0 snap-center overflow-hidden bg-[#efefeb]"
+                aria-label={`Open image ${index + 1}${index === 0 && stockLevel === 1 ? ", only 1 left" : ""}`}
+              >
+                <Image
+                  src={normalizeImageSource(image)}
+                  loader={imageKitLoader}
+                  alt={`${name} — view ${index + 1}`}
+                  fill
+                  priority={index === 0}
+                  sizes="90vw"
+                  className="object-cover"
+                />
+                {index === 0 && stockLevel === 1 ? (
+                  <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/95 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-800 shadow-sm">
+                    Only 1 left
+                  </span>
+                ) : null}
+              </button>
+            ))}
+            {validYoutubeId ? (
+              <div className="relative aspect-[5/6] w-full shrink-0 snap-center overflow-hidden bg-[#efefeb]">
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${validYoutubeId}?autoplay=1&mute=1&loop=1&playlist=${validYoutubeId}&rel=0&playsinline=1`}
+                  title={`${name} video`}
+                  className="pointer-events-none absolute inset-0 h-full w-full sm:pointer-events-auto"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            ) : null}
+            {visibleImages.slice(1).map((image, index) => {
+              const actualIndex = index + 1;
+              return (
+                <button
+                  key={`${image}-${actualIndex}`}
+                  type="button"
+                  onClick={() => {
+                    setActiveIndex(actualIndex);
+                    setIsExpanded(true);
+                  }}
+                  className="relative aspect-[5/6] w-full shrink-0 snap-center overflow-hidden bg-[#efefeb]"
+                  aria-label={`Open image ${actualIndex + 1}`}
+                >
+                  <Image
+                    src={normalizeImageSource(image)}
+                    loader={imageKitLoader}
+                    alt={`${name} — view ${actualIndex + 1}`}
+                    fill
+                    sizes="90vw"
+                    className="object-cover"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {mobileItemCount > 1 ? (
+          <div
+            className="flex items-center justify-center gap-2 sm:hidden"
+            role="group"
+            aria-label="Product media"
+          >
+            {Array.from({ length: mobileItemCount }, (_, index) => (
+              <button
+                key={index}
+                type="button"
+                aria-label={`Go to item ${index + 1} of ${mobileItemCount}`}
+                aria-current={mobileActiveIndex === index ? "true" : undefined}
+                onClick={() => {
+                  const carousel = mobileGalleryRef.current;
+                  const item = carousel?.children.item(index);
+                  if (!carousel || !(item instanceof HTMLElement)) return;
+
+                  carousel.scrollTo({
+                    left:
+                      carousel.scrollLeft +
+                      item.getBoundingClientRect().left -
+                      carousel.getBoundingClientRect().left,
+                    behavior: "smooth",
+                  });
+                }}
+                className={`h-2 rounded-full transition-all ${
+                  mobileActiveIndex === index
+                    ? "w-5 bg-neutral-800"
+                    : "w-2 bg-neutral-300"
+                }`}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {visibleImages.length > 0 || validYoutubeId ? (
+          <div className="hidden snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:overflow-visible">
             {visibleImages
               .slice(0, validYoutubeId ? 1 : 2)
               .map((image, index) => (
@@ -90,7 +216,7 @@ export function ProductGallery({
                 <iframe
                   src={`https://www.youtube-nocookie.com/embed/${validYoutubeId}?autoplay=1&mute=1&loop=1&playlist=${validYoutubeId}&rel=0&playsinline=1`}
                   title={`${name} video`}
-                  className="absolute inset-0 h-full w-full"
+                  className="pointer-events-none absolute inset-0 h-full w-full sm:pointer-events-auto"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
@@ -106,7 +232,7 @@ export function ProductGallery({
         )}
 
         {visibleImages.length > (validYoutubeId ? 1 : 2) && (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="hidden grid-cols-4 gap-3 sm:grid">
             {visibleImages
               .slice(validYoutubeId ? 1 : 2)
               .map((image, index) => {
@@ -184,7 +310,35 @@ export function ProductGallery({
               ))}
             </div>
 
-            <div className="relative min-h-0 min-w-0 flex-1">
+            <div
+              className="relative min-h-0 min-w-0 flex-1 touch-pan-y"
+              onTouchStart={(event) => {
+                const touch = event.touches[0];
+                touchStart.current = { x: touch.clientX, y: touch.clientY };
+              }}
+              onTouchEnd={(event) => {
+                const start = touchStart.current;
+                const touch = event.changedTouches[0];
+                touchStart.current = null;
+                if (!start || !touch) return;
+
+                const deltaX = touch.clientX - start.x;
+                const deltaY = touch.clientY - start.y;
+                if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+                  return;
+                }
+
+                setActiveIndex((index) =>
+                  Math.min(
+                    galleryImages.length - 1,
+                    Math.max(0, index + (deltaX < 0 ? 1 : -1)),
+                  ),
+                );
+              }}
+              onTouchCancel={() => {
+                touchStart.current = null;
+              }}
+            >
               {featureImage ? (
                 <Image
                   src={normalizeImageSource(featureImage)}

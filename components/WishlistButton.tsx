@@ -5,9 +5,11 @@ import { useStore } from "@/components/StoreProvider";
 export function WishlistButton({
   slug,
   className = "",
+  iconClassName = "h-3 w-3 sm:h-5 sm:w-5",
 }: {
   slug: string;
   className?: string;
+  iconClassName?: string;
 }) {
   const { isWishlisted, toggleWishlist } = useStore();
   const saved = isWishlisted(slug);
@@ -19,10 +21,10 @@ export function WishlistButton({
       aria-pressed={saved}
       title={saved ? "Remove from wishlist" : "Add to wishlist"}
       onClick={() => toggleWishlist(slug)}
-      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white/90 shadow-sm backdrop-blur transition-colors sm:h-10 sm:w-10 ${
+      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition-colors sm:h-10 sm:w-10 ${
         saved
           ? "border-red-600 text-red-600 hover:border-red-700 hover:text-red-700"
-          : "border-neutral-200 text-neutral-600 hover:border-gold hover:text-gold"
+          : "border-neutral-200 text-neutral-700 hover:border-gold hover:text-gold"
       } ${className}`}
     >
       <svg
@@ -30,7 +32,7 @@ export function WishlistButton({
         fill={saved ? "currentColor" : "none"}
         stroke="currentColor"
         strokeWidth="1.6"
-        className="h-3 w-3 sm:h-5 sm:w-5"
+        className={iconClassName}
         aria-hidden="true"
       >
         <path d="M12 20.5c-5.5-4-8.5-7-8.5-10.5a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2c0 3.5-3 6.5-8.5 10.5z" />

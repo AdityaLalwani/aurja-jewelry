@@ -763,7 +763,10 @@ export async function submitCartEnquiryAction(
       cartItems.map((item) => item.product_id),
     );
     const productLookup = Object.fromEntries(
-      localizedProducts.map((product) => [product.slug, product]),
+      localizedProducts.flatMap(({ id, product }) => [
+        [id, product],
+        [product.slug, product],
+      ]),
     );
     const cartView = buildCartView(resolved.cart, productLookup);
     const items = cartView.items.map((viewItem) => {

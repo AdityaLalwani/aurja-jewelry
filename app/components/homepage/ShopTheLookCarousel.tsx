@@ -149,7 +149,7 @@ export function ShopTheLookCarousel({
   }
 
   return (
-    <div className="relative left-1/2 isolate h-[min(41vw,730px)] min-h-[440px] w-screen -translate-x-1/2 overflow-hidden bg-transparent max-md:h-[560px] max-sm:h-[480px]">
+    <div className="relative left-1/2 isolate h-[min(41vw,730px)] min-h-[440px] w-full -translate-x-1/2 overflow-hidden bg-transparent max-md:h-[560px] max-sm:h-[480px]">
       <div
         className="absolute inset-x-0 inset-y-0 max-sm:bottom-auto max-sm:h-[290px]"
         onTouchStart={handleSceneTouchStart}

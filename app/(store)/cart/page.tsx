@@ -39,7 +39,10 @@ export default async function CartPage() {
     (cart?.items ?? []).map((item) => item.product_id),
   );
   const productLookup = Object.fromEntries(
-    products.map((product) => [product.slug, product]),
+    products.flatMap(({ id, product }) => [
+      [id, product],
+      [product.slug, product],
+    ]),
   );
 
   const view = buildCartView(cart, productLookup);

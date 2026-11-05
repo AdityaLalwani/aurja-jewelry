@@ -15,7 +15,7 @@ const SECTION_SPACING = "mt-12";
 const SECTION_CONTENT_SPACING = "mt-6";
 const SECTION_HEADING_CLASS =
   "font-display text-base font-normal text-neutral-700";
-const PLACEHOLDER_TERMS = ["necklace", "diamond jewellery", "rings"];
+const PLACEHOLDER_TERMS = ["necklace", "diamond jewellery", "rings", "SKU"];
 
 type CategoryIllustrationName =
   | "rings"
@@ -193,6 +193,7 @@ function matchesQuery(product: JewelryProduct, query: string) {
   if (terms.length === 0) return true;
   const haystack = [
     product.name,
+    product.sku,
     product.description,
     product.attributes.product_story,
     product.attributes.metal_type,

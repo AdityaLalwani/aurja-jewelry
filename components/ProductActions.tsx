@@ -304,7 +304,8 @@ export function ProductActions({
 
             <WishlistButton
               slug={product.slug}
-              className="h-10 w-10 rounded-full border-neutral-300 bg-neutral-100 shadow-none sm:h-12 sm:w-12"
+              className="h-10 w-10 rounded-full border-neutral-300 bg-white text-neutral-700 shadow-none sm:h-12 sm:w-12"
+              iconClassName="block h-5 w-5 shrink-0"
             />
 
             {inCart ? (

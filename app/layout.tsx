@@ -15,6 +15,7 @@ import {
 import { headers } from "next/headers";
 import { CookiePreferences } from "@/components/CookiePreferences";
 import { getSessionAccountId } from "@/lib/session";
+import { LoginPrompt } from "@/components/LoginPrompt";
 
 async function getNavigationCategories(): Promise<StoreCategory[]> {
   const categories = await getStoreCategories();
@@ -87,6 +88,7 @@ export default async function RootLayout({
             bestSellers={bestSellerProducts.map(({ product }) => product)}
             isAuthenticated={accountId !== null}
           />
+          <LoginPrompt isAuthenticated={accountId !== null} />
           <Suspense fallback={null}>
             <CartSnapshot />
           </Suspense>
