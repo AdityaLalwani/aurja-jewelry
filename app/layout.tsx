@@ -54,7 +54,10 @@ export const metadata: Metadata = {
   description: `${site.name} — ${site.tagline}. Crafted jewelry, made to be treasured.`,
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({
+  children,
+  modal,
+}: LayoutProps<"/">) {
   const [categories, bestSellerProducts, requestHeaders, accountId] =
     await Promise.all([
       getNavigationCategories(),
@@ -87,6 +90,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={null}>
             <CartSnapshot />
           </Suspense>
+          {modal}
           {children}
           <CookiePreferences />
         </StoreProvider>

@@ -312,15 +312,21 @@ export function SiteHeader({
 
                     return (
                       <li key={category.id} className="py-3">
-                        <Link
-                          href={`/products?category=${category.slug}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-                        >
-                          {category.name}
-                        </Link>
+                        {category.name.toLowerCase() === "collections" ? (
+                          <span className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900">
+                            {category.name}
+                          </span>
+                        ) : (
+                          <Link
+                            href={`/products?category=${category.slug}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                          >
+                            {category.name}
+                          </Link>
+                        )}
                         {subcategories.length > 0 && (
-                          <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-2 pl-3">
+                          <ul className="mt-1 grid grid-cols-3 gap-x-5 gap-y-2 pl-3">
                             {subcategories.map((subcategory) => (
                               <li key={subcategory.id}>
                                 <Link
@@ -346,19 +352,17 @@ export function SiteHeader({
                       Aurja Story
                     </Link>
                   </li>
+                  <li className="py-3">
+                    <Link
+                      href="/custom-design"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                    >
+                      Customization
+                    </Link>
+                  </li>
                 </ul>
               </nav>
-
-              <Link
-                href="/custom-design"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-6 hidden min-h-14 items-center justify-between rounded-full bg-stone-950 px-6 text-sm font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 sm:flex"
-              >
-                custom design
-                <span aria-hidden="true" className="text-lg">
-                  ↗
-                </span>
-              </Link>
             </div>
 
             <section aria-labelledby="menu-best-sellers">
@@ -407,16 +411,6 @@ export function SiteHeader({
                 ))}
               </ul>
             </section>
-            <Link
-              href="/custom-design"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex min-h-14 items-center justify-between rounded-full bg-stone-950 px-6 text-sm font-medium uppercase tracking-[0.14em] text-white transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 sm:hidden"
-            >
-              custom design
-              <span aria-hidden="true" className="text-lg">
-                ↗
-              </span>
-            </Link>
           </div>
         </div>
       </div>

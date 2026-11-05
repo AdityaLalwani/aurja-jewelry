@@ -128,6 +128,13 @@ export const BEST_SELLER_SKUS = [
   "ASR001",
   "ASER001",
   "ASN001",
+  "ASB001"
+] as const;
+
+export const TRENDING_PRODUCT_SKUS = [
+  "ASR001",
+  "ASER001",
+  "ASN001",
   "ASB001",
   "ASR002",
   "ASER002",

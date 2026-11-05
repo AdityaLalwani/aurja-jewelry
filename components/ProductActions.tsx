@@ -316,7 +316,6 @@ export function ProductActions({
               <form action={formAction} className="min-w-32 sm:min-w-52">
                 <input type="hidden" name="slug" value={product.slug} />
                 <input type="hidden" name="quantity" value="1" />
-                <input type="hidden" name="redirect" value="cart" />
                 <input
                   type="hidden"
                   name="selectedOptions"

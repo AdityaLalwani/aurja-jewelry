@@ -1,11 +1,11 @@
 import { SearchExperience } from "@/components/SearchExperience";
-import { BEST_SELLER_SKUS } from "@/lib/site";
+import { TRENDING_PRODUCT_SKUS } from "@/lib/site";
 import { getJewelryProducts, getJewelryProductsBySkus } from "@/lib/swell";
 
 export default async function SearchPage() {
   const [products, bestSellerProducts] = await Promise.all([
     getJewelryProducts(),
-    getJewelryProductsBySkus(BEST_SELLER_SKUS),
+    getJewelryProductsBySkus(TRENDING_PRODUCT_SKUS),
   ]);
 
   return (

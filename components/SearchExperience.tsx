@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
 import type { JewelryProduct } from "@/lib/swell";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
+import { home } from "@/lib/site";
 
 const inputClasses =
   "w-full rounded-full border border-neutral-300 bg-white py-3.5 pl-5 pr-12 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-gold focus:outline-none";
@@ -16,21 +17,41 @@ const SECTION_HEADING_CLASS =
   "font-display text-base font-normal text-neutral-700";
 const PLACEHOLDER_TERMS = ["necklace", "diamond jewellery", "rings"];
 
-const SEARCH_CATEGORIES = [
-  { slug: "solitaires", name: "Solitaires", illustration: "solitaire" },
-  { slug: "earrings", name: "Earrings", illustration: "earrings" },
-  { slug: "rings", name: "Rings", illustration: "rings" },
-  { slug: "pendants", name: "Pendants", illustration: "pendant" },
-  {
-    slug: "pendant-with-chain",
-    name: "Pendant with chain",
-    illustration: "pendant-chain",
-  },
-  { slug: "pendant-set", name: "Pendant set", illustration: "pendant-set" },
-] as const;
-
 type CategoryIllustrationName =
-  (typeof SEARCH_CATEGORIES)[number]["illustration"];
+  | "rings"
+  | "earrings"
+  | "pendant"
+  | "bracelet"
+  | "necklace"
+  | "silver"
+  | "solitaire";
+
+type SearchCategory = {
+  slug: string;
+  name: string;
+  illustration: CategoryIllustrationName;
+};
+
+const SEARCH_CATEGORIES: SearchCategory[] = home.categories.items.map(
+  (category) => ({
+    slug: category.slug,
+    name: category.name,
+    illustration:
+      category.slug === "rings"
+        ? "rings"
+        : category.slug === "earrings"
+          ? "earrings"
+          : category.slug === "pendants"
+            ? "pendant"
+            : category.slug === "bracelets"
+              ? "bracelet"
+              : category.slug === "necklaces"
+                ? "necklace"
+                : category.slug === "silver"
+                  ? "silver"
+                  : "solitaire",
+  }),
+);
 
 function CategoryIllustration({
   name,
@@ -77,6 +98,15 @@ function CategoryIllustration({
           <path d="m14 36 24 15" className="text-[#a51f27]" />
         </>
       )}
+      {name === "silver" && (
+        <>
+          <ellipse cx="28" cy="32" rx="20" ry="9" transform="rotate(-35 28 32)" />
+          <ellipse cx="28" cy="32" rx="15" ry="5" transform="rotate(-35 28 32)" />
+          <ellipse cx="36" cy="32" rx="20" ry="9" transform="rotate(35 36 32)" />
+          <ellipse cx="36" cy="32" rx="15" ry="5" transform="rotate(35 36 32)" />
+          <path d="m15 41 5-2m24-14 5-2M19 24l5-2m17 20 5-2" className="text-neutral-400" />
+        </>
+      )}
       {name === "pendant" && (
         <>
           <path d="M31 7v11" />
@@ -85,6 +115,51 @@ function CategoryIllustration({
           <path d="m31 25-7 13 7 12 7-12-7-13Z" />
           <path d="m24 38 7 3 7-3M31 25v26" className="text-[#a51f27]" />
         </>
+      )}
+      {name === "bracelet" && (
+        <g transform="translate(1 7)">
+          <path d="M15 40C4 40 4 30 7 22 12 10 25 5 37 6c12 1 21 7 21 16 0 3-1 6-3 8" />
+          <g transform="rotate(-8 16 39)">
+            <rect x="12" y="36" width="8" height="6" rx="2" />
+            <path d="M16 36v6" className="text-[#a51f27]" />
+          </g>
+          <g transform="rotate(-5 23 40)">
+            <rect x="19" y="37" width="8" height="6" rx="2" />
+            <path d="M23 37v6" className="text-[#a51f27]" />
+          </g>
+          <g transform="rotate(-8 30 39)">
+            <rect x="26" y="36" width="8" height="6" rx="2" />
+            <path d="M30 36v6" className="text-[#a51f27]" />
+          </g>
+          <g transform="rotate(-15 37 37)">
+            <rect x="33" y="34" width="8" height="6" rx="2" />
+            <path d="M37 34v6" className="text-[#a51f27]" />
+          </g>
+          <g transform="rotate(-25 43 34)">
+            <rect x="39" y="31" width="8" height="6" rx="2" />
+            <path d="M43 31v6" className="text-[#a51f27]" />
+          </g>
+          <g transform="rotate(-38 48 30)">
+            <rect x="44" y="27" width="8" height="6" rx="2" />
+            <path d="M48 27v6" className="text-[#a51f27]" />
+          </g>
+          <g transform="rotate(-52 52 25)">
+            <rect x="48" y="22" width="8" height="6" rx="2" />
+            <path d="M52 22v6" className="text-[#a51f27]" />
+          </g>
+          <g transform="rotate(-65 55 20)">
+            <rect x="51" y="17" width="8" height="6" rx="2" />
+            <path d="M55 17v6" className="text-[#a51f27]" />
+          </g>
+        </g>
+      )}
+      {name === "necklace" && (
+        <g transform="translate(0 -2)">
+          <path d="M14 5c0 16 6 31 18 37 12-6 18-21 18-37" />
+          <path d="M32 42v3" />
+          <path d="m32 46 7 4v8l-7 4-7-4v-8l7-4Z" />
+          <path d="m32 46v8m0 8v-8m0 0 7-4m-7 4-7-4m7 4 7 4m-7-4-7 4" />
+        </g>
       )}
       {name === "pendant-chain" && (
         <>
