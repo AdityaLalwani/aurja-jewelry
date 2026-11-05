@@ -113,8 +113,7 @@ export type CategoryConfig = {
 };
 
 export type ValueConfig = {
-  /** Icon key — mapped to an icon component inside ValuesSection. */
-  icon: "diamond" | "shield" | "sparkles" | "truck";
+  icon: "leaf" | "heart" | "diamond" | "star";
   title: string;
   description: string;
 };
@@ -170,6 +169,7 @@ export type HomeConfig = {
   values: {
     eyebrow: string;
     title: string;
+    subtitle: string;
     items: ValueConfig[];
   };
   instagram: {
@@ -272,32 +272,33 @@ export const home: HomeConfig = {
     image: "/intro.webp",
   },
   values: {
-    eyebrow: "The AURJA Way",
-    title: "Our Philosophy",
+    eyebrow: "THE AURJA WAY",
+    title: "Thoughtful. Trustworthy. Timeless.",
+    subtitle: "Four principles that guide everything we do.",
     items: [
       {
+        icon: "leaf",
+        title: "Conscious by Choice",
+        description:
+          "Beautiful jewellery comes with responsibility. We make thoughtful choices in sourcing, crafting and packaging, with sustainability in mind.",
+      },
+      {
+        icon: "heart",
+        title: "Family Beyond Business",
+        description:
+          "Our clients are family. Their trust, happiness and satisfaction guide everything we do, and every experience deserves to feel special.",
+      },
+      {
         icon: "diamond",
-        title: "Direct from our hands",
+        title: "Trust in Every Detail",
         description:
-          "From initial sketch to final polish, each creation is crafted, inspected, and finished to ensure it meets our exacting standards.",
+          "Every piece reflects quality and authenticity, with hallmarked gold and certified diamonds and gemstones for confidence in every purchase.",
       },
       {
-        icon: "shield",
-        title: "Trusted, always",
+        icon: "star",
+        title: "Made to Last, Made to Matter",
         description:
-          "Verified gold/silver and certified diamonds. Every stone documented, every claim verifiable.",
-      },
-      {
-        icon: "sparkles",
-        title: "Sustainable Processes",
-        description:
-          "Made by hand in small, considered batches. Never mass-produced, never rushed.",
-      },
-      {
-        icon: "truck",
-        title: "Built to endure",
-        description:
-          "We stand behind the enduring quality of our jewelry and complimentary insured shipping across World.",
+          "Thoughtfully designed and carefully crafted, our jewellery becomes part of your stories, milestones and memories for years to come.",
       },
     ],
   },
