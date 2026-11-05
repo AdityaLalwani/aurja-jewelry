@@ -1,11 +1,27 @@
 "use client";
 
-import { useLayoutEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 
 export function SearchDialog({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [topOffset, setTopOffset] = useState(0);
+  const [closing, setClosing] = useState(false);
+  const closeStarted = useRef(false);
+
+  const closeDialog = useCallback(() => {
+    if (closeStarted.current) return;
+
+    closeStarted.current = true;
+    setClosing(true);
+    router.back();
+  }, [router]);
 
   useLayoutEffect(() => {
     const header = document.querySelector("header");
@@ -25,7 +41,7 @@ export function SearchDialog({ children }: { children: ReactNode }) {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        router.back();
+        closeDialog();
       }
     };
 
@@ -37,7 +53,7 @@ export function SearchDialog({ children }: { children: ReactNode }) {
       resizeObserver?.disconnect();
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [router]);
+  }, [closeDialog]);
 
   return (
     <div
@@ -46,7 +62,7 @@ export function SearchDialog({ children }: { children: ReactNode }) {
       aria-labelledby="search-dialog-title"
       style={{ top: topOffset }}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) router.back();
+        if (event.target === event.currentTarget) closeDialog();
       }}
       className="fixed inset-x-0 bottom-0 z-[60] bg-neutral-950/55"
     >
@@ -65,7 +81,8 @@ export function SearchDialog({ children }: { children: ReactNode }) {
             <button
               type="button"
               aria-label="Close search"
-              onClick={() => router.back()}
+              onClick={closeDialog}
+              disabled={closing}
               className="absolute right-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
             >
               <svg

@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "@firebase/auth";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   logoutAction,
   updateProfileAction,
@@ -28,16 +28,24 @@ export function ProfileForm({
   phone,
 }: ProfileFormProps) {
   const [logoutError, setLogoutError] = useState("");
+  const [signOutPending, setSignOutPending] = useState(false);
+  const signOutStarted = useRef(false);
   const [state, formAction, pending] = useActionState(
     updateProfileAction,
     undefined,
   );
 
   async function handleSignOut() {
+    if (signOutStarted.current) return;
+
+    signOutStarted.current = true;
+    setSignOutPending(true);
     setLogoutError("");
     try {
       await signOut(firebaseAuth);
     } catch {
+      signOutStarted.current = false;
+      setSignOutPending(false);
       setLogoutError("We could not sign you out. Please try again.");
       return;
     }
@@ -141,6 +149,7 @@ export function ProfileForm({
         <button
           type="button"
           onClick={handleSignOut}
+          disabled={signOutPending}
           className="text-xs font-medium tracking-wide text-neutral-400 underline underline-offset-4 transition-colors hover:text-neutral-900"
         >
           Sign out

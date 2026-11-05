@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 export function LoginDialog({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const [closing, setClosing] = useState(false);
+  const closeStarted = useRef(false);
+
+  const closeDialog = useCallback(() => {
+    if (closeStarted.current) return;
+
+    closeStarted.current = true;
+    setClosing(true);
+    router.back();
+  }, [router]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -13,7 +23,7 @@ export function LoginDialog({ children }: { children: ReactNode }) {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        router.back();
+        closeDialog();
       }
     };
 
@@ -22,7 +32,7 @@ export function LoginDialog({ children }: { children: ReactNode }) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [router]);
+  }, [closeDialog]);
 
   return (
     <div
@@ -31,14 +41,15 @@ export function LoginDialog({ children }: { children: ReactNode }) {
       aria-labelledby="login-title"
       className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-neutral-950/55 p-4"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) router.back();
+        if (event.target === event.currentTarget) closeDialog();
       }}
     >
       <section className="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-cream shadow-2xl">
         <button
           type="button"
           aria-label="Close sign in"
-          onClick={() => router.back()}
+          onClick={closeDialog}
+          disabled={closing}
           className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-neutral-300 bg-cream text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
         >
           <svg
