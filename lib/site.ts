@@ -172,6 +172,17 @@ export type HomeConfig = {
     subtitle: string;
     items: ValueConfig[];
   };
+  launch: {
+    eyebrow: string;
+    heading: string;
+    description: string;
+    instagramNote: string;
+  };
+  launchSignup: {
+    successMessage: string;
+    placeholder: string;
+    buttonLabel: string;
+  };
   instagram: {
     heading: string;
     /** CTA label, e.g. "Follow @aurja.co". */
@@ -301,6 +312,19 @@ export const home: HomeConfig = {
           "Thoughtfully designed and carefully crafted, our jewellery becomes part of your stories, milestones and memories for years to come.",
       },
     ],
+  },
+  launch: {
+    eyebrow: "Launching Soon",
+    heading: "A new chapter is about to begin",
+    description:
+      "Leave your email and we'll write the moment our first collection goes live. No noise — just the launch.",
+    instagramNote: "Follow the making on Instagram",
+  },
+  launchSignup: {
+    successMessage:
+      "You're on the list — we'll be in touch the moment we launch.",
+    placeholder: "Your email address",
+    buttonLabel: "Notify Me",
   },
   instagram: {
     heading: "Join us on social",

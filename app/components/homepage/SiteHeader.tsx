@@ -38,7 +38,7 @@ export function SiteHeader() {
   }, [menuOpen]);
 
   return (
-    <div className="site-header-shell">
+    <>
       {/* Announcement bar — sits above the sticky header */}
       <div className="bg-stone-950 px-5 py-2 text-center">
         <p className="text-[0.65rem] font-medium uppercase tracking-[0.25em] text-amber-100/80">
@@ -180,6 +180,6 @@ export function SiteHeader() {
           </p>
         </div>
       </div>
-    </div>
+    </>
   );
 }
