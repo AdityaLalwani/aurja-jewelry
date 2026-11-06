@@ -140,6 +140,9 @@ export interface ProductStoneDetail {
 export interface JewelryProduct {
   name: string;
   slug: string;
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
   sku?: string;
   price_inr: number;
   stock_level?: number;
@@ -679,6 +682,15 @@ export function mapSwellProduct(
   return {
     name: product.name ?? product.slug ?? "Untitled product",
     slug: product.slug ?? product.id,
+    meta_title:
+      product.meta_title ??
+      firstAttributeValue(attributes, ["meta_title", "seo_title"]),
+    meta_description:
+      product.meta_description ??
+      firstAttributeValue(attributes, ["meta_description", "seo_description"]),
+    meta_keywords:
+      product.meta_keywords ??
+      firstAttributeValue(attributes, ["meta_keywords", "seo_keywords", "tags"]),
     sku:
       product.sku ??
       firstAttributeValue(attributes, ["sku", "product_sku"]) ??
@@ -934,6 +946,10 @@ export interface StoreCategory {
   name: string;
   slug: string;
   parentId?: string | null;
+  description?: string;
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
 }
 
 /**
@@ -952,12 +968,27 @@ export async function getStoreCategories(): Promise<StoreCategory[]> {
     );
     return result.results
       .filter((category) => category.active !== false)
-      .map(({ id, name, slug, parent_id }) => ({
-        id,
-        name,
-        slug,
-        parentId: parent_id ?? null,
-      }));
+      .map(
+        ({
+          id,
+          name,
+          slug,
+          parent_id,
+          description,
+          meta_title,
+          meta_description,
+          meta_keywords,
+        }) => ({
+          id,
+          name,
+          slug,
+          parentId: parent_id ?? null,
+          description,
+          meta_title,
+          meta_description,
+          meta_keywords,
+        }),
+      );
   } catch {
     return [];
   }
@@ -1524,6 +1555,9 @@ export interface SwellProduct {
   name?: string;
   slug?: string;
   description?: string;
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
   sku?: string;
   price?: number;
   price_inr?: number;
@@ -1558,6 +1592,38 @@ export interface SwellProductListResult {
   count: number;
   results: SwellProduct[];
   page?: number;
+}
+
+export async function getJewelryProductSlugs(): Promise<string[]> {
+  const limit = 100;
+  const slugs: string[] = [];
+  let page = 1;
+  let total = Number.POSITIVE_INFINITY;
+
+  while ((page - 1) * limit < total) {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      page: String(page),
+      fields: "slug,active",
+      where: JSON.stringify({ active: true }),
+    });
+    const result = await swellFetch<SwellProductListResult>(
+      `/products?${params.toString()}`,
+      {
+        useSecretKey: true,
+        next: { revalidate: 3600, tags: ["swell-products"] },
+      },
+    );
+    total = result.count;
+    slugs.push(
+      ...result.results.flatMap((product) =>
+        product.slug ? [product.slug] : [],
+      ),
+    );
+    page += 1;
+  }
+
+  return [...new Set(slugs)];
 }
 
 interface SwellLocalizedProductOptions {

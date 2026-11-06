@@ -15,9 +15,45 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await props.params;
   const product = await getJewelryProductBySlug(slug);
+  const description =
+    product?.meta_description?.trim() ||
+    product?.description
+      ?.replace(/<\/p>\s*<p\b[^>]*>/gi, " ")
+      .replace(/<\/?p\b[^>]*>/gi, "")
+      .replace(/<[^>]+>/g, "")
+      .trim()
+      .slice(0, 160);
+  const title =
+    product?.meta_title?.trim() ||
+    (product ? `${product.name} — Aurja` : "Piece not found — Aurja");
+  const keywords = product?.meta_keywords
+    ?.split(/[,|]/)
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
 
   return {
-    title: product ? `${product.name} — Aurja` : "Piece not found — Aurja",
+    title: { absolute: title },
+    ...(description ? { description } : {}),
+    ...(keywords?.length ? { keywords } : {}),
+    ...(product
+      ? {
+          alternates: { canonical: `/products/${product.slug}` },
+          openGraph: {
+            title,
+            ...(description ? { description } : {}),
+            type: "website" as const,
+            images: product.images[0]
+              ? [{ url: product.images[0], alt: product.name }]
+              : undefined,
+          },
+          twitter: {
+            card: "summary_large_image" as const,
+            title,
+            ...(description ? { description } : {}),
+            images: product.images[0] ? [product.images[0]] : undefined,
+          },
+        }
+      : {}),
   };
 }
 

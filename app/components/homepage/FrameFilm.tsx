@@ -480,7 +480,7 @@ export function FrameFilm() {
         <Image
           className="frame-film__fallback"
           src="/frames/ezgif-frame-249.jpg"
-          alt=""
+          alt="A diamond ring being crafted"
           aria-hidden="true"
           fill
           sizes="100vw"
@@ -503,7 +503,7 @@ export function FrameFilm() {
             <div className="frame-film__loader-logo" aria-hidden="true">
               <Image
                 src={site.logo}
-                alt=""
+                alt="AURJA logo while preparing the film"
                 width={72}
                 height={72}
                 priority

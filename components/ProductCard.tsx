@@ -64,7 +64,7 @@ export function ProductCard({
             <Image
               src={normalizeImageSource(product.images[1])}
               loader={imageKitLoader}
-              alt=""
+              alt={`${product.name} — alternate view`}
               aria-hidden="true"
               fill
               quality={70}

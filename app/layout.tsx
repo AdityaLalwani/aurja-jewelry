@@ -55,9 +55,7 @@ export const metadata: Metadata = {
   },
   description: `${site.name} — ${site.tagline}. Crafted jewelry, made to be treasured.`,
   applicationName: site.name,
-  alternates: {
-    canonical: "/",
-  },
+  keywords: ["fine jewelry", "handcrafted jewelry", "gold jewelry", "diamond jewelry"],
   openGraph: {
     title: `${site.name} — ${site.tagline}`,
     description: "Fine jewelry designed for meaningful rituals, milestones, and everyday stories.",

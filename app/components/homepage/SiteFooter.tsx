@@ -51,7 +51,7 @@ export function SiteFooter() {
               >
                 <Image
                   src={site.logo}
-                  alt=""
+                  alt={`${site.name} logo`}
                   width={58}
                   height={58}
                   className="h-[58px] w-[58px] rounded-full object-cover ring-1 ring-amber-200/20 shadow-[0_8px_30px_rgba(218,165,32,0.2)]"

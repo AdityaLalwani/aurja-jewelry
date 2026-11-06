@@ -110,7 +110,7 @@ export function SiteHeader({
           >
             <Image
               src="/11.png"
-              alt=""
+              alt="AURJA jewelry brand mark"
               width={40}
               height={40}
               priority
@@ -429,7 +429,7 @@ export function SiteHeader({
                           <Image
                             src={normalizeImageSource(product.images[0])}
                             loader={imageKitLoader}
-                            alt=""
+                            alt={`${product.name} jewelry`}
                             fill
                             sizes="(min-width: 1024px) 25vw, 45vw"
                             className="object-cover transition-transform duration-500 group-hover:scale-105"

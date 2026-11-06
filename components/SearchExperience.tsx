@@ -362,7 +362,7 @@ function SearchInput({
                     <Image
                       src={normalizeImageSource(product.images[0])}
                       loader={imageKitLoader}
-                      alt=""
+                      alt={`${product.name} jewelry`}
                       fill
                       quality={70}
                       sizes="(min-width: 640px) 30vw, 32vw"

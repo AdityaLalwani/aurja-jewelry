@@ -86,7 +86,7 @@ export function ProductEnquiryDialog({
             <Image
               src={normalizeImageSource(product.images[0])}
               loader={imageKitLoader}
-              alt=""
+              alt={`${product.name} jewelry`}
               width={64}
               height={64}
               className="h-16 w-16 rounded-lg object-cover"

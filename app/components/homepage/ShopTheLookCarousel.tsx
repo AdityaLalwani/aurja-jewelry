@@ -156,7 +156,7 @@ export function ShopTheLookCarousel({
         <Image
           key={activeScene.background}
           src={activeScene.background}
-          alt=""
+          alt={`Jewelry styling scene ${activeSceneIndex + 1}`}
           fill
           priority
           unoptimized

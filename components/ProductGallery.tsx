@@ -301,7 +301,7 @@ export function ProductGallery({
                   <Image
                     src={normalizeImageSource(image)}
                     loader={imageKitLoader}
-                    alt=""
+                    alt={`${name} — thumbnail view ${index + 1}`}
                     fill
                     sizes="48px"
                     className="object-cover"

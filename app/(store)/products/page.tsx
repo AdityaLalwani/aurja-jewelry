@@ -1,10 +1,42 @@
+import type { Metadata } from "next";
 import { ProductGrid } from "@/components/ProductGrid";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
-import { getJewelryProductPage } from "@/lib/swell";
+import { getJewelryProductPage, getStoreCategories } from "@/lib/swell";
 
 type ProductsPageProps = {
   searchParams: Promise<{ category?: string; page?: string }>;
 };
+
+export async function generateMetadata({
+  searchParams,
+}: ProductsPageProps): Promise<Metadata> {
+  const { category: categorySlug } = await searchParams;
+  const category = categorySlug
+    ? (await getStoreCategories()).find((item) => item.slug === categorySlug)
+    : undefined;
+  const title =
+    category?.meta_title?.trim() ||
+    (category ? `${category.name} Jewelry` : "Shop Fine Jewelry");
+  const description =
+    category?.meta_description?.trim() ||
+    category?.description ||
+    "Discover handcrafted gold and diamond jewelry designed to be treasured for a lifetime.";
+  const keywords = category?.meta_keywords
+    ?.split(/[,|]/)
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
+
+  return {
+    title: category?.meta_title?.trim() ? { absolute: title } : title,
+    description,
+    ...(keywords?.length ? { keywords } : {}),
+    alternates: {
+      canonical: categorySlug
+        ? `/products?category=${encodeURIComponent(categorySlug)}`
+        : "/products",
+    },
+  };
+}
 
 export default async function ProductsPage({
   searchParams,

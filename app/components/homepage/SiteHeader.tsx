@@ -69,7 +69,7 @@ export function SiteHeader() {
           >
             <Image
               src={site.logo}
-              alt=""
+              alt={`${site.name} logo`}
               width={28}
               height={28}
               className="h-7 w-7 rounded-full object-cover ring-1 ring-stone-200"
