@@ -1,9 +1,7 @@
 /**
  * Central site configuration for AURJA.
  *
- * Edit the values below to update the whole site. Copy is drafted for the
- * pre-launch phase — when the shop goes live, start with `home.nav`,
- * `home.categories` and the hero CTAs.
+ * Edit the values below to update shared storefront copy and links.
  */
 
 export const site = {
@@ -15,7 +13,7 @@ export const site = {
   /** Instagram handle, without the @ — used for profile links across the site. */
   instagram: "aurja.co",
   /** Announcement bar copy above the header. */
-  announcement: "Our first collection is in the making — launching soon",
+  announcement: "Fine jewelry, shaped for stories",
   /** Shared contact details for the storefront. */
   contact: {
     /** WhatsApp number in international format, digits only (used for wa.me links). */
@@ -65,7 +63,7 @@ export const profiles: Record<string, Profile> = {
     company: site.name,
     initials: "AM",
     photo: "/team/akshat.png",
-    bio: "Curating timeless jewellery at AURJA.",
+    bio: "Curating timeless jewelry at AURJA.",
     whatsapp: "917485922448",
     phoneDisplay: "+91 74859 22448",
     instagram: "aurja.co",
@@ -89,10 +87,6 @@ export function allProfileSlugs(): string[] {
  * All homepage copy lives here; components read from it so content can be
  * edited without touching markup. Images are optional — sections without
  * one render warm gradient placeholders (see MediaTile) keyed by `variant`.
- *
- * The site is pre-launch: category tiles are previews (not shop links) and
- * the launch signup posts to /api/subscribe, which forwards emails to the
- * Google Sheets webhook (see docs/google-sheets-subscriptions.md).
  * ---------------------------------------------------------------------- */
 
 export type NavLink = {
@@ -100,7 +94,7 @@ export type NavLink = {
   href: string;
 };
 
-/** Warm light gradient treatments used by MediaTile until real photos exist. */
+/** Warm light gradient treatments used by MediaTile when no photo is set. */
 export type TileVariant =
   | "champagne"
   | "honey"
@@ -119,8 +113,7 @@ export type CategoryConfig = {
 };
 
 export type ValueConfig = {
-  /** Icon key — mapped to an icon component inside ValuesSection. */
-  icon: "diamond" | "shield" | "sparkles" | "truck";
+  icon: "leaf" | "heart" | "diamond" | "star";
   title: string;
   description: string;
 };
@@ -130,12 +123,28 @@ export type FooterLinkColumn = {
   links: NavLink[];
 };
 
+export const BEST_SELLER_SKUS = [
+  "ASR001",
+  "ASER001",
+  "ASN001",
+  "ASB001"
+] as const;
+
+export const TRENDING_PRODUCT_SKUS = [
+  "ASR001",
+  "ASER001",
+  "ASN001",
+  "ASB001",
+  "ASR002",
+  "ASER002",
+  "ASN002",
+  "ASR003",
+] as const;
+
 export type HomeConfig = {
   hero: {
     tagline: string;
     constantWord: string;
-    phrases: string[];
-    finale: string;
     srText: string;
     primaryCta: NavLink;
     secondaryCta: NavLink;
@@ -145,8 +154,6 @@ export type HomeConfig = {
     eyebrow: string;
     title: string;
     description: string;
-    /** Label shown centered over each tile's blurred photo until the shop launches. */
-    comingSoonLabel: string;
     items: CategoryConfig[];
   };
   story: {
@@ -162,13 +169,13 @@ export type HomeConfig = {
   values: {
     eyebrow: string;
     title: string;
+    subtitle: string;
     items: ValueConfig[];
   };
   launch: {
     eyebrow: string;
     heading: string;
     description: string;
-    /** Label for the Instagram link under the signup. */
     instagramNote: string;
   };
   launchSignup: {
@@ -180,8 +187,6 @@ export type HomeConfig = {
     heading: string;
     /** CTA label, e.g. "Follow @aurja.co". */
     followLabel: string;
-    /** Number of square tiles in the grid. */
-    tileCount: number;
   };
   visit: {
     eyebrow: string;
@@ -198,77 +203,65 @@ export type HomeConfig = {
 export const home: HomeConfig = {
   hero: {
     tagline: "Shaped for Stories",
-    constantWord: "Jewellery",
-    phrases: [
-      "For every moment,",
-      "For every milestone,",
-      "For everything in between.",
-    ],
-    finale: "Launching soon.",
+    constantWord: "Jewelry",
     srText:
-      "Fine Crafted jewellery for everyday moments, big beginnings and everything in between — launching soon.",
-    primaryCta: { label: "Get Launch Updates", href: "#launch" },
-    secondaryCta: { label: "Read Our Story", href: "/story" },
+      "Fine jewelry for everyday moments, big beginnings and everything in between.",
+    primaryCta: { label: "Shop Jewelry", href: "/products" },
+    secondaryCta: { label: "Our Philosophy", href: "/story#philosophy" },
   },
   nav: [
+    { label: "Collection", href: "/products" },
     { label: "Our Story", href: "/story" },
     { label: "Blogs", href: "/blogs" },
     { label: "Contact", href: "/#visit" },
   ],
   categories: {
-    eyebrow: "In the Making",
-    title: "What's Coming",
+    eyebrow: "Find your favourite",
+    title: "Shop by category",
     description:
-      "The first collection spans six categories — each piece cast, set and polished by hand in our Surat atelier.",
-    comingSoonLabel: "Coming Soon",
+      "Explore thoughtfully crafted pieces for every moment and every story.",
     items: [
       {
         slug: "rings",
         name: "Rings",
         description: "Solitaires, bands & stacks",
         variant: "champagne",
-        image:
-          "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=85",
+        image: "/32.jpg",
       },
       {
         slug: "earrings",
         name: "Earrings",
         description: "Studs, drops & hoops",
         variant: "honey",
-        image:
-          "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=85",
+        image: "/33.jpg",
       },
       {
         slug: "pendants",
         name: "Pendants",
         description: "Charms & keepsakes",
         variant: "blush",
-        image:
-          "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=85",
+        image: "/36.jpg",
       },
       {
-        slug: "bracelets-bangles",
-        name: "Bracelets & Bangles",
+        slug: "bracelets",
+        name: "Bracelets",
         description: "Cuffs, chains & kadas",
         variant: "pearl",
-        image:
-          "https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=85",
+        image: "/35.jpg",
       },
       {
         slug: "necklaces",
         name: "Necklaces",
         description: "Chokers to long chains",
         variant: "sand",
-        image:
-          "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=900&q=85",
+        image: "/34.jpg",
       },
       {
         slug: "silver",
         name: "Silver",
         description: "Sterling silver essentials",
         variant: "dusk",
-        image:
-          "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=900&q=85",
+        image: "/37.jpg",
       },
     ],
   },
@@ -277,10 +270,10 @@ export const home: HomeConfig = {
     title: "Some stories begin with a moment, Ours began with a feeling.",
     paragraphs: [
       "A feeling that beauty and responsibility need not exist apart.",
-      "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewellery house creating pieces with intention.",
+      "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewelry house creating pieces with intention.",
       "We believe in relationships before transactions — choosing trusted sources, working closely with our partners, and continually moving towards more conscious ways of creating.",
       "Our inspiration comes from the world around us: the quiet forms of nature, the character of distant places, unexpected colours, and the movement found in everything living.",
-      "These inspirations become shapes, textures and details — translated into jewellery that feels modern, effortless and personal. We don't believe in creating simply for the sake of more.",
+      "These inspirations become shapes, textures and details — translated into jewelry that feels modern, effortless and personal. We don't believe in creating simply for the sake of more.",
       "We create pieces with the hope that, over time, they become part of something bigger — your moments, your milestones, your memories.",
       "This is Aurja, Shaped for Stories.",
     ],
@@ -290,32 +283,33 @@ export const home: HomeConfig = {
     image: "/intro.webp",
   },
   values: {
-    eyebrow: "The AURJA Way",
-    title: "What makes us different",
+    eyebrow: "THE AURJA WAY",
+    title: "Thoughtful. Trustworthy. Timeless.",
+    subtitle: "Four principles that guide everything we do.",
     items: [
       {
+        icon: "leaf",
+        title: "Conscious by Choice",
+        description:
+          "Beautiful jewellery comes with responsibility. We make thoughtful choices in sourcing, crafting and packaging, with sustainability in mind.",
+      },
+      {
+        icon: "heart",
+        title: "Family Beyond Business",
+        description:
+          "Our clients are family. Their trust, happiness and satisfaction guide everything we do, and every experience deserves to feel special.",
+      },
+      {
         icon: "diamond",
-        title: "Direct from our hands",
+        title: "Trust in Every Detail",
         description:
-          "From initial sketch to final polish, each creation is crafted, inspected, and finished to ensure it meets our exacting standards.",
+          "Every piece reflects quality and authenticity, with hallmarked gold and certified diamonds and gemstones for confidence in every purchase.",
       },
       {
-        icon: "shield",
-        title: "Trusted, always",
+        icon: "star",
+        title: "Made to Last, Made to Matter",
         description:
-          "Verified gold/silver and certified diamonds. Every stone documented, every claim verifiable.",
-      },
-      {
-        icon: "sparkles",
-        title: "Sustainable Processes",
-        description:
-          "Made by hand in small, considered batches. Never mass-produced, never rushed.",
-      },
-      {
-        icon: "truck",
-        title: "Built to endure",
-        description:
-          "We stand behind the enduring quality of our jewellery and complimentary insured shipping across World.",
+          "Thoughtfully designed and carefully crafted, our jewellery becomes part of your stories, milestones and memories for years to come.",
       },
     ],
   },
@@ -333,9 +327,8 @@ export const home: HomeConfig = {
     buttonLabel: "Notify Me",
   },
   instagram: {
-    heading: "Follow the Atelier",
+    heading: "Join us on social",
     followLabel: `Follow @${site.instagram}`,
-    tileCount: 6,
   },
   visit: {
     eyebrow: "Visit Us",
@@ -356,6 +349,22 @@ export const home: HomeConfig = {
             label: "Instagram",
             href: `https://instagram.com/${site.instagram}`,
           },
+        ],
+      },
+      {
+        heading: "Customer Care",
+        links: [
+          { label: "Care Guide", href: "/care-guide" },
+          { label: "Size Guide", href: "/size-guide" },
+          { label: "FAQ", href: "/faq" },
+        ],
+      },
+      {
+        heading: "Policies",
+        links: [
+          { label: "Privacy Policy", href: "/privacy-policy" },
+          { label: "Refund Policy", href: "/refund-policy" },
+          { label: "Terms & Conditions", href: "/terms-and-conditions" },
         ],
       },
       {
@@ -395,10 +404,10 @@ export const storyPage: StoryPageConfig = {
   title: "Some stories begin with a moment. Ours began with a feeling.",
   paragraphs: [
     "A feeling that beauty and responsibility need not exist apart.",
-    "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewellery house creating pieces with intention.",
+    "Born in Surat and shaped by a deep appreciation for nature, craft and imagination, Aurja is a small, hands-on jewelry house creating pieces with intention.",
     "We believe in relationships before transactions — choosing trusted sources, working closely with our partners, and continually moving towards more conscious ways of creating.",
     "Our inspiration comes from the world around us: the quiet forms of nature, the character of distant places, unexpected colours, and the movement found in everything living.",
-    "These inspirations become shapes, textures and details — translated into jewellery that feels modern, effortless and personal.",
+    "These inspirations become shapes, textures and details — translated into jewelry that feels modern, effortless and personal.",
     "We don't believe in creating simply for the sake of more.",
     "We create pieces with the hope that, over time, they become part of something bigger — your moments, your milestones, your memories.",
     "This is Aurja. Shaped for Stories.",

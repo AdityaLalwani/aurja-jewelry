@@ -108,7 +108,7 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
     );
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center overflow-hidden bg-[#0a0908] px-5 py-12 sm:py-16">
+    <div className="relative flex min-h-dvh flex-col items-center overflow-hidden bg-chandan px-5 py-12 sm:py-16">
       {/* Ambient background glows */}
       <div
         aria-hidden
@@ -123,14 +123,14 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
         {/* Brand link back to the main site */}
         <Link
           href="/"
-          className="group mb-10 flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 py-1.5 pl-2 pr-4 text-xs font-medium uppercase tracking-[0.2em] text-zinc-300 transition-colors hover:border-amber-200/30 hover:text-amber-100"
+          className="group mb-10 flex items-center gap-2.5 rounded-full border border-stone-300 bg-white/60 py-1.5 pl-2 pr-4 text-xs font-medium uppercase tracking-[0.2em] text-stone-700 transition-colors hover:border-amber-700/30 hover:text-stone-900"
         >
           <Image
             src={site.logo}
             alt={`${site.name} logo`}
             width={24}
             height={24}
-            className="h-6 w-6 rounded-full object-cover ring-1 ring-white/10"
+            className="h-6 w-6 rounded-full object-cover ring-1 ring-stone-300"
           />
           {site.name}
         </Link>
@@ -148,31 +148,31 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
               width={160}
               height={160}
               priority
-              className="relative h-32 w-32 rounded-full object-cover ring-4 ring-amber-200/20"
+              className="relative h-32 w-32 rounded-full object-cover ring-4 ring-amber-700/20"
             />
           ) : (
-            <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 font-display text-4xl font-medium text-amber-100/90 ring-4 ring-amber-200/20">
+            <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-stone-800 to-stone-900 font-display text-4xl font-medium text-amber-100/90 ring-4 ring-amber-700/20">
               {profile.initials}
             </div>
           )}
         </div>
 
         {/* Name & designation */}
-        <h1 className="font-display text-3xl font-semibold tracking-wide text-amber-50 sm:text-4xl">
+        <h1 className="font-display text-3xl font-semibold tracking-wide text-stone-900 sm:text-4xl">
           {profile.name}
         </h1>
-        <p className="mt-2.5 text-[0.7rem] font-medium uppercase tracking-[0.3em] text-amber-200/80">
+        <p className="mt-2.5 text-[0.7rem] font-medium uppercase tracking-[0.3em] text-amber-800">
           {profile.designation} · {profile.company}
         </p>
 
         {/* Gold ornament divider */}
         <div aria-hidden className="mt-8 flex w-full items-center gap-3">
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-200/40" />
-          <span className="h-1.5 w-1.5 rotate-45 bg-amber-200/60" />
-          <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-200/40" />
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-700/40" />
+          <span className="h-1.5 w-1.5 rotate-45 bg-amber-700/60" />
+          <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-700/40" />
         </div>
 
-        <p className="mt-8 text-center text-sm leading-relaxed text-zinc-400">
+        <p className="mt-8 text-center text-sm leading-relaxed text-stone-600">
           {profile.bio}
         </p>
 
@@ -182,7 +182,7 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
             const Icon = contact.icon;
             return renderAction(
               contact,
-              "flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-amber-200/70 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-200/40 hover:bg-white/10 hover:text-amber-200",
+              "flex h-12 w-12 items-center justify-center rounded-2xl border border-stone-300 bg-white/55 text-amber-800 backdrop-blur-md shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-700/40 hover:bg-white/80 hover:text-amber-900",
               <Icon className="h-5 w-5" />
             );
           })}
@@ -195,8 +195,8 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
             return renderAction(
               action,
               action.primary
-                ? "flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-amber-200/30 bg-gradient-to-r from-amber-200/15 to-amber-400/10 text-sm font-semibold tracking-wide text-amber-50 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-200 hover:border-amber-200/50 hover:from-amber-200/25 hover:to-amber-400/15"
-                : "flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 text-sm font-medium tracking-wide text-zinc-100 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200 hover:border-white/25 hover:bg-white/15",
+                ? "flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-amber-700/30 bg-amber-100/80 text-sm font-semibold tracking-wide text-stone-900 backdrop-blur-xl shadow-sm transition-all duration-200 hover:border-amber-700/50 hover:bg-amber-100"
+                : "flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-stone-300 bg-white/60 text-sm font-medium tracking-wide text-stone-800 backdrop-blur-xl shadow-sm transition-all duration-200 hover:border-stone-400 hover:bg-white/80",
               <>
                 <Icon className="h-4.5 w-4.5 shrink-0" />
                 {action.label}
@@ -207,7 +207,7 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
 
         {/* Footer */}
         <footer className="mt-14 flex flex-col items-center gap-1 text-center">
-          <span className="text-[0.65rem] uppercase tracking-[0.25em] text-zinc-500">
+          <span className="text-[0.65rem] uppercase tracking-[0.25em] text-stone-600">
             © {new Date().getFullYear()} {site.name} · {site.tagline}
           </span>
         </footer>

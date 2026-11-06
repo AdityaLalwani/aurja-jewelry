@@ -13,7 +13,7 @@ import {
 } from "../icons";
 
 /**
- * Announcement bar + sticky header with desktop nav, a launch-notify pill and a
+ * Announcement bar + sticky header with desktop nav, a shop CTA and a
  * full-screen mobile menu. The only state is `menuOpen` — it initializes to
  * `false` on both server and client so hydration stays stable.
  */
@@ -69,12 +69,12 @@ export function SiteHeader() {
           >
             <Image
               src={site.logo}
-              alt=""
+              alt={`${site.name} logo`}
               width={28}
               height={28}
               className="h-7 w-7 rounded-full object-cover ring-1 ring-stone-200"
             />
-            <span className="font-display text-sm font-medium tracking-[0.35em] text-stone-900">
+            <span className="font-logo text-sm font-medium tracking-[0.35em] text-kajal">
               {site.name}
             </span>
           </Link>
@@ -92,12 +92,12 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          {/* Launch shortcut — scrolls to the signup section */}
+          {/* Primary shop shortcut */}
           <Link
-            href="#launch"
+            href="/products"
             className="inline-flex h-10 shrink-0 items-center rounded-full bg-stone-900 px-5 text-xs font-medium uppercase tracking-[0.2em] text-amber-50 transition-colors hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/50"
           >
-            {home.launchSignup.buttonLabel}
+            Shop Jewelry
           </Link>
         </div>
       </header>
@@ -115,7 +115,7 @@ export function SiteHeader() {
         <div className="flex h-full flex-col px-5 pb-10 pt-2 sm:px-8">
           {/* Overlay header */}
           <div className="flex h-16 items-center justify-between">
-            <span className="font-display text-sm font-medium tracking-[0.35em] text-stone-900">
+            <span className="font-logo text-sm font-medium tracking-[0.35em] text-kajal">
               {site.name}
             </span>
             <button

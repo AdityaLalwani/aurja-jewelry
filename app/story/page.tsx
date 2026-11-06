@@ -3,16 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { profiles, storyPage } from "@/lib/site";
 import { ArrowRightIcon } from "../components/icons";
-import { SiteHeader } from "../components/homepage/SiteHeader";
-import { ValuesSection } from "../components/homepage/ValuesSection";
-import { LaunchSection } from "../components/homepage/LaunchSection";
 import { SiteFooter } from "../components/homepage/SiteFooter";
 import { StoryNarrative } from "./StoryNarrative";
 
 export const metadata: Metadata = {
   title: "Our Story — AURJA",
   description:
-    "Why AURJA exists, what we believe, and how every piece will be made — Certified gold and diamonds, small-batch crafted in Surat. First collection launching soon.",
+    "Why AURJA exists, what we believe, and how every piece is made — certified gold and diamonds, thoughtfully crafted in Surat.",
 };
 
 const founder = profiles["akshat-modi"];
@@ -20,18 +17,13 @@ const founder = profiles["akshat-modi"];
 /**
  * The /story page — a static route, so it wins over the dynamic profile route
  * at app/[slug]/page.tsx (no "story" profile exists). All copy lives in
- * `storyPage` in lib/site.ts; values and launch sections are the shared ones.
+ * `storyPage` in lib/site.ts.
  */
 export default function StoryPage() {
   return (
     <>
-      <SiteHeader />
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-stone-200 bg-[#f6f0e8]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_0%,rgba(217,164,65,0.2),transparent_34%),linear-gradient(135deg,#faf7f2,#f1e8dc)]"
-          />
+        <section className="relative overflow-hidden border-b border-stone-200 bg-chandan">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-24 top-16 h-72 w-72 rounded-full border border-amber-700/15 motion-safe:animate-halo-pulse [box-shadow:0_0_0_22px_rgba(217,164,65,0.035),0_0_0_44px_rgba(217,164,65,0.025)]"
@@ -60,9 +52,6 @@ export default function StoryPage() {
         </section>
 
         <StoryNarrative paragraphs={storyPage.paragraphs} />
-
-        {/* What makes us different — the shared values grid */}
-        <ValuesSection />
 
         <section className="mx-auto max-w-7xl px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24">
           <div className="mx-auto grid max-w-5xl items-center gap-10 border-y border-stone-200 py-10 motion-safe:animate-fade-up sm:py-14 lg:grid-cols-[0.65fr_1fr] lg:gap-20">
@@ -111,8 +100,6 @@ export default function StoryPage() {
           </div>
         </section>
 
-        {/* Launch signup — the shared section, anchored at #launch */}
-        <LaunchSection />
       </main>
       <SiteFooter />
     </>
