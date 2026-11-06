@@ -7,12 +7,19 @@ import { formatPrice, useStore, type Currency } from "@/components/StoreProvider
 import { submitProductEnquiryAction } from "@/lib/cart-actions";
 import type { JewelryProduct } from "@/lib/swell";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
+import { phoneCountryCodes } from "@/lib/phone-country-codes";
 
-const enquiryInputClasses =
-  "w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-gold focus:outline-none";
+const enquiryInputBaseClasses =
+  "rounded-xl border border-neutral-300 bg-white text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-gold focus:outline-none";
+
+const enquiryInputClasses = `w-full ${enquiryInputBaseClasses} px-4 py-3`;
 
 const enquiryLabelClasses =
   "mb-1.5 block text-xs font-medium uppercase tracking-[0.15em] text-neutral-500";
+
+const countryCallingCodes = [
+  ...new Set(phoneCountryCodes.map(({ code }) => code)),
+].sort();
 
 export function ProductEnquiryDialog({
   product,
@@ -160,21 +167,37 @@ export function ProductEnquiryDialog({
             </div>
             <div>
               <label
-                htmlFor={`product-enquiry-phone-${product.slug}`}
+                htmlFor={`product-enquiry-phone-number-${product.slug}`}
                 className={enquiryLabelClasses}
               >
                 Phone number
               </label>
-              <input
-                id={`product-enquiry-phone-${product.slug}`}
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="+91 98765 43210"
-                required
-                maxLength={24}
-                className={enquiryInputClasses}
-              />
+              <div className="grid min-w-0 grid-cols-[4rem_minmax(0,1fr)] gap-2">
+                <select
+                  name="phoneCountryCode"
+                  aria-label="Country calling code"
+                  autoComplete="tel-country-code"
+                  defaultValue="+91"
+                  className={`${enquiryInputBaseClasses} w-16 px-1 py-1`}
+                >
+                  {countryCallingCodes.map((code) => (
+                    <option key={code} value={code}>
+                      {code}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  id={`product-enquiry-phone-number-${product.slug}`}
+                  name="phoneNumber"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="98765 43210"
+                  required
+                  maxLength={20}
+                  className={`${enquiryInputClasses} min-w-0`}
+                />
+              </div>
             </div>
             <div>
               <label

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
 import {
   loadJewelryProductsForFilters,
@@ -42,6 +43,16 @@ function shuffleProducts(products: JewelryProduct[]) {
     ];
   }
   return shuffled;
+}
+
+function updatePageInUrl(page: number, router: ReturnType<typeof useRouter>) {
+  const url = new URL(window.location.href);
+  if (page > 1) {
+    url.searchParams.set("page", String(page));
+  } else {
+    url.searchParams.delete("page");
+  }
+  router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
 }
 
 function getFacetValue(product: JewelryProduct, key: FacetKey): string | null {
@@ -87,6 +98,7 @@ export function ProductGrid({
   hasMore: boolean;
   categorySlug?: string;
 }) {
+  const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
   const [page, setPage] = useState(initialPage);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -229,6 +241,7 @@ export function ProductGrid({
       setPage(nextPage.page);
       setHasMore(nextPage.hasMore);
       setSortOrder(nextSortOrder);
+      updatePageInUrl(nextPage.page, router);
     } catch (error) {
       console.error("Could not sort products", error);
       setLoadError("We could not sort the pieces. Please try again.");
@@ -252,6 +265,7 @@ export function ProductGrid({
       });
       setPage(nextPage.page);
       setHasMore(nextPage.hasMore);
+      updatePageInUrl(nextPage.page, router);
     } catch (error) {
       console.error("Could not load more products", error);
       setLoadError("We could not load more pieces. Please try again.");
