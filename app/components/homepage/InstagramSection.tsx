@@ -129,10 +129,9 @@ export function InstagramSection() {
         </div>
         <h2 className="mt-4 font-display text-3xl font-normal leading-tight text-stone-900 sm:text-4xl">
           {instagram.heading}
-          <span className="ml-2 inline-block rotate-6 text-amber-700">✳</span>
         </h2>
         <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-stone-600">
-          A little sparkle, a little studio magic, and all the stories in between.
+          Studio snapshots, quiet details, and the stories we carry with us.
         </p>
         <a
           href={profileUrl}

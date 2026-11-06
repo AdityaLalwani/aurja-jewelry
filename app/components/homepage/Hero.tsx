@@ -72,7 +72,7 @@ export function Hero() {
         aria-label="Scroll to shop by category"
         className="absolute bottom-7 left-1/2 z-10 -translate-x-1/2 text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
       >
-        <ChevronDownIcon aria-hidden className="h-6 w-6 motion-safe:animate-bounce" />
+        <ChevronDownIcon aria-hidden className="h-6 w-6 motion-safe:animate-pulse" />
       </a>
     </section>
   );

@@ -48,11 +48,41 @@ const cinzel = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(site.url),
   title: {
     default: `${site.name} — ${site.tagline}`,
-    template: `%s`,
+    template: `%s | ${site.name}`,
   },
   description: `${site.name} — ${site.tagline}. Crafted jewelry, made to be treasured.`,
+  applicationName: site.name,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: `${site.name} — ${site.tagline}`,
+    description: "Fine jewelry designed for meaningful rituals, milestones, and everyday stories.",
+    siteName: site.name,
+    url: site.url,
+    locale: "en_IN",
+    type: "website",
+    images: [
+      {
+        url: "/intro.webp",
+        width: 1200,
+        height: 800,
+        alt: `${site.name} fine jewelry`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${site.name} — ${site.tagline}`,
+    description: "Fine jewelry designed for meaningful rituals, milestones, and everyday stories.",
+    images: ["/intro.webp"],
+  },
+  other: {
+    "theme-color": "#f6f4f0",
+  },
 };
 
 export default async function RootLayout({
