@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, type MouseEvent, type TouchEvent } from "react";
-import { formatPrice, useStore } from "@/components/StoreProvider";
 import type { JewelryProduct } from "@/lib/swell";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
@@ -57,7 +56,6 @@ export function ShopTheLookCarousel({
   const sceneTouchStart = useRef<{ x: number; y: number } | null>(null);
   const productTouchStart = useRef<{ x: number; y: number } | null>(null);
   const suppressProductClick = useRef(false);
-  const { currency } = useStore();
   const activeScene = scenes[activeSceneIndex];
   const activeProduct = activeScene.products[activeProductIndex];
 
@@ -234,9 +232,6 @@ export function ShopTheLookCarousel({
               <p className="line-clamp-2 font-display text-sm leading-snug text-kajal max-sm:text-left max-sm:text-xs">
                 {activeProduct.product.name}
               </p>
-              {/* <p className="mt-1 font-medium text-aurja-gold">
-                {formatPrice(activeProduct.product, currency)}
-              </p> */}
             </div>
           </Link>
           <button

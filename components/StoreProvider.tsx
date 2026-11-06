@@ -86,16 +86,22 @@ export function StoreProvider({
       return;
     }
 
-    const { language } = window.navigator;
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const detectedCurrency =
-      language.toUpperCase().endsWith("-IN") ||
-      timeZone === "Asia/Kolkata" ||
-      timeZone === "Asia/Calcutta"
-        ? "INR"
-        : "USD";
+    const detection = window.setTimeout(() => {
+      const { language } = window.navigator;
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const detectedCurrency =
+        language.toUpperCase().endsWith("-IN") ||
+        timeZone === "Asia/Kolkata" ||
+        timeZone === "Asia/Calcutta"
+          ? "INR"
+          : "USD";
 
-    setCurrency((current) => (current === detectedCurrency ? current : detectedCurrency));
+      setCurrency((current) =>
+        current === detectedCurrency ? current : detectedCurrency,
+      );
+    }, 0);
+
+    return () => window.clearTimeout(detection);
   }, [detectCurrencyFromBrowser]);
   const [enquiredSlugs, setEnquiredSlugs] = useState<string[]>([]);
   const [wishlistSlugs, setWishlistSlugs] = useState<string[]>([]);
