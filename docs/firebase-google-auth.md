@@ -72,14 +72,13 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 Do not commit `.env.local` or expose `SESSION_SECRET` with a `NEXT_PUBLIC_`
 prefix. Restart the development server after changing environment variables,
 or redeploy the app after changing the hosting environment. The Firebase
-Admin SDK dependency tree requires Node.js 22.12 or newer. The project's
-`^22.12.0` engine range keeps Vercel on its latest Node.js 22.x runtime.
-The existing `.env.local` already contains the public Firebase configuration,
-Firebase Admin service-account JSON, session secret, and Turnstile settings.
-Add the Resend variables locally and to the hosting provider's server-side
-environment, then restart or redeploy the app. The Firebase Admin dependency
-tree requires Node.js 22.12 or newer; the project declares this runtime
-requirement so deployment uses a compatible Node version.
+Admin SDK dependency tree requires Node.js 18 or newer. The project declares
+`^22.12.0` as its supported Node.js version; configure the hosting provider's
+build and function runtimes accordingly. The existing `.env.local` already
+contains the public Firebase configuration, Firebase Admin service-account
+JSON, session secret, and Turnstile settings. Add the Resend variables locally
+and to the hosting provider's server-side environment, then restart or redeploy
+the app.
 
 ## Sign-in behavior
 
