@@ -204,6 +204,9 @@ export function ProductVariantSelector({
         <div className="space-y-5">
           {product.variant_options.map((option) => {
             const optionName = option.name ?? "Option";
+            const isMetalOption =
+              optionName.trim().toLowerCase() === "metal" ||
+              optionName.trim().toLowerCase() === "metal type";
             return (
               <div key={optionName} className="space-y-2.5">
                 <div className="flex items-center justify-between gap-3">
@@ -236,7 +239,8 @@ export function ProductVariantSelector({
                           style={colorButtonStyle}
                         >
                           <span>{valueName}</span>
-                          {getProductOptionValuePrice(value, currency) > 0 ? (
+                          {getProductOptionValuePrice(value, currency) > 0 &&
+                          !(isNaturalGemstone && isMetalOption) ? (
                             <span className="ml-2 text-xs opacity-80">
                               {currency === "INR"
                                 ? `₹${new Intl.NumberFormat("en-IN").format(getProductOptionValuePrice(value, "INR"))}`
