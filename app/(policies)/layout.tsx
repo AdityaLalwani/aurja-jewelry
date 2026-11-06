@@ -2,7 +2,9 @@ import { SiteFooter } from "../components/homepage/SiteFooter";
 
 export default function InformationLayout({
   children,
-}: LayoutProps<"/">) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <>
       {children}
