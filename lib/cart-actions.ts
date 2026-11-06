@@ -26,6 +26,7 @@ import {
   createCartCookie,
   getCartIdFromCookie,
 } from "@/lib/cart-session";
+import { phoneCountryCodes } from "@/lib/phone-country-codes";
 
 export interface CartFormState {
   error?: string;
@@ -467,7 +468,9 @@ export async function submitProductEnquiryAction(
   const slug = readField(formData, "slug");
   const name = readField(formData, "name");
   const email = readField(formData, "email").toLowerCase();
-  const phone = readField(formData, "phone");
+  const phoneCountryCode = readField(formData, "phoneCountryCode");
+  const phoneNumber = readField(formData, "phoneNumber");
+  const phone = `${phoneCountryCode}${phoneNumber.replace(/\D/g, "")}`;
   const currency = readField(formData, "currency");
   const selectedOptionsJson = readField(formData, "selectedOptions");
 
@@ -503,15 +506,23 @@ export async function submitProductEnquiryAction(
   if (!EMAIL_PATTERN.test(email) || email.length > 254) {
     return { error: "Please enter a valid email address." };
   }
+  if (
+    !phoneCountryCodes.some(({ code }) => code === phoneCountryCode) ||
+    phoneNumber.length > 20 ||
+    !/^[0-9\s().-]+$/.test(phoneNumber)
+  ) {
+    return {
+      error: "Please select a country code and enter a valid phone number.",
+    };
+  }
   const phoneDigits = phone.replace(/\D/g, "");
   if (
     !/^\+[0-9\s().-]+$/.test(phone) ||
     phoneDigits.length < 8 ||
-    phoneDigits.length > 15 ||
-    phone.length > 24
+    phoneDigits.length > 15
   ) {
     return {
-      error: "Please enter a phone number with country code, such as +91 98765 43210.",
+      error: "Please enter a valid phone number.",
     };
   }
   if (currency !== "INR" && currency !== "USD") {
@@ -700,13 +711,9 @@ export async function submitCartEnquiryAction(
   const requestId = readField(formData, "requestId");
   const name = readField(formData, "name");
   const email = readField(formData, "email").toLowerCase();
-  const phone = readField(formData, "phone");
-  const address1 = readField(formData, "address1");
-  const address2 = readField(formData, "address2");
-  const city = readField(formData, "city");
-  const state = readField(formData, "state");
-  const postalCode = readField(formData, "postalCode");
-  const country = readField(formData, "country");
+  const phoneCountryCode = readField(formData, "phoneCountryCode");
+  const phoneNumber = readField(formData, "phoneNumber");
+  const phone = `${phoneCountryCode}${phoneNumber.replace(/\D/g, "")}`;
   const customizationNotes = readField(formData, "customizationNotes");
   const currency = readField(formData, "currency");
 
@@ -719,6 +726,13 @@ export async function submitCartEnquiryAction(
   if (!EMAIL_PATTERN.test(email) || email.length > 254) {
     return { error: "Please enter a valid email address." };
   }
+  if (
+    !phoneCountryCodes.some(({ code }) => code === phoneCountryCode) ||
+    phoneNumber.length > 20 ||
+    !/^[0-9\s().-]+$/.test(phoneNumber)
+  ) {
+    return { error: "Please select a country code and enter a valid phone number." };
+  }
   const phoneDigits = phone.replace(/\D/g, "");
   if (
     !/^\+[0-9\s().-]+$/.test(phone) ||
@@ -726,21 +740,6 @@ export async function submitCartEnquiryAction(
     phoneDigits.length > 15
   ) {
     return { error: "Please enter a phone number with a country code." };
-  }
-  if (
-    !address1 ||
-    address1.length > 200 ||
-    address2.length > 200 ||
-    !city ||
-    city.length > 100 ||
-    !state ||
-    state.length > 100 ||
-    !postalCode ||
-    postalCode.length > 20 ||
-    !country ||
-    country.length > 100
-  ) {
-    return { error: "Please complete all shipping address fields." };
   }
   if (customizationNotes.length > 2000) {
     return { error: "Customization notes must be 2,000 characters or fewer." };
@@ -841,16 +840,6 @@ export async function submitCartEnquiryAction(
       };
     });
     const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
-    const shippingAddress = {
-      name,
-      phone,
-      address1,
-      ...(address2 ? { address2 } : {}),
-      city,
-      state,
-      zip: postalCode,
-      country,
-    };
     const lead = {
       status: "Pending Enquiry",
       requestId,
@@ -858,7 +847,6 @@ export async function submitCartEnquiryAction(
       name,
       email,
       phone,
-      shippingAddress,
       customizationNotes,
       currency,
       total,
@@ -868,7 +856,6 @@ export async function submitCartEnquiryAction(
     const accountId = await getSessionAccountId();
     try {
       await updateSwellCart(resolved.cartId, {
-        shipping: shippingAddress,
         ...(accountId ? { account_id: accountId } : {}),
         metadata: {
           ...resolved.cart.metadata,

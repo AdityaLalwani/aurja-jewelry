@@ -98,13 +98,6 @@ function handleOrderEnquiry(body) {
   const name = String(body.name || "").trim();
   const email = String(body.email || "").trim().toLowerCase();
   const phone = String(body.phone || "").trim();
-  const address = body.shippingAddress || {};
-  const address1 = String(address.address1 || "").trim();
-  const address2 = String(address.address2 || "").trim();
-  const city = String(address.city || "").trim();
-  const state = String(address.state || "").trim();
-  const postalCode = String(address.zip || "").trim();
-  const country = String(address.country || "").trim();
   const notes = String(body.customizationNotes || "").trim();
   const currency = String(body.currency || "").trim();
   const total = Number(body.total);
@@ -120,12 +113,7 @@ function handleOrderEnquiry(body) {
       phone.replace(/\D/g, "").length > 15) {
     return jsonResponse({ ok: false, error: "Invalid contact details" }, 400);
   }
-  if (!address1 || address1.length > 200 || address2.length > 200 ||
-      !city || city.length > 100 ||
-      !state || state.length > 100 ||
-      !postalCode || postalCode.length > 20 ||
-      !country || country.length > 100 ||
-      notes.length > 2000) {
+  if (notes.length > 2000) {
     return jsonResponse({ ok: false, error: "Invalid order details" }, 400);
   }
   if (!["INR", "USD"].includes(currency) ||
@@ -181,11 +169,11 @@ function handleOrderEnquiry(body) {
       safeSheetText(name),
       safeSheetText(email),
       safeSheetText(phone),
-      safeSheetText([address1, address2].filter(Boolean).join(", ")),
-      safeSheetText(city),
-      safeSheetText(state),
-      safeSheetText(postalCode),
-      safeSheetText(country),
+      "",
+      "",
+      "",
+      "",
+      "",
       safeSheetText(notes),
       currency,
       total,
@@ -205,9 +193,6 @@ function handleOrderEnquiry(body) {
     return "- " + item.name + " (SKU: " + (item.sku || "Not available") + ")" +
       selectedOptions + " x " + item.quantity;
   }).join("\n");
-  const addressSummary = [address1, address2, city, state, postalCode, country]
-    .filter(Boolean)
-    .join(", ");
   const customerSubject = "We received your Aurja order request";
   const customerBody =
     "Dear " + name + ",\n\n" +
@@ -239,8 +224,7 @@ function handleOrderEnquiry(body) {
       "Name: " + name + "\n" +
       "Email: " + email + "\n" +
       "Phone: " + phone + "\n" +
-      "Shipping address: " + addressSummary + "\n\n" +
-      "Items:\n" + itemSummary + "\n\n" +
+      "\nItems:\n" + itemSummary + "\n\n" +
       "Customization notes: " + (notes || "None");
     try {
       MailApp.sendEmail({
