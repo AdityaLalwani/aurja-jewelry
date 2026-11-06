@@ -47,7 +47,25 @@ export default async function ProductsPage({
     Number.isInteger(requestedPage) && requestedPage > 0
       ? Math.min(requestedPage, 1000)
       : 1;
-  const productPage = await getJewelryProductPage(category, page);
+  const firstProductPage = await getJewelryProductPage(category, 1);
+  const lastPage = Math.max(
+    1,
+    Math.min(page, Math.ceil(firstProductPage.total / 24)),
+  );
+  const additionalPages = await Promise.all(
+    Array.from({ length: lastPage - 1 }, (_, index) =>
+      getJewelryProductPage(category, index + 2),
+    ),
+  );
+  const productPage = {
+    products: [
+      ...firstProductPage.products,
+      ...additionalPages.flatMap((productPage) => productPage.products),
+    ],
+    total: firstProductPage.total,
+    page: lastPage,
+    hasMore: lastPage * 24 < firstProductPage.total,
+  };
   const title = category
     ? category.replaceAll("-", " ")
     : "The Collection";
@@ -65,10 +83,10 @@ export default async function ProductsPage({
         </div>
 
         <ProductGrid
-          key={`${category ?? "all"}:${page}`}
+          key={category ?? "all"}
           products={productPage.products}
           total={productPage.total}
-          initialPage={page}
+          initialPage={productPage.page}
           hasMore={productPage.hasMore}
           categorySlug={category}
         />
