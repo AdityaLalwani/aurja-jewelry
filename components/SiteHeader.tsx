@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useStore } from "@/components/StoreProvider";
+import {
+  useHydrationSafeWishlistSlugs,
+  useStore,
+} from "@/components/StoreProvider";
 import type { JewelryProduct, StoreCategory } from "@/lib/swell";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
@@ -20,7 +23,8 @@ export function SiteHeader({
   bestSellers: JewelryProduct[];
   isAuthenticated: boolean;
 }) {
-  const { wishlistSlugs, cartCount } = useStore();
+  const { cartCount } = useStore();
+  const wishlistSlugs = useHydrationSafeWishlistSlugs();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const [isScrolled, setIsScrolled] = useState(false);
@@ -360,7 +364,7 @@ export function SiteHeader({
                         {hasSubcategories && (
                           <ul
                             id={subcategoryListId}
-                            className={`mt-2 grid grid-cols-2 gap-x-5 gap-y-3 border-l border-neutral-200 pl-3 ${
+                            className={`mt-2 grid grid-cols-1 gap-y-3 border-l border-neutral-200 pl-3 ${
                               isExpanded ? "" : "hidden"
                             }`}
                           >

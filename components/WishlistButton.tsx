@@ -1,6 +1,9 @@
 "use client";
 
-import { useStore } from "@/components/StoreProvider";
+import {
+  useHydrationSafeWishlistSlugs,
+  useStore,
+} from "@/components/StoreProvider";
 
 export function WishlistButton({
   slug,
@@ -11,8 +14,9 @@ export function WishlistButton({
   className?: string;
   iconClassName?: string;
 }) {
-  const { isWishlisted, toggleWishlist } = useStore();
-  const saved = isWishlisted(slug);
+  const { toggleWishlist } = useStore();
+  const wishlistSlugs = useHydrationSafeWishlistSlugs();
+  const saved = wishlistSlugs.includes(slug);
 
   return (
     <button

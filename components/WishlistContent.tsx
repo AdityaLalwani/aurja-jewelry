@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
-import { useStore } from "@/components/StoreProvider";
+import { useHydrationSafeWishlistSlugs } from "@/components/StoreProvider";
 import type { JewelryProduct } from "@/lib/swell";
 import { loadJewelryProductsBySlugs } from "@/lib/product-actions";
 
 export function WishlistContent() {
-  const { wishlistSlugs } = useStore();
+  const wishlistSlugs = useHydrationSafeWishlistSlugs();
   const [retryCount, setRetryCount] = useState(0);
   const [loadResult, setLoadResult] = useState<{
     key: string;
