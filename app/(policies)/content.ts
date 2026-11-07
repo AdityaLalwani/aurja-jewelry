@@ -54,7 +54,7 @@ export const privacyPolicy: InformationDocument = {
     {
       heading: "Cookies and preferences",
       paragraphs: [
-        "We use essential cookies for features such as maintaining your cart and keeping your sign-in session secure. Optional analytics and marketing cookies are not currently enabled. The cookie preference control lets you choose whether to allow those optional categories if they are introduced; essential cookies remain active so the store can work.",
+        "We use essential cookies for features such as maintaining your cart and keeping your sign-in session secure. Optional analytics tools, including Vercel Analytics, Vercel Speed Insights and Google Analytics 4 when configured, are loaded only if you allow analytics in Cookie Preferences. If you withdraw that choice, analytics collection is disabled. Marketing tools are not currently active; essential cookies remain active so the store can work.",
         "Your choice is saved in your browser for up to six months. You can reopen Cookie Preferences from the footer and change your choice at any time.",
       ],
     },

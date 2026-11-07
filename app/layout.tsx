@@ -16,6 +16,10 @@ import { headers } from "next/headers";
 import { CookiePreferences } from "@/components/CookiePreferences";
 import { getSessionAccountId } from "@/lib/session";
 import { LoginPrompt } from "@/components/LoginPrompt";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 
 async function getNavigationCategories(): Promise<StoreCategory[]> {
   const categories = await getStoreCategories();
@@ -99,6 +103,7 @@ export default async function RootLayout({
     requestHeaders.get("cf-ipcountry") ??
     requestHeaders.get("cloudfront-viewer-country");
   const initialCurrency = country?.toUpperCase() === "IN" ? "INR" : "USD";
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
     <html
@@ -124,6 +129,11 @@ export default async function RootLayout({
           {children}
           <CookiePreferences />
         </StoreProvider>
+        <AnalyticsConsent>
+          <Analytics />
+          <SpeedInsights />
+          {gaId ? <GoogleAnalytics gaId={gaId} /> : null}
+        </AnalyticsConsent>
       </body>
     </html>
   );
