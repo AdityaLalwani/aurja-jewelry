@@ -33,7 +33,7 @@ export type Profile = {
   company: string;
   /** Initials shown in the avatar until a photo is added. */
   initials: string;
-  /** Optional: path or URL to a profile photo (e.g. "/team/akshat.png"). */
+  /** Optional: path or URL to a profile photo (e.g. "/team/akshat-optimized.jpg"). */
   photo?: string;
   /** Short bio line shown under the designation. */
   bio: string;
@@ -62,7 +62,7 @@ export const profiles: Record<string, Profile> = {
     designation: "Founder & Director",
     company: site.name,
     initials: "AM",
-    photo: "/team/akshat.png",
+    photo: "/team/akshat-optimized.jpg",
     bio: "Curating timeless jewelry at AURJA.",
     whatsapp: "917485922448",
     phoneDisplay: "+91 74859 22448",

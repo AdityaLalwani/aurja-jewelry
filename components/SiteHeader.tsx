@@ -406,14 +406,8 @@ export function SiteHeader({
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-500">
-                    Loved by you
+                    Loved by you our bestsellers
                   </p>
-                  <h2
-                    id="menu-best-sellers"
-                    className="mt-1 font-display text-2xl text-neutral-900"
-                  >
-                    BESTSELLERS
-                  </h2>
                 </div>
               </div>
               <ul className="grid grid-cols-2 gap-1 sm:gap-4">

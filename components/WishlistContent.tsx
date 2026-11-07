@@ -1,15 +1,81 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { useStore } from "@/components/StoreProvider";
 import type { JewelryProduct } from "@/lib/swell";
+import { loadJewelryProductsBySlugs } from "@/lib/product-actions";
 
-export function WishlistContent({ products }: { products: JewelryProduct[] }) {
+export function WishlistContent() {
   const { wishlistSlugs } = useStore();
+  const [retryCount, setRetryCount] = useState(0);
+  const [loadResult, setLoadResult] = useState<{
+    key: string;
+    products: JewelryProduct[];
+    error?: string;
+  }>({ key: "", products: [] });
+  const requestKey = `${retryCount}:${JSON.stringify(wishlistSlugs)}`;
+
+  useEffect(() => {
+    if (wishlistSlugs.length === 0) return;
+
+    let active = true;
+    void loadJewelryProductsBySlugs(wishlistSlugs)
+      .then((loadedProducts) => {
+        if (active) {
+          setLoadResult({ key: requestKey, products: loadedProducts });
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("Could not load wishlist products", error);
+        if (active) {
+          setLoadResult({
+            key: requestKey,
+            products: [],
+            error: "We could not load your saved pieces. Please try again.",
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [requestKey, wishlistSlugs]);
+
+  const requestComplete = loadResult.key === requestKey;
+  const products = requestComplete ? loadResult.products : [];
+  const loading = wishlistSlugs.length > 0 && !requestComplete;
+  const loadError = requestComplete ? loadResult.error : "";
+
   const savedProducts = wishlistSlugs
     .map((slug) => products.find((product) => product.slug === slug))
     .filter((product): product is JewelryProduct => Boolean(product));
+
+  if (wishlistSlugs.length > 0 && loading) {
+    return (
+      <div className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-16 text-sm text-neutral-500 sm:px-6">
+        Loading your saved pieces…
+      </div>
+    );
+  }
+
+  if (wishlistSlugs.length > 0 && loadError) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center px-4 py-16 text-center sm:px-6">
+        <p role="alert" className="text-sm text-red-600">
+          {loadError}
+        </p>
+        <button
+          type="button"
+          onClick={() => setRetryCount((count) => count + 1)}
+          className="mt-6 rounded-full bg-gold px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gold-dark"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (savedProducts.length === 0) {
     return (

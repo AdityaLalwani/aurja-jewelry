@@ -22,6 +22,8 @@ export function ProductCard({
 }) {
   const { currency, enquiredSlugs, isInCart } = useStore();
   const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const [alternateImageRequested, setAlternateImageRequested] = useState(false);
+  const [alternateImageLoaded, setAlternateImageLoaded] = useState(false);
   const enquired = enquiredSlugs.includes(product.slug);
   const [state, formAction, pending] = useActionState(
     addToCartAction,
@@ -39,6 +41,12 @@ export function ProductCard({
       <div className="relative aspect-square overflow-hidden bg-neutral-100 sm:aspect-[4/5]">
         <Link
           href={`/products/${product.slug}`}
+          onPointerEnter={(event) => {
+            if (event.pointerType === "mouse") {
+              setAlternateImageRequested(true);
+            }
+          }}
+          onFocus={() => setAlternateImageRequested(true)}
           className="absolute inset-0 block focus:outline-none"
         >
           {product.images[0] ? (
@@ -50,7 +58,7 @@ export function ProductCard({
               quality={70}
               sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 30vw, 50vw"
               className={`object-cover transition-transform duration-500 ease-in-out motion-reduce:transition-none ${
-                product.images[1]
+                product.images[1] && alternateImageLoaded
                   ? "group-hover:-translate-x-full"
                   : "group-hover:scale-105"
               }`}
@@ -60,7 +68,7 @@ export function ProductCard({
               Image unavailable
             </div>
           )}
-          {product.images[1] ? (
+          {product.images[1] && alternateImageRequested ? (
             <Image
               src={normalizeImageSource(product.images[1])}
               loader={imageKitLoader}
@@ -69,6 +77,7 @@ export function ProductCard({
               fill
               quality={70}
               sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 30vw, 50vw"
+              onLoad={() => setAlternateImageLoaded(true)}
               className="translate-x-full object-cover transition-transform duration-500 ease-in-out group-hover:translate-x-0 motion-reduce:transition-none"
             />
           ) : null}

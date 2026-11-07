@@ -39,8 +39,10 @@ const carouselPosts = [
 export function InstagramSection() {
   const { instagram } = home;
   const profileUrl = `https://instagram.com/${site.instagram}`;
+  const sectionRef = useRef<HTMLElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [embedsEnabled, setEmbedsEnabled] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activePosition, setActivePosition] = useState(1);
 
@@ -64,6 +66,23 @@ export function InstagramSection() {
     },
     [],
   );
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setEmbedsEnabled(true);
+        observer.disconnect();
+      },
+      { rootMargin: "300px 0px" },
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     scrollToPosition(1, "instant");
@@ -117,6 +136,7 @@ export function InstagramSection() {
 
   return (
     <section
+      ref={sectionRef}
       id="social"
       className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 sm:px-8 sm:py-24"
     >
@@ -237,11 +257,13 @@ export function InstagramSection() {
         Swipe or scroll to explore
       </p>
 
-      <Script
-        src="https://www.instagram.com/embed.js"
-        strategy="afterInteractive"
-        onLoad={() => window.instgrm?.Embeds?.process()}
-      />
+      {embedsEnabled ? (
+        <Script
+          src="https://www.instagram.com/embed.js"
+          strategy="afterInteractive"
+          onLoad={() => window.instgrm?.Embeds?.process()}
+        />
+      ) : null}
     </section>
   );
 }

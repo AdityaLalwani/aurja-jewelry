@@ -1,6 +1,9 @@
 "use server";
 
-import { getJewelryProductPage } from "@/lib/swell";
+import {
+  getJewelryProductBySlug,
+  getJewelryProductPage,
+} from "@/lib/swell";
 import type { JewelryProduct } from "@/lib/swell";
 
 export async function loadJewelryProductsForFilters(
@@ -21,6 +24,26 @@ export async function loadJewelryProductsForFilters(
   }
 
   throw new Error("The product collection exceeds the supported page limit.");
+}
+
+export async function loadJewelryProductsBySlugs(
+  slugs: string[],
+): Promise<JewelryProduct[]> {
+  if (
+    !Array.isArray(slugs) ||
+    slugs.length > 100 ||
+    slugs.some((slug) => typeof slug !== "string" || slug.length > 200)
+  ) {
+    throw new Error("Invalid wishlist product request.");
+  }
+
+  const uniqueSlugs = [...new Set(slugs.filter(Boolean))];
+  const products = await Promise.all(
+    uniqueSlugs.map((slug) => getJewelryProductBySlug(slug)),
+  );
+  return products.filter(
+    (product): product is JewelryProduct => product !== null,
+  );
 }
 
 export async function loadMoreJewelryProducts(

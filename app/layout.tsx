@@ -21,18 +21,39 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 
+const FALLBACK_NAVIGATION_CATEGORIES: StoreCategory[] = [
+  { id: "rings", name: "Rings", slug: "rings", parentId: null },
+  { id: "earrings", name: "Earrings", slug: "earrings", parentId: null },
+  { id: "pendants", name: "Pendants", slug: "pendants", parentId: null },
+  { id: "bracelets", name: "Bracelets", slug: "bracelets", parentId: null },
+  { id: "necklaces", name: "Necklaces", slug: "necklaces", parentId: null },
+  { id: "men", name: "Men", slug: "men", parentId: null },
+];
+
 async function getNavigationCategories(): Promise<StoreCategory[]> {
   const categories = await getStoreCategories();
   if (categories.length > 0) return categories;
 
-  return [
-    { id: "rings", name: "Rings", slug: "rings", parentId: null },
-    { id: "earrings", name: "Earrings", slug: "earrings", parentId: null },
-    { id: "pendants", name: "Pendants", slug: "pendants", parentId: null },
-    { id: "bracelets", name: "Bracelets", slug: "bracelets", parentId: null },
-    { id: "necklaces", name: "Necklaces", slug: "necklaces", parentId: null },
-    { id: "men", name: "Men", slug: "men", parentId: null },
-  ];
+  return FALLBACK_NAVIGATION_CATEGORIES;
+}
+
+async function StoreHeader({
+  isAuthenticated,
+}: {
+  isAuthenticated: boolean;
+}) {
+  const [categories, bestSellerProducts] = await Promise.all([
+    getNavigationCategories(),
+    getJewelryProductsBySkus(BEST_SELLER_SKUS),
+  ]);
+
+  return (
+    <SiteHeader
+      categories={categories}
+      bestSellers={bestSellerProducts.map(({ product }) => product)}
+      isAuthenticated={isAuthenticated}
+    />
+  );
 }
 
 const playfair = Playfair_Display({
@@ -91,13 +112,10 @@ export default async function RootLayout({
   children,
   modal,
 }: LayoutProps<"/">) {
-  const [categories, bestSellerProducts, requestHeaders, accountId] =
-    await Promise.all([
-      getNavigationCategories(),
-      getJewelryProductsBySkus(BEST_SELLER_SKUS),
-      headers(),
-      getSessionAccountId(),
-    ]);
+  const [requestHeaders, accountId] = await Promise.all([
+    headers(),
+    getSessionAccountId(),
+  ]);
   const country =
     requestHeaders.get("x-vercel-ip-country") ??
     requestHeaders.get("cf-ipcountry") ??
@@ -116,11 +134,17 @@ export default async function RootLayout({
           initialCurrency={initialCurrency}
           detectCurrencyFromBrowser={!country}
         >
-          <SiteHeader
-            categories={categories}
-            bestSellers={bestSellerProducts.map(({ product }) => product)}
-            isAuthenticated={accountId !== null}
-          />
+          <Suspense
+            fallback={
+              <SiteHeader
+                categories={FALLBACK_NAVIGATION_CATEGORIES}
+                bestSellers={[]}
+                isAuthenticated={accountId !== null}
+              />
+            }
+          >
+            <StoreHeader isAuthenticated={accountId !== null} />
+          </Suspense>
           <LoginPrompt isAuthenticated={accountId !== null} />
           <Suspense fallback={null}>
             <CartSnapshot />
