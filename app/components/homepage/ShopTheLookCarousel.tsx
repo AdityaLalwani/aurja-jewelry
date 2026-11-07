@@ -158,8 +158,6 @@ export function ShopTheLookCarousel({
           src={activeScene.background}
           alt={`Jewelry styling scene ${activeSceneIndex + 1}`}
           fill
-          priority
-          unoptimized
           sizes="100vw"
           aria-hidden
           className="pointer-events-none object-cover object-top max-md:object-[58%_top]"

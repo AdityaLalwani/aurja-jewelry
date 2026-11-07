@@ -14,6 +14,9 @@
   "dependencies": {
     "@firebase/app": "^0.16.3",
     "@firebase/auth": "^1.13.7",
+    "@next/third-parties": "^16.4.5",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.1.0",
     "firebase-admin": "^13.10.0",
     "gsap": "^3.15.0",
     "next": "16.3.3",

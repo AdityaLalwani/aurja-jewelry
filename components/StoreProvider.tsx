@@ -7,6 +7,7 @@ import {
   useMemo,
   useEffect,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import type { JewelryProduct } from "@/lib/swell";
@@ -15,6 +16,11 @@ export type Currency = "INR" | "USD";
 
 const ENQUIRED_COOKIE_NAME = "aurja_enquired_products";
 const ENQUIRED_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const EMPTY_WISHLIST: string[] = [];
+
+function subscribeToWishlistChanges() {
+  return () => {};
+}
 
 function readEnquiredCookie(): string[] {
   const entry = document.cookie
@@ -259,4 +265,15 @@ export function useStore(): StoreContextValue {
     throw new Error("useStore must be used within a StoreProvider");
   }
   return context;
+}
+
+export function useHydrationSafeWishlistSlugs(): string[] {
+  const { wishlistSlugs } = useStore();
+
+  // Context updates trigger rerenders; the server snapshot keeps stored data out of hydration.
+  return useSyncExternalStore(
+    subscribeToWishlistChanges,
+    () => wishlistSlugs,
+    () => EMPTY_WISHLIST,
+  );
 }

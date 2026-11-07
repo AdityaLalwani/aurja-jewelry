@@ -4,15 +4,15 @@ import { ShopTheLookCarousel } from "./ShopTheLookCarousel";
 
 const shopTheLookScenes = [
   {
-    background: "/sbl-bg.png",
+    background: "/sbl-bg-optimized.jpg",
     skus: ["ASJ026", "ASJ023", "ASJ049", "ASJ042"],//59,60
   },
   {
-    background: "/sbl-bg2.png",
+    background: "/sbl-bg2-optimized.jpg",
     skus: ["ASJ038"],//52
   },
   {
-    background: "/sbl-bg3.png",
+    background: "/sbl-bg3-optimized.jpg",
     skus: ["ASJ001", "ASJ003"],
   },
 ] as const;

@@ -2,49 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  COOKIE_NAME,
+  parsePreferences,
+  readPreferenceCookie,
+  type CookiePreferences,
+} from "@/lib/cookie-preferences";
 
-const COOKIE_NAME = "aurja_cookie_preferences";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
-
-type CookiePreferences = {
-  version: 1;
-  analytics: boolean;
-  marketing: boolean;
-};
-
-function readPreferenceCookie() {
-  if (typeof document === "undefined") return null;
-  const entry = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith(`${COOKIE_NAME}=`));
-  if (!entry) return null;
-  try {
-    return decodeURIComponent(entry.slice(COOKIE_NAME.length + 1));
-  } catch {
-    return null;
-  }
-}
-
-function parsePreferences(value: string | null): CookiePreferences | null {
-  if (!value) return null;
-  try {
-    const parsed = JSON.parse(value) as Partial<CookiePreferences>;
-    if (
-      parsed.version !== 1 ||
-      typeof parsed.analytics !== "boolean" ||
-      typeof parsed.marketing !== "boolean"
-    ) {
-      return null;
-    }
-    return {
-      version: 1,
-      analytics: parsed.analytics,
-      marketing: parsed.marketing,
-    };
-  } catch {
-    return null;
-  }
-}
 
 function savePreferences(preferences: CookiePreferences) {
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
@@ -132,9 +97,9 @@ export function CookiePreferences() {
                 Your privacy matters
               </h2>
               <p className="mt-1 text-sm leading-relaxed text-stone-600">
-                We use essential cookies to keep the store working. Optional
-                analytics and marketing cookies are not currently enabled.
-                Choose whether to allow them if introduced.
+                We use essential cookies to keep the store working. Analytics
+                and marketing tools are disabled unless you choose to allow
+                them.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -193,8 +158,8 @@ export function CookiePreferences() {
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-stone-600">
               Essential cookies keep core store features working. Optional
-              categories are not currently active; your choices will be
-              respected if those services are added.
+              Analytics tools run only when you allow analytics. Marketing
+              tools are not currently active.
             </p>
 
             <div className="mt-6 divide-y divide-stone-200 border-y border-stone-200">
