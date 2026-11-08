@@ -151,6 +151,35 @@ function isSameCartLine(
   return matchesSelectedOptions(itemEntry.options, optionPayload);
 }
 
+function isSavedCartLine(
+  itemEntry: SwellCartItem,
+  productId: string,
+  slug: string,
+  variantId: string | undefined,
+  optionPayload: Array<{ name: string; value: string }>,
+  variantKey: string,
+): boolean {
+  if (
+    itemEntry.product_id !== productId &&
+    itemEntry.metadata?.product_slug !== slug
+  ) {
+    return false;
+  }
+
+  if (itemEntry.variant_id === variantId) {
+    return true;
+  }
+
+  if (itemEntry.metadata?.variant_key === variantKey) {
+    return true;
+  }
+
+  return (
+    optionPayload.length > 0 &&
+    matchesSelectedOptions(itemEntry.options, optionPayload)
+  );
+}
+
 /**
  * The cart a request belongs to always comes from the signed `aurja_cart`
  * cookie — never from form data, so a crafted submission cannot act on
@@ -296,7 +325,7 @@ export async function addToCartAction(
           .join("; ");
         throw new Error(detail || "Swell did not return a cart id.");
       }
-      writeItemCount = cart.items?.length ?? 0;
+      writeItemCount = Array.isArray(cart.items) ? cart.items.length : null;
       cartId = cart.id;
     } else {
       const cartItems = resolved.cart.items ?? [];
@@ -322,12 +351,16 @@ export async function addToCartAction(
         const updatedCart = await updateSwellCart(resolved.cartId, {
           $set: { items: updatedItems },
         });
-        writeItemCount = updatedCart.items?.length ?? 0;
+        writeItemCount = Array.isArray(updatedCart.items)
+          ? updatedCart.items.length
+          : null;
       } else {
         const updatedCart = await updateSwellCart(resolved.cartId, {
           $set: { items: [...updatedItems, item] },
         });
-        writeItemCount = updatedCart.items?.length ?? 0;
+        writeItemCount = Array.isArray(updatedCart.items)
+          ? updatedCart.items.length
+          : null;
       }
       cartId = resolved.cartId;
     }
@@ -335,8 +368,14 @@ export async function addToCartAction(
     const savedCart = await getSwellCart(cartId, { include: ["items"] });
     const savedItem = savedCart?.items?.find(
       (cartItem) =>
-        cartItem.product_id === product.id &&
-        (!resolvedVariantId || cartItem.variant_id === resolvedVariantId),
+        isSavedCartLine(
+          cartItem,
+          product.id,
+          slug,
+          resolvedVariantId,
+          cartOptions,
+          variantKey,
+        ),
     );
     if (!savedItem) {
       const readItemCount = savedCart?.items?.length ?? 0;
@@ -350,8 +389,7 @@ export async function addToCartAction(
     console.error("Swell add to cart failed", error);
     return {
       error:
-        error instanceof Error &&
-        error.message.startsWith("Swell did not return the product line after adding it")
+        process.env.NODE_ENV !== "production" && error instanceof Error
           ? error.message
           : "We could not add this piece to your cart right now. Please try again in a moment.",
     };
