@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { lazy, Suspense, useActionState, useState } from "react";
+import { lazy, Suspense, useActionState, useEffect, useState } from "react";
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import { addToCartAction } from "@/lib/cart-actions";
 import { WishlistButton } from "@/components/WishlistButton";
@@ -20,7 +20,13 @@ export function ProductCard({
 }: {
   product: JewelryProduct;
 }) {
-  const { currency, enquiredSlugs, isInCart } = useStore();
+  const {
+    currency,
+    enquiredSlugs,
+    isInCart,
+    addLocalCartItem,
+    localCartReady,
+  } = useStore();
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [alternateImageRequested, setAlternateImageRequested] = useState(false);
   const [alternateImageLoaded, setAlternateImageLoaded] = useState(false);
@@ -30,6 +36,12 @@ export function ProductCard({
     undefined,
   );
   const inCart = isInCart(product.slug);
+
+  useEffect(() => {
+    if (state?.localCartItem) {
+      addLocalCartItem(state.localCartItem);
+    }
+  }, [addLocalCartItem, state?.localCartItem]);
 
   function openEnquiry() {
     setEnquiryOpen(true);
@@ -150,7 +162,7 @@ export function ProductCard({
               <input type="hidden" name="quantity" value="1" />
               <button
                 type="submit"
-                disabled={pending}
+                disabled={pending || !localCartReady}
                 aria-label={pending ? "Adding to cart" : "Add to cart"}
                 className="w-full whitespace-nowrap rounded-full border border-neutral-300 px-1.5 py-1.5 text-[10px] font-medium text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:opacity-60 sm:px-4 sm:py-2.5 sm:text-sm"
               >

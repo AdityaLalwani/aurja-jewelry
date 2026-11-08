@@ -6,7 +6,7 @@ import { CartItemControls } from "@/components/CartItemControls";
 import { CartEnquiryForm } from "@/components/CartEnquiryForm";
 import { useStore } from "@/components/StoreProvider";
 import { WishlistButton } from "@/components/WishlistButton";
-import type { CartView } from "@/lib/cart-view";
+import type { LocalCartItem } from "@/lib/cart-view";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 interface CartContactDetails {
@@ -24,42 +24,25 @@ function formatDisplayAmount(amount: number, currency: "INR" | "USD") {
 }
 
 export function CartContent({
-  view,
   contactDetails,
-  loadError = false,
 }: {
-  view: CartView;
   contactDetails: CartContactDetails;
-  loadError?: boolean;
 }) {
-  const { currency } = useStore();
+  const { currency, localCartReady, localCartItems } = useStore();
+  const items = localCartItems;
 
-  if (loadError) {
+  if (!localCartReady) {
     return (
       <div
-        role="alert"
-        className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center gap-6 px-4 py-32 text-center sm:px-6"
+        role="status"
+        className="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-32 text-sm text-neutral-500 sm:px-6"
       >
-        <p className="text-[11px] uppercase tracking-[0.35em] text-gold">
-          Your Cart
-        </p>
-        <h1 className="font-display text-3xl leading-tight text-neutral-900 sm:text-4xl">
-          We couldn&apos;t load your cart
-        </h1>
-        <p className="max-w-md text-sm leading-6 text-neutral-500">
-          Your items may still be saved. Please try again in a moment.
-        </p>
-        <Link
-          href="/cart"
-          className="rounded-full bg-gold px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark"
-        >
-          Try again
-        </Link>
+        Loading your cart…
       </div>
     );
   }
 
-  if (view.items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center gap-6 px-4 py-32 text-center sm:px-6">
         <p className="text-[11px] uppercase tracking-[0.35em] text-gold">
@@ -82,24 +65,23 @@ export function CartContent({
     );
   }
 
-  const amountForCurrency = (
-    item: CartView["items"][number],
-  ): number | null =>
+  const amountForCurrency = (item: LocalCartItem): number | null =>
     currency === "INR"
       ? item.priceInr
       : item.priceUsd ?? item.price;
-  const hasUnavailablePrice = view.items.some(
+  const hasUnavailablePrice = items.some(
     (item) => !item.showPriceOnRequest && amountForCurrency(item) === null,
   );
   const total = hasUnavailablePrice
     ? null
-    : view.items.reduce(
+    : items.reduce(
         (sum, item) =>
           item.showPriceOnRequest
             ? sum
             : sum + (amountForCurrency(item) ?? 0) * item.quantity,
         0,
       );
+  const itemQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-10 sm:px-6">
@@ -108,16 +90,16 @@ export function CartContent({
           Your Cart
         </p>
         <h1 className="mt-3 font-display text-3xl leading-tight text-neutral-900 sm:text-4xl">
-          {view.itemQuantity === 1
+          {itemQuantity === 1
             ? "One piece, waiting for you"
-            : `${view.itemQuantity} pieces, waiting for you`}
+            : `${itemQuantity} pieces, waiting for you`}
         </h1>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
         <section>
           <ul className="divide-y divide-neutral-200/80 border-y border-neutral-200/80">
-            {view.items.map((item) => {
+            {items.map((item) => {
               const productHref = item.slug ? `/products/${item.slug}` : null;
               const itemAmount = amountForCurrency(item);
 
@@ -237,7 +219,8 @@ export function CartContent({
           <CartEnquiryForm
             currency={currency}
             contactDetails={contactDetails}
-            items={view.items}
+            items={items}
+            localCartItems={localCartItems}
           />
           <p className="mt-4 text-center text-xs leading-5 text-neutral-500">
             Prices shown in {currency === "INR" ? "₹ (INR)" : "$ (USD)"}. Each

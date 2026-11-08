@@ -5,7 +5,6 @@ import "./globals.css";
 import { BEST_SELLER_SKUS, site } from "@/lib/site";
 import { StoreProvider } from "@/components/StoreProvider";
 import { SiteHeader } from "@/components/SiteHeader";
-import { CartSnapshot } from "./CartSnapshot";
 import { Suspense } from "react";
 import {
   getJewelryProductsBySkus,
@@ -133,6 +132,7 @@ export default async function RootLayout({
         <StoreProvider
           initialCurrency={initialCurrency}
           detectCurrencyFromBrowser={!country}
+          accountId={accountId}
         >
           <Suspense
             fallback={
@@ -146,9 +146,6 @@ export default async function RootLayout({
             <StoreHeader isAuthenticated={accountId !== null} />
           </Suspense>
           <LoginPrompt isAuthenticated={accountId !== null} />
-          <Suspense fallback={null}>
-            <CartSnapshot />
-          </Suspense>
           {modal}
           {children}
           <CookiePreferences />

@@ -10,6 +10,7 @@ import type { Currency } from "@/components/StoreProvider";
 import { WhatsAppIcon } from "@/app/components/icons";
 import { phoneCountryCodes } from "@/lib/phone-country-codes";
 import { site } from "@/lib/site";
+import type { LocalCartItem } from "@/lib/cart-view";
 
 interface CartContactDetails {
   name: string;
@@ -40,10 +41,12 @@ export function CartEnquiryForm({
   currency,
   contactDetails,
   items,
+  localCartItems = [],
 }: {
   currency: Currency;
   contactDetails: CartContactDetails;
   items: CartEnquiryItem[];
+  localCartItems?: LocalCartItem[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [requestId, setRequestId] = useState("");
@@ -161,6 +164,17 @@ export function CartEnquiryForm({
                   <form action={formAction} className="mt-7 space-y-6">
                     <input type="hidden" name="requestId" value={requestId} />
                     <input type="hidden" name="currency" value={currency} />
+                    <input
+                      type="hidden"
+                      name="localCartItems"
+                      value={JSON.stringify(
+                        localCartItems.map((item) => ({
+                          slug: item.slug,
+                          quantity: item.quantity,
+                          selectedOptions: item.selectedOptions,
+                        })),
+                      )}
+                    />
 
                     <fieldset className="space-y-4">
                       <legend className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-900">
