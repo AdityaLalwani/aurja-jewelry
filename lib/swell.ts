@@ -138,6 +138,7 @@ export interface ProductStoneDetail {
 }
 
 export interface JewelryProduct {
+  id?: string;
   name: string;
   slug: string;
   meta_title?: string;
@@ -497,7 +498,7 @@ export function getVariantSelectionSummary(
 
 export function getItemOptionSummary(
   product: Pick<JewelryProduct, "variant_options"> | undefined,
-  itemOptions: SwellCartItemOption[] = [],
+  itemOptions: SwellProductOptionSelection[] = [],
 ): string[] {
   const lookup = new Map<string, string>();
   for (const option of itemOptions) {
@@ -527,7 +528,7 @@ export function getItemOptionSummary(
 }
 
 export function isNaturalGemstoneItemOption(
-  itemOptions: SwellCartItemOption[] = [],
+  itemOptions: SwellProductOptionSelection[] = [],
 ): boolean {
   return itemOptions.some(
     (option) =>
@@ -680,6 +681,7 @@ export function mapSwellProduct(
           .filter((url): url is string => Boolean(url));
 
   return {
+    id: product.id,
     name: product.name ?? product.slug ?? "Untitled product",
     slug: product.slug ?? product.id,
     meta_title:
@@ -1353,9 +1355,7 @@ export async function deleteSwellVariant(
 function buildSwellQuery(
   params:
     | SwellCategoryFetchOptions
-    | SwellCategoryListOptions
-    | SwellCartFetchOptions
-    | SwellCartListOptions,
+    | SwellCategoryListOptions,
 ): string {
   const search = new URLSearchParams();
 
@@ -1543,9 +1543,8 @@ export async function deleteSwellCategory(
 /* ---------------------------------------------------------------------------
  * Products — https://developers.swell.is/backend-api/products
  *
- * Minimal product surface for linking catalog slugs to Swell product ids
- * (cart items reference products by id). Extend into a full products model
- * when the storefront reads its catalog from Swell.
+ * Minimal product surface for Swell catalog lookups. Extend into a full
+ * products model when the storefront reads its catalog from Swell.
  * Server-only: these calls require the store credentials.
  * ------------------------------------------------------------------------- */
 
@@ -1923,350 +1922,11 @@ export async function getJewelryProductsBySkus(
 }
 
 /* ---------------------------------------------------------------------------
- * Carts — https://developers.swell.is/backend-api/carts
- *
- * A cart holds the items a shopper intends to buy plus billing/shipping
- * info, coupons, and running totals. Carts start "active", are abandoned
- * after roughly 3h of inactivity, and become orders via
- * convertSwellCartToOrder (which marks the cart "converted").
- * Server-only: these calls require the store credentials.
+ * Product option selections used by the local cart view.
  * ------------------------------------------------------------------------- */
 
-export type SwellCartStatus = "active" | "converted" | "abandoned" | "recovered";
-
-/** Option selection on a cart item; match by id or name, case-insensitive. */
-export interface SwellCartItemOption {
+export interface SwellProductOptionSelection {
   id?: string;
   name?: string;
-  /** Selected value id or name. */
   value: string;
-  /** Resolved variant; present on cart item responses. */
-  variant?: unknown;
-}
-
-/**
- * Item payload for cart create/update calls. When adding an item,
- * `product_id` is required; when updating an item already in the cart,
- * reference it by its `id` — not the product id — per the Swell docs.
- */
-export interface SwellCartItemInput {
-  id?: string;
-  product_id?: string;
-  /** Resolved from the item's options when omitted. */
-  variant_id?: string;
-  /** Defaults to 1. */
-  quantity?: number;
-  options?: SwellCartItemOption[];
-  /** Custom price override. */
-  price?: number;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}
-
-/** Cart item record as returned by the Swell API. */
-export interface SwellCartItem {
-  id: string;
-  product_id: string;
-  variant_id?: string;
-  quantity: number;
-  price: number;
-  /** Line total (price × quantity, net of item discounts/taxes). */
-  price_total: number;
-  orig_price?: number;
-  discount_each?: number;
-  discount_total?: number;
-  tax_each?: number;
-  tax_total?: number;
-  delivery?: boolean;
-  shipment_weight?: number;
-  options?: SwellCartItemOption[];
-  product_name?: string;
-  /** Expanded product record when requested with `items.product`. */
-  product?: SwellProduct;
-  bundle_items?: SwellCartItem[];
-  metadata?: Record<string, unknown>;
-}
-
-export interface SwellCartAddress {
-  name?: string;
-  first_name?: string;
-  last_name?: string;
-  address1?: string;
-  address2?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  country?: string;
-  phone?: string;
-}
-
-/** Shipping address plus the selected delivery service. */
-export interface SwellCartShipping extends SwellCartAddress {
-  /** Service code, e.g. "standard". */
-  service?: string;
-  service_name?: string;
-  price?: number;
-}
-
-/** Writable cart fields (POST /carts). */
-export interface SwellCartInput {
-  items?: SwellCartItemInput[];
-  billing?: SwellCartAddress;
-  shipping?: SwellCartShipping;
-  coupon_code?: string;
-  account_id?: string;
-  currency?: string;
-  /** Giftcards to apply toward the total. */
-  giftcards?: Array<{ id: string; amount?: number }>;
-  /** Whether the order is a gift. */
-  gift?: boolean;
-  gift_message?: string;
-  metadata?: Record<string, unknown>;
-}
-
-/** Cart record as returned by the Swell API. */
-export interface SwellCart {
-  id: string;
-  errors?: Record<
-    string,
-    {
-      message?: string;
-      code?: string;
-    }
-  >;
-  status?: SwellCartStatus;
-  number?: string;
-  currency?: string;
-  /** Linked Swell Checkout session, when one exists. */
-  checkout_id?: string;
-  checkout_url?: string;
-  items?: SwellCartItem[];
-  /** Total number of items across the cart. */
-  item_quantity?: number;
-  sub_total?: number;
-  discount_total?: number;
-  tax_total?: number;
-  grand_total?: number;
-  item_discount?: number;
-  item_tax?: number;
-  item_shipment_weight?: number;
-  shipment_price?: number;
-  shipment_discount?: number;
-  shipment_total?: number;
-  giftcard_total?: number;
-  auth_total?: number;
-  capture_total?: number;
-  account_id?: string;
-  guest?: boolean;
-  account_logged_in?: boolean;
-  account_info_saved?: boolean;
-  billing?: SwellCartAddress;
-  shipping?: SwellCartShipping;
-  coupon_code?: string;
-  coupon_id?: string;
-  /** Set once the cart is converted into an order. */
-  target_order_id?: string;
-  draft?: boolean;
-  notes?: string;
-  metadata?: Record<string, unknown>;
-  date_created?: string;
-  date_updated?: string;
-  date_abandoned?: string;
-}
-
-/**
- * Update payload for PUT /carts/:id — the call merges, so only changed
- * fields are needed.
- */
-export interface SwellCartUpdateInput {
-  /**
-   * Merge into the items array; existing items are matched by their `id`
-   * (not their product id), e.g. { items: [{ id, quantity: 3 }] }.
-   */
-  items?: SwellCartItemInput[];
-  billing?: SwellCartAddress;
-  shipping?: SwellCartShipping;
-  coupon_code?: string;
-  account_id?: string;
-  currency?: string;
-  metadata?: Record<string, unknown>;
-  /**
-   * Replace fields wholesale instead of merging. Required to override
-   * arrays — e.g. { $set: { items: [...] } } replaces every cart item.
-   */
-  $set?: Partial<SwellCartInput>;
-}
-
-export interface SwellCartFetchOptions {
-  /** Related records to expand, e.g. ["items.product"]. */
-  expand?: string[];
-  /** Fields to limit the response to, e.g. ["id", "items"]. id is always returned. */
-  fields?: string[];
-  /** Related records to include, e.g. ["items"]. */
-  include?: string[];
-}
-
-export interface SwellCartListOptions extends SwellCartFetchOptions {
-  /** Filter object, e.g. { status: "active" }. Supports $eq, $ne, $gt, ... operators. */
-  where?: Record<string, unknown>;
-  /** Full-text search across cart fields. */
-  search?: string;
-  /** Page size between 1 and 1000. Defaults to 15 server-side. */
-  limit?: number;
-  /** 1-based page number. */
-  page?: number;
-  /** SQL-like sort expression, e.g. "date_created desc". */
-  sort?: string;
-}
-
-export interface SwellCartListResult {
-  count: number;
-  page: number;
-  pages: Record<string, { start: number; end: number }>;
-  results: SwellCart[];
-}
-
-/**
- * Order record as returned by POST /orders when converting a cart — a
- * minimal slice of the orders model
- * (https://developers.swell.is/backend-api/orders). Extend it when the app
- * grows a full orders model.
- */
-export interface SwellOrder {
-  id: string;
-  number?: string;
-  /** Order lifecycle status — "payment_pending" right after conversion. */
-  status?: string;
-  cart_id?: string;
-  account_id?: string;
-  currency?: string;
-  items?: SwellCartItem[];
-  billing?: SwellCartAddress;
-  shipping?: SwellCartShipping;
-  sub_total?: number;
-  discount_total?: number;
-  tax_total?: number;
-  grand_total?: number;
-  item_quantity?: number;
-  item_discount?: number;
-  item_tax?: number;
-  item_shipment_weight?: number;
-  shipment_price?: number;
-  shipment_total?: number;
-  coupon_code?: string;
-  paid?: boolean;
-  payment_balance?: number;
-  payment_total?: number;
-  refund_total?: number;
-  refunded?: boolean;
-  delivered?: boolean;
-  date_created?: string;
-}
-
-/**
- * Create a cart in the Swell store. Each item needs a product_id; quantity
- * defaults to 1 and variant_id is resolved from the item's options when
- * omitted. New carts start with status "active". Server-only: this call
- * requires the store credentials.
- */
-export async function createSwellCart(
-  input: SwellCartInput,
-): Promise<SwellCart> {
-  return swellFetch<SwellCart>("/carts", {
-    method: "POST",
-    body: input,
-    useSecretKey: true,
-  });
-}
-
-/**
- * Retrieve a cart by id, or null when the id does not match any cart.
- * Server-only: this call requires the store credentials.
- */
-export async function getSwellCart(
-  cartId: string,
-  options: SwellCartFetchOptions = {},
-): Promise<SwellCart | null> {
-  const query = buildSwellQuery(options);
-  const cart = await swellFetch<SwellCart | null>(
-    `/carts/${encodeURIComponent(cartId)}${query}`,
-    { useSecretKey: true, cache: "no-store" },
-  );
-  return cart ?? null;
-}
-
-/**
- * Update a cart by id. PUT merges, so pass only the fields that change;
- * wrap arrays like items in the $set operator to replace them wholesale.
- * Reference existing items by their cart item id, not their product id.
- * Server-only: this call requires the store credentials.
- */
-export async function updateSwellCart(
-  cartId: string,
-  input: SwellCartUpdateInput,
-): Promise<SwellCart> {
-  return swellFetch<SwellCart>(
-    `/carts/${encodeURIComponent(cartId)}`,
-    { method: "PUT", body: input, useSecretKey: true },
-  );
-}
-
-/**
- * Convert a cart into an order. POST /orders with the cart's id maps the
- * cart's items and properties onto a new order — status "payment_pending" —
- * and marks the cart as converted. Order creation is an admin operation
- * (the cart calls above also use the secret key), so this requires the
- * store's secret key. Throws when required order properties are missing or
- * stock is unavailable. Server-only.
- */
-export async function convertSwellCartToOrder(
-  cartId: string,
-): Promise<SwellOrder> {
-  return swellFetch<SwellOrder>("/orders", {
-    method: "POST",
-    body: { cart_id: cartId },
-    useSecretKey: true,
-  });
-}
-
-/**
- * Retrieve an order by id — the confirmation record after converting a
- * cart — or null when the id does not match any order. Server-only: this
- * call requires the store credentials.
- */
-export async function getSwellOrder(
-  orderId: string,
-): Promise<SwellOrder | null> {
-  const order = await swellFetch<SwellOrder | null>(
-    `/orders/${encodeURIComponent(orderId)}`,
-    { useSecretKey: true },
-  );
-  return order ?? null;
-}
-
-/**
- * List all carts with optional filtering, search, and pagination. Returns
- * Swell's paginated collection envelope. Server-only: this call requires
- * the store credentials.
- */
-export async function listSwellCarts(
-  options: SwellCartListOptions = {},
-): Promise<SwellCartListResult> {
-  const query = buildSwellQuery(options);
-  return swellFetch<SwellCartListResult>(`/carts${query}`, {
-    useSecretKey: true,
-  });
-}
-
-/**
- * Delete a cart by id. Returns the deleted record. Server-only: this call
- * requires the store credentials.
- */
-export async function deleteSwellCart(
-  cartId: string,
-): Promise<SwellCart> {
-  return swellFetch<SwellCart>(
-    `/carts/${encodeURIComponent(cartId)}`,
-    { method: "DELETE", useSecretKey: true },
-  );
 }

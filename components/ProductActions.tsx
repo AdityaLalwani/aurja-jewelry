@@ -217,7 +217,13 @@ export function ProductActions({
   showPriceOnRequest?: boolean;
   selectedOptions?: Record<string, string>;
 }) {
-  const { currency, isInCart, isVariantInCart } = useStore();
+  const {
+    currency,
+    isInCart,
+    isVariantInCart,
+    addLocalCartItem,
+    localCartReady,
+  } = useStore();
   const variantKey = Object.entries(selectedOptions)
     .filter(([, value]) => value && value.trim())
     .map(([name, value]) => `${name.trim()}:${value.trim()}`)
@@ -243,6 +249,12 @@ export function ProductActions({
     undefined,
   );
   const [informationOpen, setInformationOpen] = useState(false);
+
+  useEffect(() => {
+    if (state?.localCartItem) {
+      addLocalCartItem(state.localCartItem);
+    }
+  }, [addLocalCartItem, state?.localCartItem]);
 
   useEffect(() => {
     if (!informationOpen) return;
@@ -326,7 +338,7 @@ export function ProductActions({
                 />
                 <button
                   type="submit"
-                  disabled={pending}
+                  disabled={pending || !localCartReady}
                   className="flex h-11 w-full items-center justify-center rounded-full bg-[#b32b2b] px-5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#8d1d1d] disabled:opacity-70 sm:h-14 sm:px-8 sm:text-sm"
                 >
                   {pending ? "Adding…" : "Add to bag"}

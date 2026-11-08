@@ -1,36 +1,19 @@
 "use server";
 
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import {
-  createSwellCart,
-  deleteSwellCart,
   getDefaultVariantSelections,
   getFirstImageUrl,
   getJewelryProductBySlug,
-  getJewelryProductsByIds,
-  findSwellProductBySlug,
   getSelectedVariantPrice,
   isNaturalGemstoneSelection,
-  getSwellCart,
-  resolveSelectedVariantId,
-  updateSwellCart,
-  type SwellCart,
-  type SwellCartItem,
-  type SwellCartItemInput,
 } from "@/lib/swell";
-import { buildCartView } from "@/lib/cart-view";
-import { getSessionAccountId } from "@/lib/session";
-import {
-  clearCartCookie,
-  createCartCookie,
-  getCartIdFromCookie,
-} from "@/lib/cart-session";
+import type { LocalCartItem } from "@/lib/cart-view";
 import { phoneCountryCodes } from "@/lib/phone-country-codes";
 
 export interface CartFormState {
   error?: string;
   success?: string;
+  localCartItem?: LocalCartItem;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+[^\s@]*\.[^\s@]+$/;
@@ -53,340 +36,118 @@ function clampQuantity(value: number): number {
   );
 }
 
-interface SwellFetchError extends Error {
-  status?: number;
-  data?: unknown;
-}
-
-function isSwellNotFoundError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    "status" in error &&
-    (error as SwellFetchError).status === 404
-  );
-}
-
-interface ResolvedCart {
-  cartId: string;
-  cart: SwellCart;
-}
-
-function toCartItemInput(
-  item: SwellCartItem,
-  quantity = item.quantity,
-  priceOverride?: number,
-): SwellCartItemInput {
-  return {
-    id: item.id,
-    product_id: item.product_id,
-    ...(item.variant_id ? { variant_id: item.variant_id } : {}),
-    quantity,
-    ...(item.options ? { options: item.options } : {}),
-    ...(item.metadata ? { metadata: item.metadata } : {}),
-    ...(typeof priceOverride === "number" && Number.isFinite(priceOverride)
-      ? { price: priceOverride }
-      : item.price > 0
-        ? { price: item.price }
-        : {}),
-  };
-}
-
-function normalizeOptionValue(value: string | undefined): string {
-  return value?.trim().toLowerCase() ?? "";
-}
-
-function matchesSelectedOptions(
-  itemOptions: SwellCartItem["options"],
-  selection: Array<{ name: string; value: string }> = [],
-): boolean {
-  if (selection.length === 0) {
-    return !itemOptions || itemOptions.length === 0;
-  }
-
-  const normalizedSelection = selection.map((option) => ({
-    name: normalizeOptionValue(option.name),
-    value: normalizeOptionValue(option.value),
-  }));
-
-  return (
-    Array.isArray(itemOptions) &&
-    itemOptions.length === normalizedSelection.length &&
-    normalizedSelection.every(({ name, value }) =>
-      itemOptions.some((existing) => {
-        const existingName = normalizeOptionValue(existing.name);
-        const existingId = normalizeOptionValue(existing.id);
-        return (
-          (existingName === name || existingId === name) &&
-          normalizeOptionValue(String(existing.value)) === value
-        );
-      }),
-    )
-  );
-}
-
-function isSameCartLine(
-  itemEntry: SwellCartItem,
-  productId: string,
-  variantId: string | undefined,
-  optionPayload: Array<{ name: string; value: string }>,
-  variantKey: string,
-): boolean {
-  if (itemEntry.product_id !== productId) {
-    return false;
-  }
-
-  if (variantId && itemEntry.variant_id !== variantId) {
-    return false;
-  }
-
-  if (optionPayload.length > 0) {
-    return matchesSelectedOptions(itemEntry.options, optionPayload);
-  }
-
-  if (variantId) {
-    const itemVariantKey = itemEntry.metadata?.variant_key;
-    return typeof itemVariantKey !== "string" || itemVariantKey === variantKey;
-  }
-
-  return matchesSelectedOptions(itemEntry.options, optionPayload);
-}
-
-function isSavedCartLine(
-  itemEntry: SwellCartItem,
-  productId: string,
-  slug: string,
-  variantId: string | undefined,
-  optionPayload: Array<{ name: string; value: string }>,
-  variantKey: string,
-): boolean {
-  if (
-    itemEntry.product_id !== productId &&
-    itemEntry.metadata?.product_slug !== slug
-  ) {
-    return false;
-  }
-
-  if (itemEntry.variant_id === variantId) {
-    return true;
-  }
-
-  if (itemEntry.metadata?.variant_key === variantKey) {
-    return true;
-  }
-
-  return (
-    optionPayload.length > 0 &&
-    matchesSelectedOptions(itemEntry.options, optionPayload)
-  );
-}
-
-/**
- * The cart a request belongs to always comes from the signed `aurja_cart`
- * cookie — never from form data, so a crafted submission cannot act on
- * another shopper's cart. Returns null when the cookie is missing, fails
- * signature validation, or points at a cart Swell no longer returns; callers
- * then take the guest path (fresh cart on add, empty-cart page on read).
- * Non-404 lookup errors are rethrown for the caller's catch to report.
- */
-async function resolveCart(expandProducts = false): Promise<ResolvedCart | null> {
-  const cartId = await getCartIdFromCookie();
-  if (!cartId) {
-    return null;
-  }
-
-  try {
-    const cart = await getSwellCart(
-      cartId,
-      expandProducts
-        ? { include: ["items"], expand: ["items.product"] }
-        : { include: ["items"] },
-    );
-    return cart ? { cartId, cart } : null;
-  } catch (error) {
-    if (isSwellNotFoundError(error)) {
-      return null;
-    }
-    throw error;
-  }
-}
-
 export async function addToCartAction(
   _prevState: CartFormState | undefined,
   formData: FormData,
 ): Promise<CartFormState> {
   const slug = readField(formData, "slug");
   const quantity = clampQuantity(Number(readField(formData, "quantity")));
-  const redirectToCart = readField(formData, "redirect") === "cart";
   const selectedOptionsField = readField(formData, "selectedOptions");
-  const selectedOptions = (() => {
-    if (!selectedOptionsField) {
-      return {} as Record<string, string>;
-    }
-
-    try {
-      const parsed = JSON.parse(selectedOptionsField) as Record<string, unknown>;
-      return Object.fromEntries(
-        Object.entries(parsed).flatMap(([key, value]) =>
-          typeof value === "string" && value ? [[key, value]] : [],
-        ),
-      );
-    } catch {
-      return {} as Record<string, string>;
-    }
-  })();
-
   if (!slug) {
     return { error: "This piece is no longer available." };
   }
 
-  let writeItemCount: number | null = null;
   try {
-    // Resolve the product server-side from the slug alone — the client
-    // never supplies a product id or price.
-    const [product, resolved] = await Promise.all([
-      findSwellProductBySlug(slug),
-      resolveCart(),
-    ]);
-    if (!product) {
+    const product = await getJewelryProductBySlug(slug);
+    if (!product || product.slug !== slug) {
       return { error: "This piece is no longer available." };
     }
+
+    let submittedOptions: unknown = {};
+    if (selectedOptionsField) {
+      try {
+        submittedOptions = JSON.parse(selectedOptionsField);
+      } catch {
+        return { error: "Please refresh the page and try again." };
+      }
+    }
+    if (
+      !submittedOptions ||
+      typeof submittedOptions !== "object" ||
+      Array.isArray(submittedOptions) ||
+      Object.keys(submittedOptions).length > 20
+    ) {
+      return { error: "Please refresh the page and try again." };
+    }
+
+    const selections = Object.fromEntries(
+      Object.entries(submittedOptions).flatMap(([name, value]) =>
+        typeof value === "string" && value.trim()
+          ? [[name, value.trim()]]
+          : [],
+      ),
+    );
     const defaultSelections =
-      Object.keys(selectedOptions).length > 0
-        ? selectedOptions
-        : getDefaultVariantSelections(product.options ?? []);
-    const resolvedVariantId = resolveSelectedVariantId(product, defaultSelections);
-    const activeVariants = (product.variants?.results ?? []).filter(
-      (variant) => variant.active !== false,
-    );
-    const variantOptionsAreLinked = activeVariants.some(
-      (variant) => (variant.option_value_ids ?? []).length > 0,
-    );
-    const cartOptions =
-      activeVariants.length > 0 && !variantOptionsAreLinked
-        ? []
-        : Object.entries(defaultSelections).flatMap(([name, value]) => {
-            const option = (product.options ?? []).find(
-              (candidate) =>
-                candidate.name?.trim().toLowerCase() ===
-                name.trim().toLowerCase(),
-            );
-            if (!option || !value) {
-              return [];
-            }
-
-            return [
-              {
-                ...(option.id ? { id: option.id } : {}),
-                name,
-                value,
-              },
-            ];
-          });
-    const selectedPriceUsd =
-      getSelectedVariantPrice(product.options ?? [], defaultSelections) ||
-      Number(product.price ?? 0);
-    const imageUrl =
-      getFirstImageUrl(
-        product.content?.imagekit_urls ?? product.attributes?.imagekit_urls,
-      ) ??
-      getFirstImageUrl(product.images?.[0]?.file?.url) ??
-      null;
-    const variantKey = Object.entries(defaultSelections)
-      .filter(([, value]) => value && value.trim())
-      .map(([name, value]) => `${name.trim()}:${value.trim()}`)
-      .sort()
-      .join("|") || "default";
-    if (activeVariants.length > 0 && !resolvedVariantId) {
-      throw new Error("No active Swell variant matches the selected options.");
+      Object.keys(selections).length > 0
+        ? selections
+        : getDefaultVariantSelections(product.variant_options ?? []);
+    const selectedOptions: Array<{ name: string; value: string }> = [];
+    const normalizedSelections: Record<string, string> = {};
+    for (const [name, value] of Object.entries(defaultSelections)) {
+      const option = product.variant_options?.find(
+        (candidate) =>
+          (candidate.name ?? "Option").trim().toLowerCase() ===
+          name.trim().toLowerCase(),
+      );
+      const selectedValue = option?.values.find(
+        (candidate) =>
+          candidate.active !== false &&
+          (candidate.name ?? "Value").trim().toLowerCase() ===
+            value.trim().toLowerCase(),
+      );
+      if (!option || !selectedValue) {
+        return { error: "A selection for this piece is no longer available." };
+      }
+      const optionName = (option.name ?? "Option").trim();
+      const valueName = (selectedValue.name ?? "Value").trim();
+      selectedOptions.push({ name: optionName, value: valueName });
+      normalizedSelections[optionName] = valueName;
     }
-    const item = {
-      product_id: product.id,
+
+    const variantKey =
+      Object.entries(normalizedSelections)
+        .map(([name, value]) => `${name}:${value}`)
+        .sort()
+        .join("|") || "default";
+    const selectedPriceUsd = getSelectedVariantPrice(
+      product.variant_options ?? [],
+      normalizedSelections,
+    );
+    const selectedPriceInr = getSelectedVariantPrice(
+      product.variant_options ?? [],
+      normalizedSelections,
+      "INR",
+    );
+    const naturalGemstoneSelected = isNaturalGemstoneSelection(
+      product.variant_options ?? [],
+      normalizedSelections,
+    );
+    const localCartItem: LocalCartItem = {
+      id: `local-${JSON.stringify([product.id ?? product.slug, variantKey])}`,
+      productId: product.id ?? product.slug,
+      slug: product.slug,
+      name: product.name,
+      sku: product.sku ?? null,
+      image: getFirstImageUrl(product.images) ?? null,
+      attributes: product.attributes,
+      variantSummary: selectedOptions.map(
+        ({ name, value }) => `${name}: ${value}`,
+      ),
+      showPriceOnRequest: naturalGemstoneSelected,
+      price: selectedPriceUsd || product.attributes.price_usd,
+      priceInr: naturalGemstoneSelected
+        ? null
+        : selectedPriceInr || product.price_inr,
+      priceUsd: naturalGemstoneSelected
+        ? null
+        : selectedPriceUsd || product.attributes.price_usd,
       quantity,
-      ...(selectedPriceUsd > 0 ? { price: selectedPriceUsd } : {}),
-      metadata: {
-        slug,
-        product_slug: slug,
-        variant_key: variantKey,
-        ...(imageUrl ? { image: String(imageUrl) } : {}),
-      },
-      ...(resolvedVariantId ? { variant_id: resolvedVariantId } : {}),
-      ...(cartOptions.length > 0 ? { options: cartOptions } : {}),
+      variantKey,
+      selectedOptions,
     };
-
-    let cartId: string;
-    if (!resolved) {
-      const cart = await createSwellCart({
-        items: [item],
-      });
-      if (!cart.id) {
-        const detail = Object.values(cart.errors ?? {})
-          .map((entry) => entry.message)
-          .filter(Boolean)
-          .join("; ");
-        throw new Error(detail || "Swell did not return a cart id.");
-      }
-      writeItemCount = Array.isArray(cart.items) ? cart.items.length : null;
-      cartId = cart.id;
-    } else {
-      const cartItems = resolved.cart.items ?? [];
-      const existing = cartItems.find((itemEntry) =>
-        isSameCartLine(
-          itemEntry,
-          product.id,
-          resolvedVariantId,
-          cartOptions,
-          variantKey,
-        ),
-      );
-      const updatedItems = cartItems.map((cartItem) =>
-        existing?.id === cartItem.id
-          ? toCartItemInput(
-              cartItem,
-              clampQuantity(cartItem.quantity + quantity),
-            )
-          : toCartItemInput(cartItem),
-      );
-
-      if (existing) {
-        const updatedCart = await updateSwellCart(resolved.cartId, {
-          $set: { items: updatedItems },
-        });
-        writeItemCount = Array.isArray(updatedCart.items)
-          ? updatedCart.items.length
-          : null;
-      } else {
-        const updatedCart = await updateSwellCart(resolved.cartId, {
-          $set: { items: [...updatedItems, item] },
-        });
-        writeItemCount = Array.isArray(updatedCart.items)
-          ? updatedCart.items.length
-          : null;
-      }
-      cartId = resolved.cartId;
-    }
-
-    const savedCart = await getSwellCart(cartId, { include: ["items"] });
-    const savedItem = savedCart?.items?.find(
-      (cartItem) =>
-        isSavedCartLine(
-          cartItem,
-          product.id,
-          slug,
-          resolvedVariantId,
-          cartOptions,
-          variantKey,
-        ),
-    );
-    if (!savedItem) {
-      const readItemCount = savedCart?.items?.length ?? 0;
-      throw new Error(
-        `Swell did not return the product line after adding it (write=${writeItemCount ?? "unknown"}, read=${readItemCount}).`,
-      );
-    }
-
-    await createCartCookie(cartId);
+    return { success: "Added", localCartItem };
   } catch (error) {
-    console.error("Swell add to cart failed", error);
+    console.error("Add to cart failed", error);
     return {
       error:
         process.env.NODE_ENV !== "production" && error instanceof Error
@@ -394,108 +155,6 @@ export async function addToCartAction(
           : "We could not add this piece to your cart right now. Please try again in a moment.",
     };
   }
-
-  // Revalidate before redirect so /cart renders with the fresh cart.
-  revalidatePath("/", "layout");
-  if (redirectToCart) {
-    redirect("/cart");
-  }
-  return { success: "Added" };
-}
-
-export async function updateCartItemQuantityAction(
-  _prevState: CartFormState | undefined,
-  formData: FormData,
-): Promise<CartFormState> {
-  const itemId = readField(formData, "itemId");
-  const quantity = clampQuantity(Number(readField(formData, "quantity")));
-
-  if (!itemId) {
-    return { error: "This item is no longer in your cart." };
-  }
-
-  try {
-    const resolved = await resolveCart();
-    if (!resolved) {
-      return { error: "Your cart has expired." };
-    }
-
-    const cartItems = resolved.cart.items ?? [];
-    // Membership check: the item id must belong to this cart, not just any cart.
-    if (!cartItems.some((item) => item.id === itemId)) {
-      return { error: "This item is no longer in your cart." };
-    }
-
-    const updatedItems = cartItems.map((item) =>
-      item.id === itemId
-        ? toCartItemInput(item, quantity)
-        : toCartItemInput(item),
-    );
-    await updateSwellCart(resolved.cartId, {
-      $set: { items: updatedItems },
-    });
-  } catch (error) {
-    console.error("Swell cart quantity update failed", error);
-    return {
-      error: "We could not update your cart right now. Please try again in a moment.",
-    };
-  }
-
-  revalidatePath("/", "layout");
-  return {};
-}
-
-export async function removeCartItemAction(
-  _prevState: CartFormState | undefined,
-  formData: FormData,
-): Promise<CartFormState> {
-  const itemId = readField(formData, "itemId");
-
-  if (!itemId) {
-    return { error: "This item is no longer in your cart." };
-  }
-
-  try {
-    const resolved = await resolveCart();
-    if (!resolved) {
-      return { error: "Your cart has expired." };
-    }
-
-    const items = resolved.cart.items ?? [];
-    if (!items.some((item) => item.id === itemId)) {
-      return { error: "This item is no longer in your cart." };
-    }
-
-    // Re-echo the surviving lines in full: $set replaces the items array
-    // wholesale, so every field the line carries must be sent back.
-    const kept = items
-      .filter((item) => item.id !== itemId)
-      .map((item) => toCartItemInput(item));
-
-    if (kept.length === 0) {
-      // Removing the last line empties the cart — delete the Swell record
-      // so it does not linger as an empty cart, then clear the cookie. The
-      // record may already be gone; a 404 is fine.
-      try {
-        await deleteSwellCart(resolved.cartId);
-      } catch (deleteError) {
-        if (!isSwellNotFoundError(deleteError)) {
-          throw deleteError;
-        }
-      }
-      await clearCartCookie();
-    } else {
-      await updateSwellCart(resolved.cartId, { $set: { items: kept } });
-    }
-  } catch (error) {
-    console.error("Swell cart update failed", error);
-    return {
-      error: "We could not update your cart right now. Please try again in a moment.",
-    };
-  }
-
-  revalidatePath("/", "layout");
-  return {};
 }
 
 export async function submitProductEnquiryAction(
@@ -742,6 +401,254 @@ export async function submitProductEnquiryAction(
   };
 }
 
+async function notifyCartEnquiry(
+  lead: object,
+): Promise<CartFormState> {
+  const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
+  const webhookSecret = process.env.GOOGLE_SHEETS_WEBHOOK_SECRET;
+  if (!webhookUrl || !webhookSecret) {
+    console.error("Order enquiry notifications are not configured.");
+    return {
+      error:
+        "Our team notification service is not configured. Please contact the Aurja atelier to send your request.",
+    };
+  }
+
+  try {
+    const notificationResponse = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "order-enquiry",
+        ...lead,
+        secret: webhookSecret,
+      }),
+      cache: "no-store",
+    });
+    const responseText = await notificationResponse.text();
+    let notificationResult: { ok?: boolean; error?: string } | null = null;
+    try {
+      notificationResult = JSON.parse(responseText) as {
+        ok?: boolean;
+        error?: string;
+      };
+    } catch {
+      // Apps Script may return an HTML error page when its deployment or
+      // authorization is broken; keep that response out of the UI.
+    }
+
+    if (!notificationResponse.ok || !notificationResult?.ok) {
+      const detail =
+        typeof notificationResult?.error === "string"
+          ? notificationResult.error.slice(0, 200)
+          : `Apps Script returned HTTP ${notificationResponse.status} without a valid confirmation.`;
+      console.error("Order enquiry notification failed", {
+        status: notificationResponse.status,
+        detail,
+      });
+      return {
+        error: `We could not send your request to our team (${detail}). Please try again or contact Aurja.`,
+      };
+    }
+  } catch (error) {
+    console.error("Order enquiry notification request failed", error);
+    return {
+      error:
+        "We could not reach the notification service. Please try again or contact the Aurja atelier.",
+    };
+  }
+
+  return {
+    success:
+      "Thank you — your order request has been received. An Aurja atelier specialist will reach out within 24 hours.",
+  };
+}
+
+interface LocalCartEnquiryInput {
+  slug: string;
+  quantity: number;
+  selectedOptions: Array<{ name: string; value: string }>;
+}
+
+async function submitLocalCartEnquiry(
+  input: string,
+  details: {
+    requestId: string;
+    name: string;
+    email: string;
+    phone: string;
+    customizationNotes: string;
+    currency: "INR" | "USD";
+  },
+): Promise<CartFormState> {
+  if (input.length > 20000) {
+    return { error: "Please refresh the page and try again." };
+  }
+
+  let submitted: unknown;
+  try {
+    submitted = JSON.parse(input);
+  } catch {
+    return { error: "Please refresh the page and try again." };
+  }
+  if (!Array.isArray(submitted) || submitted.length === 0 || submitted.length > 50) {
+    return { error: "Your cart is empty or invalid. Please refresh the page." };
+  }
+
+  const lines: LocalCartEnquiryInput[] = [];
+  for (const value of submitted) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return { error: "Please refresh the page and try again." };
+    }
+    const line = value as Record<string, unknown>;
+    if (
+      typeof line.slug !== "string" ||
+      !line.slug ||
+      line.slug.length > 200 ||
+      typeof line.quantity !== "number" ||
+      !Number.isInteger(line.quantity) ||
+      line.quantity < MIN_ITEM_QUANTITY ||
+      line.quantity > MAX_ITEM_QUANTITY ||
+      !Array.isArray(line.selectedOptions) ||
+      line.selectedOptions.length > 20
+    ) {
+      return { error: "Please refresh the page and try again." };
+    }
+    const selectedOptions: LocalCartEnquiryInput["selectedOptions"] = [];
+    for (const optionValue of line.selectedOptions) {
+      if (
+        !optionValue ||
+        typeof optionValue !== "object" ||
+        Array.isArray(optionValue)
+      ) {
+        return { error: "Please refresh the page and try again." };
+      }
+      const option = optionValue as Record<string, unknown>;
+      if (
+        typeof option.name !== "string" ||
+        !option.name.trim() ||
+        option.name.length > 100 ||
+        typeof option.value !== "string" ||
+        !option.value.trim() ||
+        option.value.length > 100
+      ) {
+        return { error: "Please refresh the page and try again." };
+      }
+      selectedOptions.push({
+        name: option.name.trim(),
+        value: option.value.trim(),
+      });
+    }
+    lines.push({
+      slug: line.slug,
+      quantity: line.quantity,
+      selectedOptions,
+    });
+  }
+
+  let products: Array<Awaited<ReturnType<typeof getJewelryProductBySlug>>>;
+  try {
+    products = await Promise.all(
+      lines.map(({ slug }) => getJewelryProductBySlug(slug)),
+    );
+  } catch (error) {
+    console.error("Could not load products for local cart enquiry", error);
+    return {
+      error:
+        "We could not prepare your order request. Please try again, or contact the Aurja atelier if the problem continues.",
+    };
+  }
+  const items = [];
+  for (const [index, line] of lines.entries()) {
+    const product = products[index];
+    if (!product || product.slug !== line.slug) {
+      return { error: "A piece in your cart is no longer available." };
+    }
+    const normalizedOptions: Record<string, string> = {};
+    const selectedOptions: Array<{ name: string; value: string }> = [];
+    for (const selected of line.selectedOptions) {
+      const option = product.variant_options?.find(
+        (candidate) =>
+          (candidate.name ?? "Option").trim().toLowerCase() ===
+          selected.name.toLowerCase(),
+      );
+      const value = option?.values.find(
+        (candidate) =>
+          candidate.active !== false &&
+          (candidate.name ?? "Value").trim().toLowerCase() ===
+            selected.value.toLowerCase(),
+      );
+      if (!option || !value) {
+        return { error: "A selection in your cart is no longer available." };
+      }
+      const optionName = (option.name ?? "Option").trim();
+      const valueName = (value.name ?? "Value").trim();
+      normalizedOptions[optionName] = valueName;
+      selectedOptions.push({ name: optionName, value: valueName });
+    }
+
+    const naturalGemstoneSelected = isNaturalGemstoneSelection(
+      product.variant_options ?? [],
+      normalizedOptions,
+    );
+    const selectedPriceUsd = getSelectedVariantPrice(
+      product.variant_options ?? [],
+      normalizedOptions,
+    );
+    const selectedPriceInr = getSelectedVariantPrice(
+      product.variant_options ?? [],
+      normalizedOptions,
+      "INR",
+    );
+    const unitPrice =
+      naturalGemstoneSelected
+        ? 0
+        : details.currency === "INR"
+          ? selectedPriceInr || product.price_inr
+          : selectedPriceUsd || product.attributes.price_usd;
+    const attributes = product.attributes;
+    const specifications = [
+      attributes.metal_color,
+      attributes.metal_type,
+      attributes.gold_purity,
+      attributes.metal_weight_gms
+        ? `${attributes.metal_weight_gms} g`
+        : undefined,
+      attributes.ring_size ?? attributes.size,
+      attributes.gemstone_type,
+      attributes.diamond_carat
+        ? `${attributes.diamond_carat} ct diamond`
+        : undefined,
+    ].filter(
+      (specification): specification is string =>
+        typeof specification === "string" && specification.length > 0,
+    );
+    items.push({
+      name: product.name,
+      productId: product.id ?? product.slug,
+      sku: product.sku ?? "",
+      specifications: specifications.concat(
+        selectedOptions.map(({ name, value }) => `${name}: ${value}`),
+      ),
+      quantity: line.quantity,
+      unitPrice,
+      lineTotal: unitPrice * line.quantity,
+      selectedOptions,
+    });
+  }
+
+  const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+  return notifyCartEnquiry(
+    {
+      status: "Pending Enquiry",
+      ...details,
+      createdAt: new Date().toISOString(),
+      total,
+      items,
+    },
+  );
+}
+
 export async function submitCartEnquiryAction(
   _prevState: CartFormState | undefined,
   formData: FormData,
@@ -786,192 +693,16 @@ export async function submitCartEnquiryAction(
     return { error: "Please refresh the page and try again." };
   }
 
-  try {
-    const resolved = await resolveCart(true);
-    if (!resolved) {
-      return { error: "Your cart has expired." };
-    }
-    const cartItems = resolved.cart.items ?? [];
-    if (cartItems.length === 0) {
-      return { error: "Your cart is empty." };
-    }
-
-    const localizedProducts = await getJewelryProductsByIds(
-      cartItems.map((item) => item.product_id),
-    );
-    const productLookup = Object.fromEntries(
-      localizedProducts.flatMap(({ id, product }) => [
-        [id, product],
-        [product.slug, product],
-      ]),
-    );
-    const cartView = buildCartView(resolved.cart, productLookup);
-    const items = cartView.items.map((viewItem) => {
-      const cartItem = cartItems.find((item) => item.id === viewItem.id);
-      if (!cartItem) {
-        throw new Error("Cart item details could not be matched.");
-      }
-      if (
-        currency === "INR" &&
-        viewItem.priceInr === null &&
-        !viewItem.showPriceOnRequest
-      ) {
-        throw new Error(
-          `Could not load the INR price for ${viewItem.name} from Swell.`,
-        );
-      }
-      const unitPrice =
-        currency === "INR"
-          ? viewItem.priceInr ?? 0
-          : viewItem.priceUsd ?? viewItem.price;
-      const attributes = viewItem.attributes;
-      const selectedOptionsFromCart = (cartItem.options ?? [])
-        .flatMap((option) => {
-          const optionName = option.name?.trim();
-          const value = String(option.value).trim();
-          return optionName && value
-            ? [{ name: optionName, value }]
-            : [];
-        });
-      const selectedOptions =
-        selectedOptionsFromCart.length > 0
-          ? selectedOptionsFromCart
-          : viewItem.variantSummary.flatMap((selection) => {
-              const separator = selection.indexOf(":");
-              if (separator <= 0) {
-                return [];
-              }
-              const name = selection.slice(0, separator).trim();
-              const value = selection.slice(separator + 1).trim();
-              return name && value ? [{ name, value }] : [];
-            });
-      const specifications = [
-        attributes?.metal_color,
-        attributes?.metal_type,
-        attributes?.gold_purity,
-        attributes?.metal_weight_gms
-          ? `${attributes.metal_weight_gms} g`
-          : undefined,
-        attributes?.ring_size ?? attributes?.size,
-        attributes?.gemstone_type,
-        attributes?.diamond_carat
-          ? `${attributes.diamond_carat} ct diamond`
-          : undefined,
-      ]
-        .filter((value): value is string => typeof value === "string" && value.length > 0)
-        .concat(
-          (cartItem.options ?? []).map((option) =>
-            option.name ? `${option.name}: ${option.value}` : option.value,
-          ),
-        );
-
-      return {
-        name: viewItem.name,
-        productId: viewItem.productId,
-        sku: cartItem.product?.sku?.trim() ?? "",
-        ...(cartItem.variant_id ? { variantId: cartItem.variant_id } : {}),
-        specifications,
-        quantity: viewItem.quantity,
-        unitPrice,
-        lineTotal: unitPrice * viewItem.quantity,
-        selectedOptions,
-      };
-    });
-    const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
-    const lead = {
-      status: "Pending Enquiry",
-      requestId,
-      createdAt: new Date().toISOString(),
-      name,
-      email,
-      phone,
-      customizationNotes,
-      currency,
-      total,
-      items,
-    };
-
-    const accountId = await getSessionAccountId();
-    try {
-      await updateSwellCart(resolved.cartId, {
-        ...(accountId ? { account_id: accountId } : {}),
-        metadata: {
-          ...resolved.cart.metadata,
-          lead,
-        },
-      });
-    } catch (error) {
-      console.error("Order enquiry save failed", error);
-      return {
-        error:
-          "We could not save your order request. Please try again, or contact the Aurja atelier if the problem continues.",
-      };
-    }
-
-    const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
-    const webhookSecret = process.env.GOOGLE_SHEETS_WEBHOOK_SECRET;
-    if (!webhookUrl || !webhookSecret) {
-      console.error("Order enquiry notifications are not configured.");
-      return {
-        error:
-          "Your request was saved, but our team notification service is not configured. Please contact the Aurja atelier to confirm your request.",
-      };
-    }
-
-    try {
-      const notificationResponse = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "order-enquiry",
-          ...lead,
-          secret: webhookSecret,
-        }),
-        cache: "no-store",
-      });
-      const responseText = await notificationResponse.text();
-      let notificationResult: { ok?: boolean; error?: string } | null = null;
-      try {
-        notificationResult = JSON.parse(responseText) as {
-          ok?: boolean;
-          error?: string;
-        };
-      } catch {
-        // Apps Script may return an HTML error page when its deployment or
-        // authorization is broken; keep that response out of the UI.
-      }
-
-      if (!notificationResponse.ok || !notificationResult?.ok) {
-        const detail =
-          typeof notificationResult?.error === "string"
-            ? notificationResult.error.slice(0, 200)
-            : `Apps Script returned HTTP ${notificationResponse.status} without a valid confirmation.`;
-        console.error("Order enquiry notification failed", {
-          status: notificationResponse.status,
-          detail,
-        });
-        return {
-          error: `Your request was saved, but the confirmation emails could not be sent (${detail}). Please verify that the Apps Script web app is redeployed and that AURJA_SALES_EMAIL is configured, then contact the Aurja atelier to confirm your request.`,
-        };
-      }
-    } catch (error) {
-      console.error("Order enquiry notification request failed", error);
-      return {
-        error:
-          "Your request was saved, but we could not reach the notification service. Please verify the Apps Script deployment and contact the Aurja atelier to confirm your request.",
-      };
-    }
-  } catch (error) {
-    console.error("Order enquiry submission failed", error);
-    return {
-      error:
-        "We could not prepare your order request. Please try again, or contact the Aurja atelier if the problem continues.",
-    };
+  const localCartItems = readField(formData, "localCartItems");
+  if (!localCartItems) {
+    return { error: "Your cart is empty. Please refresh the page." };
   }
-
-  revalidatePath("/", "layout");
-  return {
-    success:
-      "Thank you — your order request has been received. An Aurja atelier specialist will reach out within 24 hours.",
-  };
+  return submitLocalCartEnquiry(localCartItems, {
+    requestId,
+    name,
+    email,
+    phone,
+    customizationNotes,
+    currency,
+  });
 }

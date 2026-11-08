@@ -11,12 +11,14 @@ import {
   type ReactNode,
 } from "react";
 import type { JewelryProduct } from "@/lib/swell";
+import type { LocalCartItem } from "@/lib/cart-view";
 
 export type Currency = "INR" | "USD";
 
 const ENQUIRED_COOKIE_NAME = "aurja_enquired_products";
 const ENQUIRED_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const EMPTY_WISHLIST: string[] = [];
+const LOCAL_CART_STORAGE_PREFIX = "aurja_cart_";
 
 function subscribeToWishlistChanges() {
   return () => {};
@@ -47,6 +49,27 @@ function saveEnquiredCookie(slugs: string[]) {
   )}; Path=/; Max-Age=${ENQUIRED_COOKIE_MAX_AGE}; SameSite=Lax${secure}`;
 }
 
+function localCartStorageKey(accountId: string): string {
+  return `${LOCAL_CART_STORAGE_PREFIX}${accountId}`;
+}
+
+function isLocalCartItem(value: unknown): value is LocalCartItem {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const item = value as Partial<LocalCartItem>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.productId === "string" &&
+    typeof item.slug === "string" &&
+    typeof item.name === "string" &&
+    typeof item.quantity === "number" &&
+    typeof item.variantKey === "string" &&
+    Array.isArray(item.variantSummary) &&
+    Array.isArray(item.selectedOptions)
+  );
+}
+
 type StoreContextValue = {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
@@ -58,7 +81,11 @@ type StoreContextValue = {
   isInCart: (slug: string) => boolean;
   isVariantInCart: (slug: string, variantKey: string) => boolean;
   cartCount: number;
-  setCartSnapshot: (slugs: string[], count: number, variantKeys?: string[]) => void;
+  localCartReady: boolean;
+  localCartItems: LocalCartItem[];
+  addLocalCartItem: (item: LocalCartItem) => void;
+  updateLocalCartItem: (id: string, quantity: number) => void;
+  removeLocalCartItem: (id: string) => void;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -76,14 +103,14 @@ export function formatPrice(
 
 export function StoreProvider({
   children,
-  initialCartSlugs = [],
   initialCurrency = "USD",
   detectCurrencyFromBrowser = false,
+  accountId = null,
 }: {
   children: ReactNode;
-  initialCartSlugs?: string[];
   initialCurrency?: Currency;
   detectCurrencyFromBrowser?: boolean;
+  accountId?: string | null;
 }) {
   const [currency, setCurrency] = useState<Currency>(initialCurrency);
 
@@ -112,9 +139,49 @@ export function StoreProvider({
   const [enquiredSlugs, setEnquiredSlugs] = useState<string[]>([]);
   const [wishlistSlugs, setWishlistSlugs] = useState<string[]>([]);
   const [wishlistHydrated, setWishlistHydrated] = useState(false);
-  const [cartSlugs, setCartSlugs] = useState(initialCartSlugs);
-  const [cartVariantKeys, setCartVariantKeys] = useState<string[]>([]);
-  const [cartCount, setCartCount] = useState(0);
+  const [localCartItems, setLocalCartItems] = useState<LocalCartItem[]>([]);
+  const [localCartOwner, setLocalCartOwner] = useState<string | null>(null);
+  const cartOwner = accountId ?? "guest";
+  const localCartReady = localCartOwner === cartOwner;
+  const activeLocalCartItems = useMemo(
+    () => (localCartReady ? localCartItems : []),
+    [localCartItems, localCartReady],
+  );
+
+  useEffect(() => {
+    const hydration = window.setTimeout(() => {
+      try {
+        const saved = window.localStorage.getItem(
+          localCartStorageKey(cartOwner),
+        );
+        const parsed: unknown = saved ? JSON.parse(saved) : [];
+        setLocalCartItems(
+          Array.isArray(parsed) ? parsed.filter(isLocalCartItem) : [],
+        );
+      } catch (error) {
+        console.error("Could not load the local cart", error);
+        setLocalCartItems([]);
+      }
+      setLocalCartOwner(cartOwner);
+    }, 0);
+
+    return () => window.clearTimeout(hydration);
+  }, [cartOwner]);
+
+  useEffect(() => {
+    if (!localCartReady) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        localCartStorageKey(cartOwner),
+        JSON.stringify(localCartItems),
+      );
+    } catch (error) {
+      console.error("Could not save the local cart", error);
+    }
+  }, [cartOwner, localCartItems, localCartReady]);
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
@@ -184,8 +251,8 @@ export function StoreProvider({
   );
 
   const isInCart = useCallback(
-    (slug: string) => cartSlugs.includes(slug),
-    [cartSlugs],
+    (slug: string) => activeLocalCartItems.some((item) => item.slug === slug),
+    [activeLocalCartItems],
   );
   const isVariantInCart = useCallback(
     (slug: string, variantKey: string) => {
@@ -193,39 +260,46 @@ export function StoreProvider({
         return false;
       }
       const normalizedVariantKey = variantKey || "default";
-      return (
-        cartSlugs.includes(slug) &&
-        cartVariantKeys.includes(`${slug}::${normalizedVariantKey}`)
+      return activeLocalCartItems.some(
+        (item) =>
+          item.slug === slug && item.variantKey === normalizedVariantKey,
       );
     },
-    [cartSlugs, cartVariantKeys],
+    [activeLocalCartItems],
   );
-  const setCartSnapshot = useCallback(
-    (slugs: string[], count: number, variantKeys: string[] = []) => {
-      const nextSlugs = [...slugs];
-      const nextVariantKeys = [...variantKeys];
-
-      setCartSlugs((currentSlugs) => {
-        const sameSlugs =
-          currentSlugs.length === nextSlugs.length &&
-          currentSlugs.every((slug, index) => slug === nextSlugs[index]);
-        return sameSlugs ? currentSlugs : nextSlugs;
+  const addLocalCartItem = useCallback(
+    (item: LocalCartItem) => {
+      setLocalCartItems((items) => {
+        const existing = items.find(
+          (entry) =>
+            entry.slug === item.slug && entry.variantKey === item.variantKey,
+        );
+        if (!existing) {
+          return [...items, item];
+        }
+        return items.map((entry) =>
+          entry.id === existing.id
+            ? {
+                ...entry,
+                quantity: Math.min(99, entry.quantity + item.quantity),
+              }
+            : entry,
+        );
       });
-
-      setCartVariantKeys((currentVariantKeys) => {
-        const sameVariantKeys =
-          currentVariantKeys.length === nextVariantKeys.length &&
-          currentVariantKeys.every(
-            (variantKey, index) => variantKey === nextVariantKeys[index],
-          );
-        return sameVariantKeys ? currentVariantKeys : nextVariantKeys;
-      });
-
-      setCartCount((currentCount) => (currentCount === count ? currentCount : count));
     },
     [],
   );
-
+  const updateLocalCartItem = useCallback((id: string, quantity: number) => {
+    const clampedQuantity = Math.min(99, Math.max(1, Math.round(quantity)));
+    setLocalCartItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, quantity: clampedQuantity } : item,
+      ),
+    );
+  }, []);
+  const removeLocalCartItem = useCallback((id: string) => {
+    setLocalCartItems((items) => items.filter((item) => item.id !== id));
+  }, []);
   const value = useMemo<StoreContextValue>(
     () => ({
       currency,
@@ -237,20 +311,30 @@ export function StoreProvider({
       toggleWishlist,
       isInCart,
       isVariantInCart,
-      cartCount,
-      setCartSnapshot,
+      localCartReady,
+      localCartItems: activeLocalCartItems,
+      cartCount: activeLocalCartItems.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      ),
+      addLocalCartItem,
+      updateLocalCartItem,
+      removeLocalCartItem,
     }),
     [
       currency,
       enquiredSlugs,
       isInCart,
       isVariantInCart,
+      localCartReady,
+      activeLocalCartItems,
+      addLocalCartItem,
+      updateLocalCartItem,
+      removeLocalCartItem,
       isWishlisted,
       markEnquired,
       toggleWishlist,
       wishlistSlugs,
-      cartCount,
-      setCartSnapshot,
     ],
   );
 
