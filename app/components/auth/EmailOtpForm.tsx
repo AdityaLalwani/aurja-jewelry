@@ -1,12 +1,10 @@
 "use client";
 
-import { signInWithCustomToken } from "@firebase/auth";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { firebaseAuth } from "@/lib/firebase-client";
 
 const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const inputClasses =
-  "w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-gold focus:outline-none";
+  "w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-500 focus:border-gold focus:outline-none";
 
 interface TurnstileApi {
   render(
@@ -47,6 +45,7 @@ export default function EmailOtpForm({
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaError, setCaptchaError] = useState("");
   const [captchaWidgetKey, setCaptchaWidgetKey] = useState(0);
+  const [captchaRequested, setCaptchaRequested] = useState(false);
   const [step, setStep] = useState<"email" | "code">("email");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -54,7 +53,7 @@ export default function EmailOtpForm({
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (!siteKey || !widgetContainer.current) return;
+    if (!siteKey || !captchaRequested || !widgetContainer.current) return;
     const container = widgetContainer.current;
     let widgetId: string | undefined;
     let cancelled = false;
@@ -111,7 +110,7 @@ export default function EmailOtpForm({
       if (widgetId) window.turnstile?.remove(widgetId);
       container.replaceChildren();
     };
-  }, [captchaWidgetKey]);
+  }, [captchaRequested, captchaWidgetKey]);
 
   async function readResponse(
     response: Response,
@@ -227,6 +226,10 @@ export default function EmailOtpForm({
         );
       }
 
+      const [{ signInWithCustomToken }, { firebaseAuth }] = await Promise.all([
+        import("@firebase/auth"),
+        import("@/lib/firebase-client"),
+      ]);
       const credential = await signInWithCustomToken(
         firebaseAuth,
         result.customToken,
@@ -286,7 +289,7 @@ export default function EmailOtpForm({
 
   return (
     <section className="mt-6 border-t border-neutral-200 pt-6">
-      <p className="mb-4 text-center text-xs font-medium uppercase tracking-[0.15em] text-neutral-500">
+      <p className="mb-4 text-center text-xs font-medium uppercase tracking-[0.15em] text-neutral-600">
         Or continue with email OTP
       </p>
 
@@ -295,7 +298,7 @@ export default function EmailOtpForm({
           <div>
             <label
               htmlFor={`${mode}-otp-email`}
-              className="mb-1.5 block text-xs font-medium uppercase tracking-[0.15em] text-neutral-500"
+              className="mb-1.5 block text-xs font-medium uppercase tracking-[0.15em] text-neutral-600"
             >
               Email address
             </label>
@@ -307,6 +310,7 @@ export default function EmailOtpForm({
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              onFocus={() => setCaptchaRequested(true)}
               placeholder="you@example.com"
               className={inputClasses}
             />
@@ -334,20 +338,20 @@ export default function EmailOtpForm({
             type="submit"
             disabled={pending || !captchaToken || !siteKey}
             aria-busy={pending}
-            className="w-full rounded-full bg-gold px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-gold px-8 py-3 text-sm font-medium text-neutral-900 transition-colors hover:bg-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending ? "Sending code…" : "Email me a six-digit code"}
           </button>
         </form>
       ) : (
         <form onSubmit={verifyCode} className="space-y-4">
-          <p className="text-center text-sm text-neutral-500">
+          <p className="text-center text-sm text-neutral-600">
             Enter the six-digit code sent to <strong>{email}</strong>.
           </p>
           <div>
             <label
               htmlFor={`${mode}-otp-code`}
-              className="mb-1.5 block text-xs font-medium uppercase tracking-[0.15em] text-neutral-500"
+              className="mb-1.5 block text-xs font-medium uppercase tracking-[0.15em] text-neutral-600"
             >
               Verification code
             </label>
@@ -378,7 +382,7 @@ export default function EmailOtpForm({
               type="button"
               onClick={retrySession}
               disabled={pending}
-              className="w-full rounded-full bg-gold px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-gold px-8 py-3 text-sm font-medium text-neutral-900 transition-colors hover:bg-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? "Signing in…" : "Retry sign-in"}
             </button>
@@ -392,7 +396,7 @@ export default function EmailOtpForm({
             type="submit"
             disabled={pending || code.length !== 6}
             aria-busy={pending}
-            className="w-full rounded-full bg-gold px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-gold-dark disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-gold px-8 py-3 text-sm font-medium text-neutral-900 transition-colors hover:bg-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending ? "Verifying…" : mode === "signup" ? "Verify and sign up" : "Verify and sign in"}
           </button>
@@ -405,7 +409,7 @@ export default function EmailOtpForm({
               setStatus("");
             }}
             disabled={pending}
-            className="w-full text-sm font-medium text-gold-link underline underline-offset-4 hover:text-gold disabled:opacity-60"
+            className="w-full text-sm font-medium text-gold-link underline underline-offset-4 hover:text-gold-dark disabled:opacity-60"
           >
             Use a different email or request another code
           </button>

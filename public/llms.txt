@@ -1,0 +1,13 @@
+# AURJA
+
+> AURJA is a Surat-based jewelry atelier creating fine jewelry shaped for stories.
+
+## About
+
+- [Our story](https://aurja.co.in/story): The values and inspiration behind AURJA.
+- [Shop jewelry](https://aurja.co.in/products): Browse the AURJA jewelry collection.
+- [Blogs](https://aurja.co.in/blogs): Read stories and jewelry guides.
+- [Care guide](https://aurja.co.in/care-guide): Learn how to care for your jewelry.
+- [Frequently asked questions](https://aurja.co.in/faq): Answers to common customer questions.
+- [Custom design](https://aurja.co.in/custom-design): Information about custom jewelry.
+- [Sitemap](https://aurja.co.in/sitemap.xml): Discover public pages on the site.

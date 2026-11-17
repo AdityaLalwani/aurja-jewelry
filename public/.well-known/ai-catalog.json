@@ -1,0 +1,54 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "AURJA",
+    "identifier": "did:web:aurja.co.in",
+    "url": "https://aurja.co.in"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:aurja.co.in:website:home",
+      "displayName": "AURJA website",
+      "description": "The official website of AURJA, a Surat-based jewelry atelier.",
+      "type": "text/html",
+      "url": "https://aurja.co.in/",
+      "representativeQueries": [
+        "What is AURJA?",
+        "Where can I shop AURJA jewelry?"
+      ]
+    },
+    {
+      "identifier": "urn:air:aurja.co.in:website:collection",
+      "displayName": "AURJA jewelry collection",
+      "description": "Browse fine jewelry from the AURJA collection.",
+      "type": "text/html",
+      "url": "https://aurja.co.in/products",
+      "representativeQueries": [
+        "What jewelry can I buy from AURJA?",
+        "Show me the AURJA jewelry collection."
+      ]
+    },
+    {
+      "identifier": "urn:air:aurja.co.in:website:story",
+      "displayName": "The AURJA story",
+      "description": "Learn about AURJA's origin, values, and approach to jewelry.",
+      "type": "text/html",
+      "url": "https://aurja.co.in/story",
+      "representativeQueries": [
+        "What is the story behind AURJA?",
+        "What values guide AURJA?"
+      ]
+    },
+    {
+      "identifier": "urn:air:aurja.co.in:website:care-guide",
+      "displayName": "AURJA jewelry care guide",
+      "description": "Guidance for caring for AURJA jewelry.",
+      "type": "text/html",
+      "url": "https://aurja.co.in/care-guide",
+      "representativeQueries": [
+        "How should I care for my AURJA jewelry?",
+        "How do I keep my jewelry in good condition?"
+      ]
+    }
+  ]
+}

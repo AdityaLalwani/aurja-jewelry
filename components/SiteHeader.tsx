@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,13 +14,52 @@ import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 const ICON_LINK_CLASS =
   "relative rounded-full border border-neutral-300 p-1.5 text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 sm:p-2";
 
+type HeaderProduct = Pick<JewelryProduct, "name" | "slug" | "images">;
+
+type NavigationData = {
+  categories: StoreCategory[];
+  bestSellers: HeaderProduct[];
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isStoreCategory(value: unknown): value is StoreCategory {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    typeof value.slug === "string" &&
+    (value.parentId === null || typeof value.parentId === "string")
+  );
+}
+
+function isHeaderProduct(value: unknown): value is HeaderProduct {
+  return (
+    isRecord(value) &&
+    typeof value.name === "string" &&
+    typeof value.slug === "string" &&
+    Array.isArray(value.images) &&
+    value.images.every((image) => typeof image === "string")
+  );
+}
+
+function isNavigationData(value: unknown): value is NavigationData {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.categories) &&
+    value.categories.every(isStoreCategory) &&
+    Array.isArray(value.bestSellers) &&
+    value.bestSellers.every(isHeaderProduct)
+  );
+}
+
 export function SiteHeader({
   categories,
-  bestSellers,
   isAuthenticated,
 }: {
   categories: StoreCategory[];
-  bestSellers: JewelryProduct[];
   isAuthenticated: boolean;
 }) {
   const { cartCount } = useStore();
@@ -32,13 +71,56 @@ export function SiteHeader({
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(
     null,
   );
+  const [navigationCategories, setNavigationCategories] = useState(categories);
+  const [navigationBestSellers, setNavigationBestSellers] =
+    useState<HeaderProduct[]>([]);
+  const [navigationLoaded, setNavigationLoaded] = useState(false);
+  const [navigationLoading, setNavigationLoading] = useState(false);
+  const [navigationError, setNavigationError] = useState("");
+  const navigationRequest = useRef<AbortController | null>(null);
   const overVideo = isHomePage && !isScrolled;
   const iconLinkClass = overVideo
     ? "relative rounded-full border border-white/35 p-1.5 text-white transition-colors hover:border-white hover:bg-white/10 sm:p-2"
     : ICON_LINK_CLASS;
-  const topLevelCategories = categories.filter(
+  const topLevelCategories = navigationCategories.filter(
     (category) => !category.parentId,
   );
+
+  async function loadNavigation() {
+    if (navigationLoaded || navigationRequest.current) return;
+    const controller = new AbortController();
+    navigationRequest.current = controller;
+    setNavigationLoading(true);
+    setNavigationError("");
+
+    try {
+      const response = await fetch("/api/store/navigation", {
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`Navigation request failed with HTTP ${response.status}.`);
+      }
+
+      const result: unknown = await response.json();
+      if (!isNavigationData(result)) {
+        throw new Error("Navigation request returned an invalid response.");
+      }
+
+      if (result.categories.length > 0) {
+        setNavigationCategories(result.categories);
+      }
+      setNavigationBestSellers(result.bestSellers);
+      setNavigationLoaded(true);
+    } catch (error) {
+      console.error("Navigation data request failed", error);
+      setNavigationError(
+        "We could not load the latest collection details. Please try again.",
+      );
+    } finally {
+      navigationRequest.current = null;
+      setNavigationLoading(false);
+    }
+  }
 
   useEffect(() => {
     const updateScrolledState = () => setIsScrolled(window.scrollY > 40);
@@ -88,7 +170,10 @@ export function SiteHeader({
             aria-label="Open menu"
             aria-expanded={mobileMenuOpen}
             aria-controls="site-navigation-menu"
-            onClick={() => setMobileMenuOpen(true)}
+            onClick={() => {
+              setMobileMenuOpen(true);
+              void loadNavigation();
+            }}
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold sm:h-10 sm:w-10 ${
               overVideo
                 ? "border-white/40 text-white hover:border-white hover:bg-white/10"
@@ -132,7 +217,7 @@ export function SiteHeader({
               </span>
               <span
                 className={`block text-[7px] uppercase tracking-[0.15em] sm:text-[10px] sm:tracking-[0.2em] ${
-                  overVideo ? "text-white/75" : "text-neutral-500"
+                  overVideo ? "text-white/75" : "text-neutral-600"
                 }`}
               >
                 Fine Jewelry
@@ -308,13 +393,14 @@ export function SiteHeader({
           <div className="grid gap-6 py-6">
             <div>
               <nav aria-label="Shop categories">
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-500">
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-600">
                   Explore
                 </p>
                 <ul className="divide-y divide-neutral-200">
                   {topLevelCategories.map((category) => {
                     const subcategories = categories.filter(
-                      (subcategory) => subcategory.parentId === category.id,
+                      (subcategory) =>
+                        subcategory.parentId === category.id,
                     );
                     const hasSubcategories = subcategories.length > 0;
                     const isExpanded = expandedCategoryId === category.id;
@@ -409,41 +495,62 @@ export function SiteHeader({
             <section aria-labelledby="menu-best-sellers">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-500">
+                  <p
+                    id="menu-best-sellers"
+                    className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-600"
+                  >
                     Loved by you our bestsellers
                   </p>
                 </div>
               </div>
+              {navigationLoading ? (
+                <p role="status" className="text-sm text-neutral-600">
+                  Loading bestsellers…
+                </p>
+              ) : null}
+              {navigationError ? (
+                <div role="alert" className="text-sm text-red-700">
+                  <p>{navigationError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadNavigation()}
+                    className="mt-2 font-medium underline underline-offset-4"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : null}
               <ul className="grid grid-cols-2 gap-1 sm:gap-4">
-                {bestSellers.map((product) => (
-                  <li key={product.slug}>
-                    <Link
-                      href={`/products/${product.slug}`}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-                    >
-                      <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
-                        {product.images[0] ? (
-                          <Image
-                            src={normalizeImageSource(product.images[0])}
-                            loader={imageKitLoader}
-                            alt={`${product.name} jewelry`}
-                            fill
-                            sizes="(min-width: 1024px) 25vw, 45vw"
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <span className="flex h-full items-center justify-center text-xs text-neutral-400">
-                            Image unavailable
+                {mobileMenuOpen &&
+                  navigationBestSellers.map((product) => (
+                    <li key={product.slug}>
+                      <Link
+                        href={`/products/${product.slug}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                      >
+                        <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
+                          {product.images[0] ? (
+                            <Image
+                              src={normalizeImageSource(product.images[0])}
+                              loader={imageKitLoader}
+                              alt={`${product.name} jewelry`}
+                              fill
+                              sizes="(min-width: 1024px) 25vw, 45vw"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <span className="flex h-full items-center justify-center text-xs text-neutral-400">
+                              Image unavailable
+                            </span>
+                          )}
+                          <span className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/80 via-black/45 to-transparent px-3 pb-3 pt-8 text-sm font-medium leading-snug text-white sm:block">
+                            {product.name}
                           </span>
-                        )}
-                        <span className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/80 via-black/45 to-transparent px-3 pb-3 pt-8 text-sm font-medium leading-snug text-white sm:block">
-                          {product.name}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             </section>
           </div>
