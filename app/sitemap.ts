@@ -20,8 +20,25 @@ const staticRoutes = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const productSlugsPromise = getJewelryProductSlugs().catch(
+    (error: unknown): string[] => {
+      if (
+        error instanceof Error &&
+        "status" in error &&
+        error.status === 402
+      ) {
+        console.warn(
+          "Sitemap is omitting product URLs because Swell returned HTTP 402.",
+          error.message,
+        );
+        return [];
+      }
+
+      throw error;
+    },
+  );
   const [productSlugs, categories] = await Promise.all([
-    getJewelryProductSlugs(),
+    productSlugsPromise,
     getStoreCategories(),
   ]);
   const routes = [
