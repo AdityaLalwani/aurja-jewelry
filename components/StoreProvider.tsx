@@ -70,6 +70,18 @@ function isLocalCartItem(value: unknown): value is LocalCartItem {
   );
 }
 
+function isAccountActivity(
+  value: unknown,
+): value is { cart: unknown[]; wishlist: unknown[] } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  return (
+    "cart" in value &&
+    Array.isArray(value.cart) &&
+    "wishlist" in value &&
+    Array.isArray(value.wishlist)
+  );
+}
+
 type StoreContextValue = {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
@@ -141,6 +153,9 @@ export function StoreProvider({
   const [wishlistHydrated, setWishlistHydrated] = useState(false);
   const [localCartItems, setLocalCartItems] = useState<LocalCartItem[]>([]);
   const [localCartOwner, setLocalCartOwner] = useState<string | null>(null);
+  const [syncedActivityOwner, setSyncedActivityOwner] = useState<string | null>(
+    null,
+  );
   const cartOwner = accountId ?? "guest";
   const localCartReady = localCartOwner === cartOwner;
   const activeLocalCartItems = useMemo(
@@ -224,6 +239,70 @@ export function StoreProvider({
       window.localStorage.setItem("aurja_wishlist", JSON.stringify(wishlistSlugs));
     }
   }, [wishlistHydrated, wishlistSlugs]);
+
+  useEffect(() => {
+    if (!accountId || !localCartReady || !wishlistHydrated) return;
+    if (syncedActivityOwner === accountId) return;
+
+    let active = true;
+    void fetch("/api/account/activity", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Account activity request failed (${response.status}).`);
+        }
+        const activity: unknown = await response.json();
+        if (!isAccountActivity(activity)) {
+          throw new Error("Account activity response has an invalid shape.");
+        }
+        return activity;
+      })
+      .then((activity) => {
+        if (!active) return;
+        const remoteCart = activity.cart.filter(isLocalCartItem);
+        const remoteWishlist = activity.wishlist.filter(
+          (slug): slug is string => typeof slug === "string",
+        );
+        setLocalCartItems((current) =>
+          current.length > 0 ? current : remoteCart,
+        );
+        setWishlistSlugs((current) =>
+          [...new Set([...current, ...remoteWishlist])].slice(0, 500),
+        );
+        setSyncedActivityOwner(accountId);
+      })
+      .catch((error: unknown) => {
+        console.error("Could not sync customer cart and wishlist", error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [
+    accountId,
+    localCartReady,
+    wishlistHydrated,
+    syncedActivityOwner,
+  ]);
+
+  useEffect(() => {
+    if (!accountId || syncedActivityOwner !== accountId) return;
+    const timeoutId = window.setTimeout(() => {
+      void fetch("/api/account/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart: localCartItems, wishlist: wishlistSlugs }),
+      }).then((response) => {
+        if (!response.ok) {
+          console.error(
+            `Could not save customer cart and wishlist (${response.status}).`,
+          );
+        }
+      }).catch((error: unknown) => {
+        console.error("Could not save customer cart and wishlist", error);
+      });
+    }, 350);
+    return () => window.clearTimeout(timeoutId);
+  }, [accountId, localCartItems, syncedActivityOwner, wishlistSlugs]);
 
   const markEnquired = useCallback(
     (slug: string) => {

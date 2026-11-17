@@ -3,7 +3,7 @@
 import {
   getJewelryProductBySlug,
   getJewelryProductPage,
-} from "@/lib/swell";
+} from "@/lib/storefront-data";
 import type { JewelryProduct } from "@/lib/swell";
 
 export async function loadJewelryProductsForFilters(

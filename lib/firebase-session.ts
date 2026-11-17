@@ -3,10 +3,11 @@ import "server-only";
 import type { DecodedIdToken } from "firebase-admin/auth";
 import { createSession } from "@/lib/session";
 import {
-  createSwellAccount,
-  getSwellAccountByEmail,
-  isSwellDuplicateEmailError,
-} from "@/lib/swell";
+  createAccount,
+  getAccountByAuthUid,
+  getAccountByEmail,
+  linkAccountAuthUid,
+} from "@/lib/store-db";
 
 export class FirebaseSessionError extends Error {
   constructor(
@@ -23,6 +24,15 @@ function splitDisplayName(displayName: string | undefined) {
     firstName: parts[0]?.slice(0, 80) ?? "",
     lastName: parts.slice(1).join(" ").slice(0, 80),
   };
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "23505",
+  );
 }
 
 export async function establishAurjaSession(decodedToken: DecodedIdToken) {
@@ -47,25 +57,43 @@ export async function establishAurjaSession(decodedToken: DecodedIdToken) {
     );
   }
 
-  let account = await getSwellAccountByEmail(email);
+  let account =
+    (await getAccountByAuthUid(decodedToken.uid)) ??
+    (await getAccountByEmail(email));
+  if (account && account.auth_uid !== decodedToken.uid) {
+    if (account.auth_uid) {
+      throw new FirebaseSessionError(
+        "This email is already linked to another sign-in account.",
+        409,
+      );
+    }
+    const linked = await linkAccountAuthUid(account.id, decodedToken.uid);
+    if (!linked) {
+      throw new FirebaseSessionError(
+        "This Firebase account is already linked to another customer.",
+        409,
+      );
+    }
+    account.auth_uid = decodedToken.uid;
+  }
+
   if (!account) {
     const { firstName, lastName } = splitDisplayName(decodedToken.name);
     try {
-      account = await createSwellAccount({
-        email,
-        ...(firstName ? { first_name: firstName } : {}),
-        ...(lastName ? { last_name: lastName } : {}),
-      });
+      account = await createAccount(
+        {
+          email,
+          ...(firstName ? { first_name: firstName } : {}),
+          ...(lastName ? { last_name: lastName } : {}),
+        },
+        decodedToken.uid,
+      );
     } catch (error) {
-      if (!isSwellDuplicateEmailError(error)) {
-        throw error;
-      }
-      account = await getSwellAccountByEmail(email);
-      if (!account) {
-        throw error;
-      }
+      if (!isUniqueViolation(error)) throw error;
+      account = await getAccountByAuthUid(decodedToken.uid);
+      if (!account) throw error;
     }
   }
 
-  await createSession(account.id);
+  await createSession(account.id, email);
 }

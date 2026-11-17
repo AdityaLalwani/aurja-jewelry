@@ -6,6 +6,7 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
 interface SessionPayload {
   accountId: string;
+  email?: string;
   iat: number;
 }
 
@@ -55,16 +56,19 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 /**
- * Create a signed session cookie for the given Swell account id. Swell does
- * not issue a session token, so the app keeps the user logged in by storing
- * the account id in an HMAC-signed, httpOnly cookie.
+ * Create a signed session cookie for the customer's Neon record id. Firebase
+ * authenticates the user; the app stores the linked customer id in this cookie.
  *
  * Call only from a Server Action or Route Handler — cookies can only be
  * written there.
  */
-export async function createSession(accountId: string): Promise<void> {
+export async function createSession(
+  accountId: string,
+  email?: string,
+): Promise<void> {
   const payload: SessionPayload = {
     accountId,
+    ...(email ? { email: email.trim().toLowerCase() } : {}),
     iat: Math.floor(Date.now() / 1000),
   };
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
@@ -81,10 +85,15 @@ export async function createSession(accountId: string): Promise<void> {
 }
 
 /**
- * Read the signed session cookie and return the authenticated Swell account
- * id, or null when there is no session or the signature is invalid.
+ * Read the signed session cookie and return the linked customer id, or null
+ * when there is no session or the signature is invalid.
  */
 export async function getSessionAccountId(): Promise<string | null> {
+  const session = await getSession();
+  return session?.accountId ?? null;
+}
+
+export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const cookieValue = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
@@ -118,7 +127,7 @@ export async function getSessionAccountId(): Promise<string | null> {
     return null;
   }
 
-  return payload.accountId;
+  return payload;
 }
 
 /**

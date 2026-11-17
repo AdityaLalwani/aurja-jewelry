@@ -1,0 +1,68 @@
+body:has([data-admin-shell]) .site-header-shell {
+  display: none;
+}
+
+.admin-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  display: flex;
+  width: 15.5rem;
+  flex-direction: column;
+  border-right: 1px solid #e7e5e4;
+  background: #fff;
+  padding: 2rem 1.25rem 1.5rem;
+}
+
+.admin-nav-link {
+  display: block;
+  border-radius: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  color: #57534e;
+  font-size: 0.9rem;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link:focus-visible {
+  background: #f4f1eb;
+  color: #661514;
+  outline: none;
+}
+
+.admin-main {
+  min-height: 100vh;
+  margin-left: 15.5rem;
+  padding: 2.5rem clamp(1rem, 3vw, 3rem);
+}
+
+@media (max-width: 760px) {
+  .admin-sidebar {
+    position: static;
+    width: auto;
+    padding: 1.25rem;
+  }
+
+  .admin-sidebar nav {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    margin-top: 1rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .admin-nav-link {
+    flex: none;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .admin-sidebar > div {
+    display: none;
+  }
+
+  .admin-main {
+    margin-left: 0;
+    padding: 1.25rem;
+  }
+}

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
-import { getJewelryProductBySlug } from "@/lib/swell";
+import { getJewelryProductBySlug } from "@/lib/storefront-data";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;

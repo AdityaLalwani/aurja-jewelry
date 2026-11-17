@@ -3,9 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
-  isSwellDuplicateEmailError,
-  updateSwellAccount,
-} from "@/lib/swell";
+  getAccountByEmail,
+  getAccountById,
+  updateAccount,
+} from "@/lib/store-db";
 import { destroySession, getSessionAccountId } from "@/lib/session";
 
 export interface ProfileFormState {
@@ -48,17 +49,32 @@ export async function updateProfileAction(
   }
 
   try {
-    await updateSwellAccount(accountId, {
+    const account = await getAccountById(accountId);
+    if (!account) {
+      return { error: "Your account could not be found. Please sign in again." };
+    }
+    if (
+      typeof account.auth_uid === "string" &&
+      account.email.toLowerCase() !== email
+    ) {
+      return {
+        error:
+          "Your sign-in email cannot be changed here. Please contact the Aurja team.",
+      };
+    }
+    const existingAccount = await getAccountByEmail(email);
+    if (existingAccount && existingAccount.id !== accountId) {
+      return { error: "Another account is already using this email." };
+    }
+
+    await updateAccount(accountId, {
       email,
       first_name: firstName,
       last_name: lastName,
       ...(phone ? { phone } : {}),
     });
   } catch (error) {
-    if (isSwellDuplicateEmailError(error)) {
-      return { error: "Another account is already using this email." };
-    }
-    console.error("Swell profile update failed", error);
+    console.error("Neon profile update failed", error);
     return {
       error:
         "We could not save your details right now. Please try again in a moment.",

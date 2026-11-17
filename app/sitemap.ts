@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { allProfileSlugs, site } from "@/lib/site";
-import { getJewelryProductSlugs, getStoreCategories } from "@/lib/swell";
+import { getJewelryProductSlugs, getStoreCategories } from "@/lib/storefront-data";
 
 const staticRoutes = [
   "",

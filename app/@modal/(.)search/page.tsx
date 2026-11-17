@@ -1,7 +1,7 @@
 import { SearchDialog } from "@/components/SearchDialog";
 import { SearchExperience } from "@/components/SearchExperience";
 import { TRENDING_PRODUCT_SKUS } from "@/lib/site";
-import { getJewelryProducts, getJewelryProductsBySkus } from "@/lib/swell";
+import { getJewelryProducts, getJewelryProductsBySkus } from "@/lib/storefront-data";
 
 export default async function SearchModalPage() {
   const [products, trendingProducts] = await Promise.all([

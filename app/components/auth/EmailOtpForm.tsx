@@ -1,8 +1,6 @@
 "use client";
 
-import { signInWithCustomToken } from "@firebase/auth";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { firebaseAuth } from "@/lib/firebase-client";
 
 const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const inputClasses =
@@ -47,6 +45,7 @@ export default function EmailOtpForm({
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaError, setCaptchaError] = useState("");
   const [captchaWidgetKey, setCaptchaWidgetKey] = useState(0);
+  const [captchaRequested, setCaptchaRequested] = useState(false);
   const [step, setStep] = useState<"email" | "code">("email");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -54,7 +53,7 @@ export default function EmailOtpForm({
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (!siteKey || !widgetContainer.current) return;
+    if (!siteKey || !captchaRequested || !widgetContainer.current) return;
     const container = widgetContainer.current;
     let widgetId: string | undefined;
     let cancelled = false;
@@ -111,7 +110,7 @@ export default function EmailOtpForm({
       if (widgetId) window.turnstile?.remove(widgetId);
       container.replaceChildren();
     };
-  }, [captchaWidgetKey]);
+  }, [captchaRequested, captchaWidgetKey]);
 
   async function readResponse(
     response: Response,
@@ -227,10 +226,11 @@ export default function EmailOtpForm({
         );
       }
 
-      const credential = await signInWithCustomToken(
-        firebaseAuth,
-        result.customToken,
-      );
+      const [{ signInWithCustomToken }, { firebaseAuth }] = await Promise.all([
+        import("@firebase/auth"),
+        import("@/lib/firebase-client"),
+      ]);
+      const credential = await signInWithCustomToken(firebaseAuth, result.customToken);
       const verifiedIdToken = await credential.user.getIdToken();
       setIdToken(verifiedIdToken);
       await establishAurjaSession(verifiedIdToken);
@@ -307,6 +307,7 @@ export default function EmailOtpForm({
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              onFocus={() => setCaptchaRequested(true)}
               placeholder="you@example.com"
               className={inputClasses}
             />

@@ -1,6 +1,6 @@
 import { SearchExperience } from "@/components/SearchExperience";
 import { TRENDING_PRODUCT_SKUS } from "@/lib/site";
-import { getJewelryProducts, getJewelryProductsBySkus } from "@/lib/swell";
+import { getJewelryProducts, getJewelryProductsBySkus } from "@/lib/storefront-data";
 
 export default async function SearchPage() {
   const [products, bestSellerProducts] = await Promise.all([

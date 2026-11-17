@@ -5,6 +5,7 @@ import {
   establishAurjaSession,
   FirebaseSessionError,
 } from "@/lib/firebase-session";
+import { isAdminEmail } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -72,7 +73,13 @@ export async function POST(request: Request) {
 
     await establishAurjaSession(decodedToken);
     return NextResponse.json(
-      { redirectTo: "/profile" },
+      {
+        redirectTo:
+          typeof decodedToken.email === "string" &&
+          isAdminEmail(decodedToken.email)
+            ? "/admin"
+            : "/profile",
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
@@ -85,7 +92,7 @@ export async function POST(request: Request) {
         error.message.includes("FIREBASE_SERVICE_ACCOUNT_JSON") ||
         error.message.includes("NEXT_PUBLIC_FIREBASE_PROJECT_ID"));
     console.error(
-      "Firebase sign-in and Swell customer provisioning failed",
+      "Firebase sign-in and Neon customer provisioning failed",
       error instanceof Error ? error.message : "Unknown error",
     );
     return errorResponse(

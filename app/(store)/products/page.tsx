@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ProductGrid } from "@/components/ProductGrid";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
-import { getJewelryProductPage, getStoreCategories } from "@/lib/swell";
+import { getJewelryProductPage, getStoreCategories } from "@/lib/storefront-data";
 
 type ProductsPageProps = {
   searchParams: Promise<{ category?: string; page?: string }>;

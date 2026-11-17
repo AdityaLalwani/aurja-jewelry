@@ -2,8 +2,8 @@
 
 Login and signup support Google and six-digit email OTP. After authentication,
 the Next.js server verifies the Firebase ID token, finds or creates a matching
-Swell customer, and sets the existing Aurja session cookie. Firebase tokens,
-OTP codes, and service-account credentials are never sent to Swell or exposed
+Neon customer, and sets the existing Aurja session cookie. Firebase tokens,
+OTP codes, and service-account credentials are never sent to Neon or exposed
 to the browser.
 
 ## Firebase Console setup
@@ -89,11 +89,11 @@ verification. Requests are protected by Turnstile, limited to three sends per
 email each hour with a 60-second resend delay, and allow at most five
 verification attempts per code. After verification, the server creates or
 reuses a verified Firebase user, issues a short-lived custom sign-in token,
-and follows the existing Firebase-to-Swell session flow.
+and follows the existing Firebase-to-Neon session flow.
 
-On first successful authentication, the server creates a Swell account using
+On first successful authentication, the server creates a Neon customer using
 the verified email and any profile name provided by Google. Later
-authentications reuse the matching Swell account. Existing Swell profile
+authentications reuse the matching Neon customer. Existing customer profile
 details are not overwritten. The profile sign-out action clears both the
 Firebase client session and the Aurja session cookie.
 

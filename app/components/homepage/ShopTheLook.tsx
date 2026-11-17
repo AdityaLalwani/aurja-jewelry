@@ -1,4 +1,4 @@
-import { getJewelryProductsBySkus } from "@/lib/swell";
+import { getJewelryProductsBySkus } from "@/lib/storefront-data";
 import { SectionHeading } from "./SectionHeading";
 import { ShopTheLookCarousel } from "./ShopTheLookCarousel";
 

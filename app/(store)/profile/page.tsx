@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSwellAccount } from "@/lib/swell";
+import { getAccountById } from "@/lib/store-db";
 import { getSessionAccountId } from "@/lib/session";
 import { ProfileForm } from "@/components/ProfileForm";
 
@@ -14,10 +14,10 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const account = await getSwellAccount(accountId);
+  const account = await getAccountById(accountId);
 
   if (!account) {
-    // The session points at an account that no longer exists in Swell.
+    // The session points at a customer record that no longer exists.
     redirect("/login");
   }
 

@@ -3,12 +3,13 @@
 import {
   getDefaultVariantSelections,
   getFirstImageUrl,
-  getJewelryProductBySlug,
   getSelectedVariantPrice,
   isNaturalGemstoneSelection,
 } from "@/lib/swell";
+import { getJewelryProductBySlug } from "@/lib/storefront-data";
 import type { LocalCartItem } from "@/lib/cart-view";
 import { phoneCountryCodes } from "@/lib/phone-country-codes";
+import { saveOrderEnquiry } from "@/lib/store-db";
 
 export interface CartFormState {
   error?: string;
@@ -638,6 +639,26 @@ async function submitLocalCartEnquiry(
   }
 
   const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+  try {
+    await saveOrderEnquiry(details.requestId, {
+      status: "pending",
+      name: details.name,
+      email: details.email,
+      phone: details.phone,
+      customization_notes: details.customizationNotes,
+      currency: details.currency,
+      created_at: new Date().toISOString(),
+      total,
+      items,
+    });
+  } catch (error) {
+    console.error("Could not save order enquiry in Neon", error);
+    return {
+      error:
+        "We could not save your order request right now. Please try again or contact the Aurja atelier.",
+    };
+  }
+
   return notifyCartEnquiry(
     {
       status: "Pending Enquiry",
