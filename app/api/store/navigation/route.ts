@@ -4,6 +4,8 @@ import {
   getStoreCategories,
 } from "@/lib/storefront-data";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const [categories, bestSellerProducts] = await Promise.all([
     getStoreCategories(),
