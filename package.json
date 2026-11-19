@@ -12,7 +12,9 @@
     "lint": "eslint",
     "migrate:neon:schema": "node --env-file=.env.local scripts/migrate-swell-to-neon.mjs --schema-only",
     "migrate:swell:neon": "node --env-file=.env.local scripts/migrate-swell-to-neon.mjs",
-    "import:products:neon": "node --env-file=.env.local scripts/import-product-sheet-to-neon.mjs"
+    "import:products:neon": "node --env-file=.env.local scripts/import-product-sheet-to-neon.mjs",
+    "add:product:neon": "node --env-file=.env.local scripts/add-product-to-neon.mjs",
+    "update:variant-prices:neon": "node --env-file=.env.local scripts/update-variant-prices-from-breakup.mjs"
   },
   "dependencies": {
     "@firebase/app": "^0.16.3",

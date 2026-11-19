@@ -85,7 +85,27 @@ export async function saveProductAction(formData: FormData): Promise<void> {
   const slug = slugify(readText(formData, "slug", 200) || name);
   if (!name || !slug) throw new Error("Product name and slug are required.");
 
-  const categoryId = readText(formData, "category_id", 100);
+  const categoryIds = [
+    ...new Set(
+      formData.getAll("category_ids").map((value) => {
+        if (typeof value !== "string") throw new Error("Invalid product category.");
+        const categoryId = value.trim();
+        if (categoryId.length > 100) throw new Error("Invalid product category.");
+        return categoryId;
+      }).filter(Boolean),
+    ),
+  ];
+  if (categoryIds.length > 200) throw new Error("A product cannot have more than 200 categories.");
+  if (categoryIds.length > 0) {
+    const existingCategories = await queryNeon<{ id: string }>(
+      "SELECT payload ->> 'id' AS id FROM swell_categories WHERE payload ->> 'id' = ANY($1::text[])",
+      [categoryIds],
+    );
+    if (existingCategories.length !== categoryIds.length) {
+      throw new Error("One or more selected categories were not found.");
+    }
+  }
+  const categoryId = categoryIds[0];
   const existing = await getStoreRecord("swell_products", id);
   const product = {
     ...(existing?.payload ?? {}),
@@ -98,8 +118,8 @@ export async function saveProductAction(formData: FormData): Promise<void> {
     price_inr: readAmount(formData, "price_inr"),
     stock_level: Math.floor(readAmount(formData, "stock_level")),
     active: readBoolean(formData, "active"),
-    category_id: categoryId || undefined,
-    categories: categoryId ? [categoryId] : [],
+    category_id: categoryId,
+    categories: categoryIds,
     images: imageUrlLines(readText(formData, "images", 10_000)).map((url) => ({
       file: { url },
     })),

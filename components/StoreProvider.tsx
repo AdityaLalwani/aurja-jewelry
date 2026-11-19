@@ -102,12 +102,18 @@ type StoreContextValue = {
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
+export function formatInrPrice(amount: number): string {
+  return `₹${new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: 0,
+  }).format(Math.round(amount))}`;
+}
+
 export function formatPrice(
   product: JewelryProduct,
   currency: Currency,
 ): string {
   return currency === "INR"
-    ? `₹${new Intl.NumberFormat("en-IN").format(product.price_inr)}`
+    ? formatInrPrice(product.price_inr)
     : `$${new Intl.NumberFormat("en-US").format(
         product.attributes.price_usd,
       )}`;

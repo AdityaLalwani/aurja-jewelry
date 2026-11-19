@@ -169,6 +169,12 @@ function ProductEditor({
 }) {
   const product = record?.payload ?? {};
   const options = Array.isArray(product.options) ? product.options : [];
+  const selectedCategoryIds = new Set([
+    ...(Array.isArray(product.categories)
+      ? product.categories.filter((categoryId): categoryId is string => typeof categoryId === "string")
+      : []),
+    ...(typeof product.category_id === "string" ? [product.category_id] : []),
+  ]);
   return (
     <details className="rounded-xl border border-stone-200 bg-white">
       <summary className="cursor-pointer list-none p-4 text-sm font-medium">
@@ -182,15 +188,29 @@ function ProductEditor({
         <Field name="price" label="Price (USD)" type="number" defaultValue={text(product.price)} />
         <Field name="price_inr" label="Price (INR)" type="number" defaultValue={text(product.price_inr)} />
         <Field name="stock_level" label="Stock" type="number" defaultValue={text(product.stock_level || 0)} />
-        <label className="block">
-          <span className={labelClass}>Category</span>
-          <select className={inputClass} name="category_id" defaultValue={text(product.category_id)}>
-            <option value="">No category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>{text(category.name)}</option>
-            ))}
-          </select>
-        </label>
+        <fieldset className="min-w-0">
+          <legend className={labelClass}>Categories</legend>
+          <div className="max-h-40 overflow-y-auto rounded-lg border border-stone-300 bg-white p-3">
+            {categories.length > 0 ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {categories.map((category) => (
+                  <label key={category.id} className="flex items-center gap-2 text-sm text-stone-700">
+                    <input
+                      type="checkbox"
+                      name="category_ids"
+                      value={category.id}
+                      defaultChecked={selectedCategoryIds.has(category.id)}
+                    />
+                    {text(category.name)}
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-stone-500">Create a category before assigning one to a product.</p>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-stone-500">Select one or more categories.</p>
+        </fieldset>
         <TextArea name="description" label="Description" defaultValue={text(product.description)} rows={3} />
         <TextArea name="images" label="Image URLs (one per line)" defaultValue={imageUrls(product.images)} rows={3} />
         <TextArea name="attributes" label="Attributes JSON" defaultValue={jsonText(product.attributes, "{}")} rows={5} />

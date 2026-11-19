@@ -28,6 +28,8 @@ Email subscription forms post to `/api/subscribe`, which forwards to a Google Sh
 - `npm run start` — serve the production build
 - `npm run lint` — ESLint
 - `npm run migrate:swell:neon` — dry-run a Swell import; append `-- --apply` to import products, categories, customers, orders, and coupons into Neon.
+- `npm run add:product:neon -- --file "scripts/product-example.json"` — validate a product JSON file; append `-- --apply` to insert it and its variants into Neon.
+- `npm run update:variant-prices:neon -- --goldrate 6000 --silverrate 100` — preview variant INR/USD prices using a fetched INR/USD rate, and backfill INR prices for products without variants; append `-- --apply` to update Neon. Use `--inr-prices "scripts/asj-inr-prices.json"` to apply explicit INR prices by SKU.
 
 The store catalog, category navigation, and customer profiles now read from Neon. See [docs/neon-store-admin.md](docs/neon-store-admin.md) for admin access, migration steps, and the current order/cart behavior.
 

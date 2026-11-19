@@ -216,6 +216,7 @@ export function ShopTheLookCarousel({
                   loader={imageKitLoader}
                   alt={activeProduct.product.name}
                   fill
+                  loading="eager"
                   sizes="(max-width: 639px) 64px, 225px"
                   className="object-contain transition-transform duration-500 group-hover:scale-105"
                 />
