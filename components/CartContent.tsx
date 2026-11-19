@@ -19,7 +19,7 @@ function formatDisplayAmount(amount: number, currency: "INR" | "USD") {
   if (currency === "INR") {
     return formatInrPrice(amount);
   }
-  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
