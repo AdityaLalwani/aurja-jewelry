@@ -44,6 +44,37 @@ const ACTIVE_PRODUCT_FILTER =
   "COALESCE(p.payload ->> 'active', 'true') NOT IN ('false', '0')";
 const PRODUCT_SKU_EXPRESSION =
   "COALESCE(p.payload ->> 'sku', p.payload -> 'attributes' ->> 'sku', p.payload -> 'attributes' ->> 'product_sku')";
+const SEARCHABLE_PRODUCT_TEXT = `lower(concat_ws(
+  ' ',
+  p.payload ->> 'name',
+  ${PRODUCT_SKU_EXPRESSION},
+  p.payload ->> 'description',
+  p.payload -> 'attributes' ->> 'product_story',
+  p.payload -> 'attributes' ->> 'metal_type',
+  p.payload -> 'attributes' ->> 'metal_color',
+  p.payload -> 'attributes' ->> 'gemstone_type',
+  p.payload -> 'attributes' ->> 'diamond_clarity',
+  p.payload -> 'attributes' ->> 'diamond_carat',
+  p.payload -> 'attributes' ->> 'stone_shape',
+  p.payload -> 'attributes' ->> 'diamond_cut',
+  COALESCE((
+    SELECT string_agg(detail.value, ' ')
+    FROM jsonb_array_elements(
+      CASE
+        WHEN jsonb_typeof(p.payload -> 'stone_details') = 'array'
+          THEN p.payload -> 'stone_details'
+        ELSE '[]'::jsonb
+      END
+    ) AS stone_detail(value)
+    CROSS JOIN LATERAL jsonb_each_text(
+      CASE
+        WHEN jsonb_typeof(stone_detail.value) = 'object'
+          THEN stone_detail.value
+        ELSE '{}'::jsonb
+      END
+    ) AS detail(key, value)
+  ), '')
+))`;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -162,6 +193,29 @@ export async function getProductsPage(
     products: records.map(({ payload }) => payload),
     total: Number(count),
   };
+}
+
+export async function searchActiveProducts(
+  terms: readonly string[],
+): Promise<Record<string, unknown>[]> {
+  const normalizedTerms = [...new Set(terms.map((term) => term.trim().toLowerCase()).filter(Boolean))];
+  if (normalizedTerms.length === 0) return [];
+
+  const records = await queryNeon<{ payload: Record<string, unknown> }>(
+    `SELECT ${STOREFRONT_PRODUCT_WITH_VARIANTS} AS payload
+     FROM swell_products p
+     ${STOREFRONT_PRODUCT_VARIANTS_JOIN}
+     WHERE ${ACTIVE_PRODUCT_FILTER}
+       AND NOT EXISTS (
+         SELECT 1
+         FROM unnest($1::text[]) AS search_term(term)
+         WHERE strpos(${SEARCHABLE_PRODUCT_TEXT}, search_term.term) = 0
+       )
+     ORDER BY p.payload ->> 'name', p.swell_id
+     LIMIT 100`,
+    [normalizedTerms],
+  );
+  return records.map(({ payload }) => payload);
 }
 
 export async function getAllActiveProducts(): Promise<Record<string, unknown>[]> {

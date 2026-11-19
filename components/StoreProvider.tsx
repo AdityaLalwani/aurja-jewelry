@@ -10,7 +10,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProductCard } from "@/lib/swell";
 import type { LocalCartItem } from "@/lib/cart-view";
 
 export type Currency = "INR" | "USD";
@@ -109,7 +109,7 @@ export function formatInrPrice(amount: number): string {
 }
 
 export function formatPrice(
-  product: JewelryProduct,
+  product: JewelryProductCard,
   currency: Currency,
 ): string {
   return currency === "INR"

@@ -96,7 +96,6 @@ export function SiteHeader({
     try {
       const response = await fetch("/api/store/navigation", {
         signal: controller.signal,
-        cache: "no-store",
       });
       if (!response.ok) {
         throw new Error(`Navigation request failed with HTTP ${response.status}.`);
@@ -171,6 +170,9 @@ export function SiteHeader({
             aria-label="Open menu"
             aria-expanded={mobileMenuOpen}
             aria-controls="site-navigation-menu"
+            onMouseEnter={() => void loadNavigation()}
+            onPointerDown={() => void loadNavigation()}
+            onFocus={() => void loadNavigation()}
             onClick={() => {
               setMobileMenuOpen(true);
               void loadNavigation();

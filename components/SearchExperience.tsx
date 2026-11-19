@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProductCard } from "@/lib/swell";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 import { home } from "@/lib/site";
 
@@ -16,6 +16,14 @@ const SECTION_CONTENT_SPACING = "mt-6";
 const SECTION_HEADING_CLASS =
   "font-display text-base font-normal text-neutral-700";
 const PLACEHOLDER_TERMS = ["necklace", "diamond jewellery", "rings", "SKU"];
+type SearchPreviewProduct = Pick<
+  JewelryProductCard,
+  "name" | "slug" | "images"
+>;
+type SearchResponse = {
+  products: JewelryProductCard[];
+  popularProducts: SearchPreviewProduct[];
+};
 
 type CategoryIllustrationName =
   | "rings"
@@ -188,44 +196,63 @@ function CategoryIllustration({
   );
 }
 
-function matchesQuery(product: JewelryProduct, query: string) {
-  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (terms.length === 0) return true;
-  const haystack = [
-    product.name,
-    product.sku,
-    product.description,
-    product.attributes.product_story,
-    product.attributes.metal_type,
-    product.attributes.metal_color,
-    product.attributes.gemstone_type,
-    product.attributes.diamond_clarity,
-    product.attributes.diamond_carat,
-    product.attributes.stone_shape,
-    product.attributes.diamond_cut,
-    ...(product.stone_details ?? []).flatMap((detail) =>
-      Object.values(detail),
-    ),
-  ]
-    .join(" ")
-    .toLowerCase();
-  return terms.every((term) => haystack.includes(term));
-}
-
-function SearchInput({
-  products,
-  popularProducts,
-}: {
-  products: JewelryProduct[];
-  popularProducts: JewelryProduct[];
-}) {
+function SearchInput() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [products, setProducts] = useState<JewelryProductCard[]>([]);
+  const [popularProducts, setPopularProducts] = useState<SearchPreviewProduct[]>(
+    [],
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchError, setSearchError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const trimmed = query.trim();
-  const results = trimmed
-    ? products.filter((product) => matchesQuery(product, trimmed))
-    : [];
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(
+      async () => {
+        setIsLoading(true);
+        setSearchError("");
+        try {
+          const response = await fetch(
+            `/api/store/search?q=${encodeURIComponent(trimmed.toLowerCase())}`,
+            { signal: controller.signal },
+          );
+          if (!response.ok) {
+            throw new Error(
+              `Search request failed with HTTP ${response.status}.`,
+            );
+          }
+
+          const result = (await response.json()) as SearchResponse;
+          if (
+            !Array.isArray(result.products) ||
+            !Array.isArray(result.popularProducts)
+          ) {
+            throw new Error("Search request returned an invalid response.");
+          }
+          setProducts(result.products);
+          setPopularProducts(result.popularProducts);
+        } catch (error) {
+          if (controller.signal.aborted) return;
+          console.error("Search request failed", error);
+          setSearchError(
+            "We could not load search results. Please try again.",
+          );
+        } finally {
+          if (!controller.signal.aborted) setIsLoading(false);
+        }
+      },
+      trimmed ? 180 : 0,
+    );
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [retryCount, trimmed]);
 
   useEffect(() => {
     if (
@@ -253,7 +280,11 @@ function SearchInput({
           <input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setIsLoading(true);
+              setSearchError("");
+            }}
             aria-label="Search the catalogue"
             placeholder={`Search ${PLACEHOLDER_TERMS[placeholderIndex]}`}
             className={inputClasses}
@@ -273,13 +304,28 @@ function SearchInput({
       </form>
 
       {trimmed ? (
-        results.length > 0 ? (
+        isLoading ? (
+          <p role="status" className={`${SECTION_SPACING} text-sm text-neutral-600`}>
+            Searching the catalogue…
+          </p>
+        ) : searchError ? (
+          <div role="alert" className={`${SECTION_SPACING} text-sm text-red-700`}>
+            <p>{searchError}</p>
+            <button
+              type="button"
+              onClick={() => setRetryCount((count) => count + 1)}
+              className="mt-2 font-medium underline underline-offset-4"
+            >
+              Try again
+            </button>
+          </div>
+        ) : products.length > 0 ? (
           <section className={SECTION_SPACING}>
             <p className="mb-6 text-xs uppercase tracking-[0.2em] text-neutral-500">
-              Showing {results.length} {results.length === 1 ? "piece" : "pieces"}
+              Showing {products.length} {products.length === 1 ? "piece" : "pieces"}
             </p>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {results.map((product) => (
+              {products.map((product) => (
                 <ProductCard key={product.slug} product={product} />
               ))}
             </div>
@@ -333,6 +379,23 @@ function SearchInput({
             ))}
           </div>
         </section>
+      )}
+      {!trimmed && isLoading && (
+        <p role="status" className={`${SECTION_SPACING} text-sm text-neutral-600`}>
+          Loading trending products…
+        </p>
+      )}
+      {!trimmed && searchError && (
+        <div role="alert" className={`${SECTION_SPACING} text-sm text-red-700`}>
+          <p>{searchError}</p>
+          <button
+            type="button"
+            onClick={() => setRetryCount((count) => count + 1)}
+            className="mt-2 font-medium underline underline-offset-4"
+          >
+            Try again
+          </button>
+        </div>
       )}
       {!trimmed && popularProducts.length > 0 && (
         <section
@@ -389,20 +452,14 @@ function SearchInput({
   );
 }
 
-export function SearchExperience({
-  products,
-  popularProducts,
-}: {
-  products: JewelryProduct[];
-  popularProducts: JewelryProduct[];
-}) {
+export function SearchExperience() {
   return (
     <Suspense
       fallback={
         <div className="mt-8 h-[52px] rounded-full border border-neutral-300 bg-white" />
       }
     >
-      <SearchInput products={products} popularProducts={popularProducts} />
+      <SearchInput />
     </Suspense>
   );
 }

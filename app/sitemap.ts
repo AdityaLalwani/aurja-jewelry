@@ -14,8 +14,6 @@ const staticRoutes = [
   "/refund-policy",
   "/size-guide",
   "/terms-and-conditions",
-  "/quotation",
-  "/vmof",
   "/warranty-registration",
 ];
 

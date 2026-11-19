@@ -8,6 +8,7 @@ import {
   getProductsByIds,
   getProductsPage,
   findProduct,
+  searchActiveProducts,
 } from "@/lib/store-db";
 import {
   mapSwellProduct,
@@ -52,6 +53,16 @@ export async function getJewelryProducts(
 ): Promise<JewelryProduct[]> {
   const result = await getJewelryProductPage(categorySlug, 1, 100);
   return result.products;
+}
+
+export async function searchJewelryProducts(
+  query: string,
+): Promise<JewelryProduct[]> {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const records = await searchActiveProducts(terms);
+  return records.map((product) =>
+    mapSwellProduct(toSwellProduct(product), 2),
+  );
 }
 
 export const getJewelryProductBySlug = cache(

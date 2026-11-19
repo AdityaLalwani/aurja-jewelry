@@ -6,7 +6,7 @@ import { lazy, Suspense, useActionState, useEffect, useState } from "react";
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import { addToCartAction } from "@/lib/cart-actions";
 import { WishlistButton } from "@/components/WishlistButton";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProductCard } from "@/lib/swell";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 const ProductEnquiryDialog = lazy(() =>
@@ -18,7 +18,7 @@ const ProductEnquiryDialog = lazy(() =>
 export function ProductCard({
   product,
 }: {
-  product: JewelryProduct;
+  product: JewelryProductCard;
 }) {
   const {
     currency,

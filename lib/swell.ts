@@ -188,6 +188,13 @@ export interface JewelryProduct {
   };
 }
 
+export type JewelryProductCard = Pick<
+  JewelryProduct,
+  "name" | "slug" | "price_inr" | "stock_level" | "images"
+> & {
+  attributes: Pick<JewelryProduct["attributes"], "price_usd">;
+};
+
 function coercePrice(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
