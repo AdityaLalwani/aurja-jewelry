@@ -34,7 +34,7 @@ export function CategoryGrid() {
                 <h3 className="font-display text-base font-normal text-stone-800 transition-colors group-hover:text-amber-800 sm:text-lg">
                   {category.name}
                 </h3>
-                <p className="mt-1 text-xs font-light tracking-wide text-stone-500 sm:text-sm">
+                <p className="mt-1 text-xs font-light tracking-wide text-stone-600 sm:text-sm">
                   {category.description}
                 </p>
               </div>
