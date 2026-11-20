@@ -10,7 +10,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import type { JewelryProductCard } from "@/lib/swell";
+import type { JewelryProductCard } from "@/lib/catalog";
 import type { LocalCartItem } from "@/lib/cart-view";
 
 export type Currency = "INR" | "USD";

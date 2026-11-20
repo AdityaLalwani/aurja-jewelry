@@ -6,7 +6,7 @@ import { lazy, Suspense, useActionState, useEffect, useState } from "react";
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import { addToCartAction } from "@/lib/cart-actions";
 import { WishlistButton } from "@/components/WishlistButton";
-import type { JewelryProductCard } from "@/lib/swell";
+import type { JewelryProductCard } from "@/lib/catalog";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 const ProductEnquiryDialog = lazy(() =>

@@ -8,7 +8,7 @@ import {
   useHydrationSafeWishlistSlugs,
   useStore,
 } from "@/components/StoreProvider";
-import type { JewelryProduct, StoreCategory } from "@/lib/swell";
+import type { JewelryProduct, StoreCategory } from "@/lib/catalog";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 const ICON_LINK_CLASS =

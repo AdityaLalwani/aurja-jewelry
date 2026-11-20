@@ -92,7 +92,7 @@ async function main() {
     await client.query("BEGIN");
     try {
       const duplicateSlug = await client.query(
-        "SELECT swell_id FROM swell_products WHERE payload ->> 'slug' = $1 LIMIT 1",
+        "SELECT store_id FROM store_products WHERE payload ->> 'slug' = $1 LIMIT 1",
         [product.slug],
       );
       if (duplicateSlug.rowCount) {
@@ -100,13 +100,13 @@ async function main() {
       }
 
       await client.query(
-        `INSERT INTO swell_products (swell_id, payload, source_updated_at)
+        `INSERT INTO store_products (store_id, payload, source_updated_at)
          VALUES ($1, $2::jsonb, now())`,
         [product.id, JSON.stringify(product)],
       );
       for (const variant of variants) {
         await client.query(
-          `INSERT INTO swell_variants (swell_id, parent_id, payload, source_updated_at)
+          `INSERT INTO store_variants (store_id, parent_id, payload, source_updated_at)
            VALUES ($1, $2, $3::jsonb, now())`,
           [variant.id, product.id, JSON.stringify(variant)],
         );

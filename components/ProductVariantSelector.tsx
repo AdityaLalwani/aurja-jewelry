@@ -20,7 +20,7 @@ import {
   getSelectedVariantPrice,
   isNaturalGemstoneSelection,
   type JewelryProduct,
-} from "@/lib/swell";
+} from "@/lib/catalog";
 
 const ProductEnquiryDialog = lazy(() =>
   import("@/components/ProductEnquiryDialog").then((module) => ({

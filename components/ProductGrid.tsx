@@ -7,7 +7,7 @@ import {
   loadJewelryProductsForFilters,
   loadMoreJewelryProducts,
 } from "@/lib/product-actions";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProduct } from "@/lib/catalog";
 
 type FacetKey =
   | "jewelryType"

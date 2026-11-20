@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { queryNeon } from "@/lib/neon-db";
 
 export type StoreRecord = {
-  swell_id: string;
+  store_id: string;
   payload: Record<string, unknown>;
   source_updated_at: Date | null;
 };
@@ -25,9 +25,9 @@ export type AccountRecord = {
 
 const STOREFRONT_PRODUCT_VARIANTS_JOIN = `
   LEFT JOIN LATERAL (
-    SELECT jsonb_agg((v.payload - 'source_data') ORDER BY v.swell_id) AS results
-    FROM swell_variants v
-    WHERE v.parent_id = p.swell_id
+    SELECT jsonb_agg((v.payload - 'source_data') ORDER BY v.store_id) AS results
+    FROM store_variants v
+    WHERE v.parent_id = p.store_id
   ) variant_records ON true`;
 
 const STOREFRONT_PRODUCT_WITH_VARIANTS = `CASE
@@ -81,52 +81,52 @@ function nowIso(): string {
 }
 
 export async function listStoreRecords(
-  table: "swell_products" | "swell_categories" | "swell_customers" | "swell_orders" | "swell_discounts",
+  table: "store_products" | "store_categories" | "store_customers" | "store_orders" | "store_discounts",
   search = "",
   limit = 100,
 ): Promise<StoreRecord[]> {
   const term = search.trim();
   if (!term) {
     return queryNeon<StoreRecord>(
-      `SELECT swell_id, payload, source_updated_at
+      `SELECT store_id, payload, source_updated_at
        FROM ${table}
-       ORDER BY imported_at DESC, swell_id
+       ORDER BY imported_at DESC, store_id
        LIMIT $1`,
       [Math.min(500, Math.max(1, limit))],
     );
   }
   return queryNeon<StoreRecord>(
-    `SELECT swell_id, payload, source_updated_at
+    `SELECT store_id, payload, source_updated_at
      FROM ${table}
      WHERE payload::text ILIKE $1
-     ORDER BY imported_at DESC, swell_id
+     ORDER BY imported_at DESC, store_id
      LIMIT $2`,
     [`%${term}%`, Math.min(500, Math.max(1, limit))],
   );
 }
 
 export async function getStoreRecord(
-  table: "swell_products" | "swell_categories" | "swell_customers" | "swell_orders" | "swell_discounts",
+  table: "store_products" | "store_categories" | "store_customers" | "store_orders" | "store_discounts",
   id: string,
 ): Promise<StoreRecord | null> {
   const [record] = await queryNeon<StoreRecord>(
-    `SELECT swell_id, payload, source_updated_at
+    `SELECT store_id, payload, source_updated_at
      FROM ${table}
-     WHERE swell_id = $1`,
+     WHERE store_id = $1`,
     [id],
   );
   return record ?? null;
 }
 
 export async function saveStoreRecord(
-  table: "swell_products" | "swell_categories" | "swell_orders" | "swell_discounts",
+  table: "store_products" | "store_categories" | "store_orders" | "store_discounts",
   id: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
   await queryNeon(
-    `INSERT INTO ${table} (swell_id, payload, source_updated_at, imported_at)
+    `INSERT INTO ${table} (store_id, payload, source_updated_at, imported_at)
      VALUES ($1, $2::jsonb, $3, now())
-     ON CONFLICT (swell_id) DO UPDATE SET
+     ON CONFLICT (store_id) DO UPDATE SET
        payload = EXCLUDED.payload,
        source_updated_at = EXCLUDED.source_updated_at,
        imported_at = now()`,
@@ -140,9 +140,9 @@ export async function saveOrderEnquiry(
 ): Promise<void> {
   const id = `enquiry-${requestId}`;
   await queryNeon(
-    `INSERT INTO swell_orders (swell_id, payload, source_updated_at, imported_at)
+    `INSERT INTO store_orders (store_id, payload, source_updated_at, imported_at)
      VALUES ($1, $2::jsonb, now(), now())
-     ON CONFLICT (swell_id) DO NOTHING`,
+     ON CONFLICT (store_id) DO NOTHING`,
     [id, JSON.stringify({ ...order, id, type: "order-enquiry" })],
   );
 }
@@ -154,11 +154,11 @@ export async function getProductsPage(
 ): Promise<{ products: Record<string, unknown>[]; total: number }> {
   const categoryId = categorySlug
     ? (
-        await queryNeon<{ swell_id: string }>(
-          "SELECT swell_id FROM swell_categories WHERE payload ->> 'slug' = $1 LIMIT 1",
+        await queryNeon<{ store_id: string }>(
+          "SELECT store_id FROM store_categories WHERE payload ->> 'slug' = $1 LIMIT 1",
           [categorySlug],
         )
-      )[0]?.swell_id
+      )[0]?.store_id
     : undefined;
   if (categorySlug && !categoryId) {
     return { products: [], total: 0 };
@@ -176,15 +176,15 @@ export async function getProductsPage(
   const [records, [{ count }]] = await Promise.all([
     queryNeon<{ payload: Record<string, unknown> }>(
       `SELECT ${STOREFRONT_PRODUCT_WITH_VARIANTS} AS payload
-       FROM swell_products p
+       FROM store_products p
        ${STOREFRONT_PRODUCT_VARIANTS_JOIN}
        WHERE ${ACTIVE_PRODUCT_FILTER} ${whereCategory}
-       ORDER BY p.payload ->> 'name', p.swell_id
+       ORDER BY p.payload ->> 'name', p.store_id
        LIMIT $1 OFFSET $2`,
       values,
     ),
     queryNeon<{ count: string }>(
-      `SELECT count(*)::text AS count FROM swell_products p
+      `SELECT count(*)::text AS count FROM store_products p
        WHERE ${ACTIVE_PRODUCT_FILTER} ${countWhereCategory}`,
       categoryId ? [categoryId] : [],
     ),
@@ -203,7 +203,7 @@ export async function searchActiveProducts(
 
   const records = await queryNeon<{ payload: Record<string, unknown> }>(
     `SELECT ${STOREFRONT_PRODUCT_WITH_VARIANTS} AS payload
-     FROM swell_products p
+     FROM store_products p
      ${STOREFRONT_PRODUCT_VARIANTS_JOIN}
      WHERE ${ACTIVE_PRODUCT_FILTER}
        AND NOT EXISTS (
@@ -211,7 +211,7 @@ export async function searchActiveProducts(
          FROM unnest($1::text[]) AS search_term(term)
          WHERE strpos(${SEARCHABLE_PRODUCT_TEXT}, search_term.term) = 0
        )
-     ORDER BY p.payload ->> 'name', p.swell_id
+     ORDER BY p.payload ->> 'name', p.store_id
      LIMIT 100`,
     [normalizedTerms],
   );
@@ -221,50 +221,50 @@ export async function searchActiveProducts(
 export async function getAllActiveProducts(): Promise<Record<string, unknown>[]> {
   const records = await queryNeon<{ payload: Record<string, unknown> }>(
     `SELECT ${STOREFRONT_PRODUCT_WITH_VARIANTS} AS payload
-     FROM swell_products p
+     FROM store_products p
      ${STOREFRONT_PRODUCT_VARIANTS_JOIN}
      WHERE ${ACTIVE_PRODUCT_FILTER}
-     ORDER BY p.payload ->> 'name', p.swell_id`,
+     ORDER BY p.payload ->> 'name', p.store_id`,
   );
   return records.map(({ payload }) => payload);
 }
 
 export async function getActiveProductsBySkus(
   skus: readonly string[],
-): Promise<Array<{ swell_id: string; sku: string; payload: Record<string, unknown> }>> {
+): Promise<Array<{ store_id: string; sku: string; payload: Record<string, unknown> }>> {
   const normalizedSkus = [...new Set(skus.map((sku) => sku.toUpperCase()).filter(Boolean))];
   if (normalizedSkus.length === 0) return [];
 
   return queryNeon<{
-    swell_id: string;
+    store_id: string;
     sku: string;
     payload: Record<string, unknown>;
   }>(
-    `SELECT p.swell_id,
+    `SELECT p.store_id,
             ${PRODUCT_SKU_EXPRESSION} AS sku,
             ${STOREFRONT_PRODUCT_WITH_VARIANTS} AS payload
-     FROM swell_products p
+     FROM store_products p
      ${STOREFRONT_PRODUCT_VARIANTS_JOIN}
      WHERE ${ACTIVE_PRODUCT_FILTER}
        AND upper(${PRODUCT_SKU_EXPRESSION}) = ANY($1::text[])
-     ORDER BY p.payload ->> 'name', p.swell_id`,
+     ORDER BY p.payload ->> 'name', p.store_id`,
     [normalizedSkus],
   );
 }
 
 export async function getProductsByIds(
   ids: readonly string[],
-): Promise<Array<{ swell_id: string; payload: Record<string, unknown> }>> {
+): Promise<Array<{ store_id: string; payload: Record<string, unknown> }>> {
   const uniqueIds = [...new Set(ids.filter(Boolean))];
   if (uniqueIds.length === 0) return [];
 
-  return queryNeon<{ swell_id: string; payload: Record<string, unknown> }>(
-    `SELECT p.swell_id,
+  return queryNeon<{ store_id: string; payload: Record<string, unknown> }>(
+    `SELECT p.store_id,
             ${STOREFRONT_PRODUCT_WITH_VARIANTS} AS payload
-     FROM swell_products p
+     FROM store_products p
      ${STOREFRONT_PRODUCT_VARIANTS_JOIN}
-     WHERE p.swell_id = ANY($1::text[])
-     ORDER BY p.swell_id`,
+     WHERE p.store_id = ANY($1::text[])
+     ORDER BY p.store_id`,
     [uniqueIds],
   );
 }
@@ -272,10 +272,10 @@ export async function getProductsByIds(
 export async function getActiveProductSlugs(): Promise<string[]> {
   const rows = await queryNeon<{ slug: string }>(
     `SELECT p.payload ->> 'slug' AS slug
-     FROM swell_products p
+     FROM store_products p
      WHERE ${ACTIVE_PRODUCT_FILTER}
        AND jsonb_typeof(p.payload -> 'slug') = 'string'
-     ORDER BY p.payload ->> 'name', p.swell_id`,
+     ORDER BY p.payload ->> 'name', p.store_id`,
   );
   return rows.map(({ slug }) => slug);
 }
@@ -292,12 +292,12 @@ export async function listProducts(
     : [boundedLimit];
   const limitParameter = term ? "$2" : "$1";
   return queryNeon<StoreRecord>(
-    `SELECT p.swell_id,
+    `SELECT p.store_id,
             (p.payload - 'source_data') AS payload,
             p.source_updated_at
-     FROM swell_products p
+     FROM store_products p
      ${where}
-     ORDER BY p.imported_at DESC, p.swell_id
+     ORDER BY p.imported_at DESC, p.store_id
      LIMIT ${limitParameter}`,
     values,
   );
@@ -307,7 +307,7 @@ export async function getCategories(): Promise<
   Array<Record<string, unknown> & { id: string }>
 > {
   const records = await queryNeon<{ payload: Record<string, unknown> }>(
-    "SELECT payload FROM swell_categories ORDER BY COALESCE((payload ->> 'sort')::int, 0), payload ->> 'name'",
+    "SELECT payload FROM store_categories ORDER BY COALESCE((payload ->> 'sort')::int, 0), payload ->> 'name'",
   );
   return records.map(({ payload }) => ({
     ...payload,
@@ -322,12 +322,12 @@ export async function findProduct(
   const expression = {
     slug: "p.payload ->> 'slug'",
     sku: "upper(p.payload ->> 'sku')",
-    id: "p.swell_id",
+    id: "p.store_id",
   }[field];
   const queryValue = field === "sku" ? value.toUpperCase() : value;
   const [record] = await queryNeon<{ payload: Record<string, unknown> }>(
     `SELECT ${STOREFRONT_PRODUCT_WITH_VARIANTS} AS payload
-     FROM swell_products p
+     FROM store_products p
      ${STOREFRONT_PRODUCT_VARIANTS_JOIN}
      WHERE ${expression} = $1
      LIMIT 1`,
@@ -337,36 +337,36 @@ export async function findProduct(
 }
 
 export async function getAccountById(id: string): Promise<AccountRecord | null> {
-  const record = await getStoreRecord("swell_customers", id);
+  const record = await getStoreRecord("store_customers", id);
   return record ? ({ ...record.payload, id } as AccountRecord) : null;
 }
 
 export async function getAccountByEmail(email: string): Promise<AccountRecord | null> {
   const [row] = await queryNeon<StoreRecord & { auth_uid: string | null }>(
-    "SELECT swell_id, payload, source_updated_at, auth_uid FROM swell_customers WHERE lower(payload ->> 'email') = lower($1) LIMIT 1",
+    "SELECT store_id, payload, source_updated_at, auth_uid FROM store_customers WHERE lower(payload ->> 'email') = lower($1) LIMIT 1",
     [email],
   );
   return row
-    ? ({ ...row.payload, id: row.swell_id, auth_uid: row.auth_uid } as AccountRecord)
+    ? ({ ...row.payload, id: row.store_id, auth_uid: row.auth_uid } as AccountRecord)
     : null;
 }
 
 export async function getAccountByAuthUid(uid: string): Promise<AccountRecord | null> {
   const [row] = await queryNeon<StoreRecord & { auth_uid: string | null }>(
-    "SELECT c.swell_id, c.payload, c.source_updated_at, c.auth_uid FROM swell_customers c WHERE c.auth_uid = $1 LIMIT 1",
+    "SELECT c.store_id, c.payload, c.source_updated_at, c.auth_uid FROM store_customers c WHERE c.auth_uid = $1 LIMIT 1",
     [uid],
   );
   return row
-    ? ({ ...row.payload, id: row.swell_id, auth_uid: row.auth_uid } as AccountRecord)
+    ? ({ ...row.payload, id: row.store_id, auth_uid: row.auth_uid } as AccountRecord)
     : null;
 }
 
 export async function linkAccountAuthUid(id: string, uid: string): Promise<boolean> {
-  const [linked] = await queryNeon<{ swell_id: string }>(
-    `UPDATE swell_customers
+  const [linked] = await queryNeon<{ store_id: string }>(
+    `UPDATE store_customers
      SET auth_uid = $2
-     WHERE swell_id = $1 AND (auth_uid IS NULL OR auth_uid = $2)
-     RETURNING swell_id`,
+     WHERE store_id = $1 AND (auth_uid IS NULL OR auth_uid = $2)
+     RETURNING store_id`,
     [id, uid],
   );
   if (linked) return true;
@@ -388,7 +388,7 @@ export async function createAccount(
     date_updated: nowIso(),
   };
   await queryNeon(
-    `INSERT INTO swell_customers (swell_id, payload, auth_uid, source_updated_at)
+    `INSERT INTO store_customers (store_id, payload, auth_uid, source_updated_at)
      VALUES ($1, $2::jsonb, $3, now())`,
     [id, JSON.stringify(payload), authUid ?? null],
   );
@@ -400,11 +400,11 @@ export async function updateAccount(
   input: Partial<AccountRecord>,
 ): Promise<AccountRecord | null> {
   const [row] = await queryNeon<{ payload: Record<string, unknown> }>(
-    `UPDATE swell_customers
+    `UPDATE store_customers
      SET payload = payload || $2::jsonb || jsonb_build_object('date_updated', now()::text),
          source_updated_at = now(),
          imported_at = now()
-     WHERE swell_id = $1
+     WHERE store_id = $1
      RETURNING payload`,
     [id, JSON.stringify(input)],
   );

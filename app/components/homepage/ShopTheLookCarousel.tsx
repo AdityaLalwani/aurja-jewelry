@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, type MouseEvent, type TouchEvent } from "react";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProduct } from "@/lib/catalog";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 type ShopTheLookProduct = {

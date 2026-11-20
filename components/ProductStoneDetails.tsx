@@ -1,5 +1,5 @@
 import { ChevronDownIcon, DiamondIcon } from "@/app/components/icons";
-import type { ProductStoneDetail } from "@/lib/swell";
+import type { ProductStoneDetail } from "@/lib/catalog";
 
 const columns: { label: string; value: keyof ProductStoneDetail }[] = [
   { label: "Stone", value: "type" },

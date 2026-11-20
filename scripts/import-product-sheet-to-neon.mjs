@@ -408,8 +408,8 @@ export function prepareProductImport(rows) {
 
 async function upsertRecords(client, table, records, variants = false) {
   const columns = variants
-    ? "(swell_id, parent_id, payload, source_updated_at)"
-    : "(swell_id, payload, source_updated_at)";
+    ? "(store_id, parent_id, payload, source_updated_at)"
+    : "(store_id, payload, source_updated_at)";
   const rowSize = variants ? 4 : 3;
 
   for (let offset = 0; offset < records.length; offset += BATCH_SIZE) {
@@ -433,7 +433,7 @@ async function upsertRecords(client, table, records, variants = false) {
     await client.query(
       `INSERT INTO ${table} ${columns}
        VALUES ${placeholders.join(", ")}
-       ON CONFLICT (swell_id) DO UPDATE SET
+       ON CONFLICT (store_id) DO UPDATE SET
          ${variants ? "parent_id = EXCLUDED.parent_id," : ""}
          payload = EXCLUDED.payload,
          source_updated_at = COALESCE(EXCLUDED.source_updated_at, ${table}.source_updated_at),
@@ -484,14 +484,14 @@ async function main() {
     try {
       await upsertRecords(
         client,
-        "swell_categories",
+        "store_categories",
         plan.categories.map((category) => ({
           id: category.id,
           payload: category,
         })),
       );
-      await upsertRecords(client, "swell_products", plan.products);
-      await upsertRecords(client, "swell_variants", plan.variants, true);
+      await upsertRecords(client, "store_products", plan.products);
+      await upsertRecords(client, "store_variants", plan.variants, true);
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");

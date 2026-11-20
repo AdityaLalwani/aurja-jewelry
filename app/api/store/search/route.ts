@@ -3,7 +3,7 @@ import {
   getJewelryProductsBySkus,
   searchJewelryProducts,
 } from "@/lib/storefront-data";
-import type { JewelryProductCard } from "@/lib/swell";
+import type { JewelryProductCard } from "@/lib/catalog";
 
 export const dynamic = "force-dynamic";
 const searchCacheHeaders = {

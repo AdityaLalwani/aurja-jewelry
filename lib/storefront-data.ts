@@ -11,17 +11,17 @@ import {
   searchActiveProducts,
 } from "@/lib/store-db";
 import {
-  mapSwellProduct,
+  mapCatalogProduct,
   type JewelryProduct,
   type StoreCategory,
-  type SwellProduct,
-} from "@/lib/swell";
+  type CatalogProduct,
+} from "@/lib/catalog";
 
-function toSwellProduct(value: Record<string, unknown>): SwellProduct {
+function toCatalogProduct(value: Record<string, unknown>): CatalogProduct {
   if (typeof value.id !== "string" || value.id.length === 0) {
     throw new Error("A product record in Neon is missing its id.");
   }
-  return { ...value, id: value.id } as SwellProduct;
+  return { ...value, id: value.id } as CatalogProduct;
 }
 
 export async function getJewelryProductPage(
@@ -38,7 +38,7 @@ export async function getJewelryProductPage(
   const safeLimit = Math.min(100, Math.max(1, Math.floor(limit)));
   const result = await getProductsPage(categorySlug, safePage, safeLimit);
   const products = result.products.map((product) =>
-    mapSwellProduct(toSwellProduct(product), 2),
+    mapCatalogProduct(toCatalogProduct(product), 2),
   );
   return {
     products,
@@ -61,7 +61,7 @@ export async function searchJewelryProducts(
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const records = await searchActiveProducts(terms);
   return records.map((product) =>
-    mapSwellProduct(toSwellProduct(product), 2),
+    mapCatalogProduct(toCatalogProduct(product), 2),
   );
 }
 
@@ -69,7 +69,7 @@ export const getJewelryProductBySlug = cache(
   async (slug: string): Promise<JewelryProduct | null> => {
     const record = await findProduct("slug", slug);
     if (!record || record.active === false) return null;
-    return mapSwellProduct(toSwellProduct(record));
+    return mapCatalogProduct(toCatalogProduct(record));
   },
 );
 
@@ -79,11 +79,11 @@ export async function getJewelryProductsByIds(
   const ids = [...new Set(productIds.filter(Boolean))];
   const records = await getProductsByIds(ids);
   const productsById = new Map(
-    records.map(({ swell_id, payload }) => [
-      swell_id,
+    records.map(({ store_id, payload }) => [
+      store_id,
       {
         active: payload.active,
-        product: mapSwellProduct(toSwellProduct({ ...payload, id: swell_id })),
+        product: mapCatalogProduct(toCatalogProduct({ ...payload, id: store_id })),
       },
     ]),
   );
@@ -100,12 +100,12 @@ export async function getJewelryProductsBySkus(
 ): Promise<Array<{ sku: string; product: JewelryProduct }>> {
   const records = await getActiveProductsBySkus(skus);
   const productsBySku = new Map<string, JewelryProduct>();
-  for (const { swell_id, sku, payload } of records) {
+  for (const { store_id, sku, payload } of records) {
     const normalizedSku = sku.toUpperCase();
     if (!productsBySku.has(normalizedSku)) {
       productsBySku.set(
         normalizedSku,
-        mapSwellProduct(toSwellProduct({ ...payload, id: swell_id }), 2),
+        mapCatalogProduct(toCatalogProduct({ ...payload, id: store_id }), 2),
       );
     }
   }

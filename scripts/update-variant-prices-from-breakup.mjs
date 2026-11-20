@@ -314,16 +314,16 @@ function validateRates(goldrate, silverrate) {
 async function updateMappedSkuPrices(client, inrPrices, usdPerInr, apply) {
   const skus = Object.keys(inrPrices);
   const { rows } = await client.query(
-    `SELECT p.swell_id, p.payload,
+    `SELECT p.store_id, p.payload,
             COALESCE(
               p.payload->>'sku',
               p.payload->'attributes'->>'sku',
               p.payload->'attributes'->>'product_sku'
             ) AS sku,
             (SELECT count(*)::int
-               FROM swell_variants v
-              WHERE v.parent_id = p.swell_id) AS variant_count
-       FROM swell_products p
+               FROM store_variants v
+              WHERE v.parent_id = p.store_id) AS variant_count
+       FROM store_products p
       WHERE upper(COALESCE(
         p.payload->>'sku',
         p.payload->'attributes'->>'sku',
@@ -352,7 +352,7 @@ async function updateMappedSkuPrices(client, inrPrices, usdPerInr, apply) {
       throw new Error(`SKU ${sku} has variants; this mapping is for base products only.`);
     }
     plans.push({
-      productId: row.swell_id,
+      productId: row.store_id,
       sku,
       ...buildSkuPriceUpdatePlan(row.payload, priceInr, usdPerInr),
     });
@@ -374,9 +374,9 @@ async function updateMappedSkuPrices(client, inrPrices, usdPerInr, apply) {
   try {
     for (const plan of plans) {
       await client.query(
-        `UPDATE swell_products
+        `UPDATE store_products
          SET payload = $1::jsonb, imported_at = now()
-         WHERE swell_id = $2`,
+         WHERE store_id = $2`,
         [JSON.stringify(plan.product), plan.productId],
       );
     }
@@ -423,11 +423,11 @@ async function main() {
       return;
     }
     const { rows } = await client.query(
-      `SELECT p.swell_id AS product_id, p.payload AS product_payload,
-              v.swell_id AS variant_id, v.payload AS variant_payload
-       FROM swell_products p
-       LEFT JOIN swell_variants v ON v.parent_id = p.swell_id
-       ORDER BY p.swell_id, v.swell_id`,
+      `SELECT p.store_id AS product_id, p.payload AS product_payload,
+              v.store_id AS variant_id, v.payload AS variant_payload
+       FROM store_products p
+       LEFT JOIN store_variants v ON v.parent_id = p.store_id
+       ORDER BY p.store_id, v.store_id`,
     );
     const byProduct = new Map();
     for (const row of rows) {
@@ -479,16 +479,16 @@ async function main() {
     try {
       for (const plan of plans) {
         await client.query(
-          `UPDATE swell_products
+          `UPDATE store_products
            SET payload = $1::jsonb, imported_at = now()
-           WHERE swell_id = $2`,
+           WHERE store_id = $2`,
           [JSON.stringify(plan.product), plan.product.id],
         );
         for (const variant of plan.variants) {
           await client.query(
-            `UPDATE swell_variants
+            `UPDATE store_variants
              SET payload = $1::jsonb, imported_at = now()
-             WHERE swell_id = $2`,
+             WHERE store_id = $2`,
             [JSON.stringify(variant), variant.id],
           );
         }

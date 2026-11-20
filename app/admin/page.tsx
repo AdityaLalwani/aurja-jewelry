@@ -178,10 +178,10 @@ function ProductEditor({
   return (
     <details className="rounded-xl border border-stone-200 bg-white">
       <summary className="cursor-pointer list-none p-4 text-sm font-medium">
-        {record ? `Edit ${text(product.name) || record.swell_id}` : "＋ Add product"}
+        {record ? `Edit ${text(product.name) || record.store_id}` : "＋ Add product"}
       </summary>
       <form action={saveProductAction} className="grid gap-4 border-t border-stone-100 p-4 md:grid-cols-2">
-        <input type="hidden" name="id" value={record?.swell_id ?? ""} />
+        <input type="hidden" name="id" value={record?.store_id ?? ""} />
         <Field name="name" label="Product name" defaultValue={text(product.name)} required />
         <Field name="slug" label="URL slug" defaultValue={text(product.slug)} required />
         <Field name="sku" label="SKU" defaultValue={text(product.sku)} />
@@ -223,7 +223,7 @@ function ProductEditor({
       </form>
       {record ? (
         <form action={archiveProductAction} className="border-t border-stone-100 px-4 py-3">
-          <input type="hidden" name="id" value={record.swell_id} />
+          <input type="hidden" name="id" value={record.store_id} />
           <button className="text-xs text-red-700 underline underline-offset-4">Archive product</button>
         </form>
       ) : null}
@@ -330,13 +330,13 @@ function OrderCard({ record }: { record: StoreRecord }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-4">
       <div>
-        <p className="text-sm font-semibold">{text(order.number ?? order.order_number) || record.swell_id}</p>
+        <p className="text-sm font-semibold">{text(order.number ?? order.order_number) || record.store_id}</p>
         <p className="mt-1 text-xs text-stone-500">
           {text(order.email ?? order.account_id)} · {text(order.currency) || "INR"} {text(order.grand_total ?? order.total)}
         </p>
       </div>
       <form action={updateOrderStatusAction} className="flex items-center gap-2">
-        <input type="hidden" name="id" value={record.swell_id} />
+        <input type="hidden" name="id" value={record.store_id} />
         <select className={inputClass} name="status" defaultValue={status}>
           {["pending", "processing", "fulfilled", "canceled", "refunded"].map((item) => <option key={item}>{item}</option>)}
         </select>
@@ -351,10 +351,10 @@ function DiscountEditor({ record }: { record?: StoreRecord }) {
   return (
     <details className="rounded-xl border border-stone-200 bg-white">
       <summary className="cursor-pointer list-none p-4 text-sm font-medium">
-        {record ? `Edit ${text(discount.code) || record.swell_id}` : "＋ Add discount"}
+        {record ? `Edit ${text(discount.code) || record.store_id}` : "＋ Add discount"}
       </summary>
       <form action={saveDiscountAction} className="grid gap-4 border-t border-stone-100 p-4 md:grid-cols-2">
-        <input type="hidden" name="id" value={record?.swell_id ?? ""} />
+        <input type="hidden" name="id" value={record?.store_id ?? ""} />
         <Field name="code" label="Code" defaultValue={text(discount.code)} required />
         <Field name="name" label="Name" defaultValue={text(discount.name)} required />
         <label className="block">
@@ -372,7 +372,7 @@ function DiscountEditor({ record }: { record?: StoreRecord }) {
       </form>
       {record && discount.active !== false ? (
         <form action={archiveDiscountAction} className="border-t border-stone-100 px-4 py-3">
-          <input type="hidden" name="id" value={record.swell_id} />
+          <input type="hidden" name="id" value={record.store_id} />
           <button className="text-xs text-red-700 underline underline-offset-4">Deactivate discount</button>
         </form>
       ) : null}
@@ -411,7 +411,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           ))}
         </div>
         <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-          Swell order and coupon history can be imported when an export is available. The storefront records quote/order enquiries (not paid orders); carts and wishlists are saved to Neon for signed-in customers.
+          The storefront records quote/order enquiries (not paid orders); carts and wishlists are saved to Neon for signed-in customers.
         </div>
       </section>
     );
@@ -452,8 +452,8 @@ async function ProductsSection({
     return (
       <div className="mt-7 space-y-3">
         {records.map((record) => (
-          <form key={record.swell_id} action={updateInventoryAction} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-4">
-            <input type="hidden" name="id" value={record.swell_id} />
+          <form key={record.store_id} action={updateInventoryAction} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-4">
+            <input type="hidden" name="id" value={record.store_id} />
             <div>
               <p className="text-sm font-semibold">{text(record.payload.name)}</p>
               <p className="mt-1 text-xs text-stone-500">{text(record.payload.sku)} · {text(record.payload.slug)}</p>
@@ -471,8 +471,8 @@ async function ProductsSection({
   return (
     <div className="mt-7 space-y-3">
       <ProductEditor categories={categories} />
-      {records.map((record) => <ProductEditor key={record.swell_id} record={record} categories={categories} />)}
-      {records.length === 0 ? <EmptyState>There are no products in Neon yet. You can create them here or import a Swell export.</EmptyState> : null}
+      {records.map((record) => <ProductEditor key={record.store_id} record={record} categories={categories} />)}
+      {records.length === 0 ? <EmptyState>There are no products in Neon yet. You can create them here.</EmptyState> : null}
     </div>
   );
 }
@@ -495,7 +495,7 @@ async function CustomersSection({ search }: { search: string }) {
   return (
     <div className="mt-7 space-y-3">
       {customers.map((customer) => <CustomerCard key={customer.id} customer={customer} />)}
-      {customers.length === 0 ? <EmptyState>No customer records matched. Customers appear after sign-in or a Swell import.</EmptyState> : null}
+      {customers.length === 0 ? <EmptyState>No customer records matched. Customers appear after sign-in.</EmptyState> : null}
     </div>
   );
 }
@@ -504,8 +504,8 @@ async function OrdersSection({ search }: { search: string }) {
   const orders = await getAdminOrders(search);
   return (
     <div className="mt-7 space-y-3">
-      {orders.map((record) => <OrderCard key={record.swell_id} record={record} />)}
-      {orders.length === 0 ? <EmptyState>No orders are stored yet. Import Swell order records when an export is available.</EmptyState> : null}
+      {orders.map((record) => <OrderCard key={record.store_id} record={record} />)}
+      {orders.length === 0 ? <EmptyState>No orders are stored yet.</EmptyState> : null}
     </div>
   );
 }
@@ -519,7 +519,7 @@ async function DiscountsSection({ search }: { search: string }) {
         enquiry-only storefront does not apply discounts at checkout.
       </p>
       <DiscountEditor />
-      {discounts.map((record) => <DiscountEditor key={record.swell_id} record={record} />)}
+      {discounts.map((record) => <DiscountEditor key={record.store_id} record={record} />)}
       {discounts.length === 0 ? <EmptyState>No discounts in Neon yet.</EmptyState> : null}
     </div>
   );

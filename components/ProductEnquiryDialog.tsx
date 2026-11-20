@@ -5,7 +5,7 @@ import { useActionState, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { formatPrice, useStore, type Currency } from "@/components/StoreProvider";
 import { submitProductEnquiryAction } from "@/lib/cart-actions";
-import type { JewelryProductCard } from "@/lib/swell";
+import type { JewelryProductCard } from "@/lib/catalog";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 import { phoneCountryCodes } from "@/lib/phone-country-codes";
 

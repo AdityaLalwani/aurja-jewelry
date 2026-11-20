@@ -98,7 +98,7 @@ export async function saveProductAction(formData: FormData): Promise<void> {
   if (categoryIds.length > 200) throw new Error("A product cannot have more than 200 categories.");
   if (categoryIds.length > 0) {
     const existingCategories = await queryNeon<{ id: string }>(
-      "SELECT payload ->> 'id' AS id FROM swell_categories WHERE payload ->> 'id' = ANY($1::text[])",
+      "SELECT payload ->> 'id' AS id FROM store_categories WHERE payload ->> 'id' = ANY($1::text[])",
       [categoryIds],
     );
     if (existingCategories.length !== categoryIds.length) {
@@ -106,7 +106,7 @@ export async function saveProductAction(formData: FormData): Promise<void> {
     }
   }
   const categoryId = categoryIds[0];
-  const existing = await getStoreRecord("swell_products", id);
+  const existing = await getStoreRecord("store_products", id);
   const product = {
     ...(existing?.payload ?? {}),
     id,
@@ -131,13 +131,13 @@ export async function saveProductAction(formData: FormData): Promise<void> {
   if (!Array.isArray(product.options)) {
     throw new Error("Product options must be a JSON array.");
   }
-  const duplicate = await queryNeon<{ swell_id: string }>(
-    "SELECT swell_id FROM swell_products WHERE payload ->> 'slug' = $1 AND swell_id <> $2 LIMIT 1",
+  const duplicate = await queryNeon<{ store_id: string }>(
+    "SELECT store_id FROM store_products WHERE payload ->> 'slug' = $1 AND store_id <> $2 LIMIT 1",
     [slug, id],
   );
   if (duplicate.length > 0) throw new Error("That product slug is already in use.");
 
-  await saveStoreRecord("swell_products", id, product);
+  await saveStoreRecord("store_products", id, product);
   revalidateAdmin();
   redirect("/admin?section=products");
 }
@@ -145,9 +145,9 @@ export async function saveProductAction(formData: FormData): Promise<void> {
 export async function archiveProductAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = readText(formData, "id", 100);
-  const existing = await getStoreRecord("swell_products", id);
+  const existing = await getStoreRecord("store_products", id);
   if (!existing) throw new Error("Product was not found.");
-  await saveStoreRecord("swell_products", id, {
+  await saveStoreRecord("store_products", id, {
     ...existing.payload,
     active: false,
     date_updated: new Date().toISOString(),
@@ -162,7 +162,7 @@ export async function saveCategoryAction(formData: FormData): Promise<void> {
   const name = readText(formData, "name", 160);
   const slug = slugify(readText(formData, "slug", 200) || name);
   if (!name || !slug) throw new Error("Category name and slug are required.");
-  const existing = await getStoreRecord("swell_categories", id);
+  const existing = await getStoreRecord("store_categories", id);
   const category = {
     ...(existing?.payload ?? {}),
     id,
@@ -176,12 +176,12 @@ export async function saveCategoryAction(formData: FormData): Promise<void> {
     meta_keywords: readText(formData, "meta_keywords", 500) || undefined,
     date_updated: new Date().toISOString(),
   };
-  const duplicate = await queryNeon<{ swell_id: string }>(
-    "SELECT swell_id FROM swell_categories WHERE payload ->> 'slug' = $1 AND swell_id <> $2 LIMIT 1",
+  const duplicate = await queryNeon<{ store_id: string }>(
+    "SELECT store_id FROM store_categories WHERE payload ->> 'slug' = $1 AND store_id <> $2 LIMIT 1",
     [slug, id],
   );
   if (duplicate.length > 0) throw new Error("That category slug is already in use.");
-  await saveStoreRecord("swell_categories", id, category);
+  await saveStoreRecord("store_categories", id, category);
   revalidateAdmin();
   redirect("/admin?section=categories");
 }
@@ -189,9 +189,9 @@ export async function saveCategoryAction(formData: FormData): Promise<void> {
 export async function archiveCategoryAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = readText(formData, "id", 100);
-  const existing = await getStoreRecord("swell_categories", id);
+  const existing = await getStoreRecord("store_categories", id);
   if (!existing) throw new Error("Category was not found.");
-  await saveStoreRecord("swell_categories", id, {
+  await saveStoreRecord("store_categories", id, {
     ...existing.payload,
     active: false,
     date_updated: new Date().toISOString(),
@@ -204,9 +204,9 @@ export async function updateInventoryAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = readText(formData, "id", 100);
   const stockLevel = Math.floor(readAmount(formData, "stock_level"));
-  const existing = await getStoreRecord("swell_products", id);
+  const existing = await getStoreRecord("store_products", id);
   if (!existing) throw new Error("Product was not found.");
-  await saveStoreRecord("swell_products", id, {
+  await saveStoreRecord("store_products", id, {
     ...existing.payload,
     stock_level: stockLevel,
     date_updated: new Date().toISOString(),
@@ -231,7 +231,7 @@ export async function saveCustomerAction(formData: FormData): Promise<void> {
     addresses = parsed;
   }
   const [identity] = await queryNeon<{ auth_uid: string | null; payload: { email?: string } }>(
-    "SELECT auth_uid, payload FROM swell_customers WHERE swell_id = $1",
+    "SELECT auth_uid, payload FROM store_customers WHERE store_id = $1",
     [id],
   );
   if (!identity) throw new Error("Customer was not found.");
@@ -262,9 +262,9 @@ export async function updateOrderStatusAction(formData: FormData): Promise<void>
   if (!["pending", "processing", "fulfilled", "canceled", "refunded"].includes(status)) {
     throw new Error("Choose a valid order status.");
   }
-  const order = await getStoreRecord("swell_orders", id);
+  const order = await getStoreRecord("store_orders", id);
   if (!order) throw new Error("Order was not found.");
-  await saveStoreRecord("swell_orders", id, {
+  await saveStoreRecord("store_orders", id, {
     ...order.payload,
     status,
     date_updated: new Date().toISOString(),
@@ -286,13 +286,13 @@ export async function saveDiscountAction(formData: FormData): Promise<void> {
   if (type === "percent" && value > 100) {
     throw new Error("Percentage discounts cannot exceed 100.");
   }
-  const duplicate = await queryNeon<{ swell_id: string }>(
-    "SELECT swell_id FROM swell_discounts WHERE upper(payload ->> 'code') = $1 AND swell_id <> $2 LIMIT 1",
+  const duplicate = await queryNeon<{ store_id: string }>(
+    "SELECT store_id FROM store_discounts WHERE upper(payload ->> 'code') = $1 AND store_id <> $2 LIMIT 1",
     [code, id],
   );
   if (duplicate.length > 0) throw new Error("That discount code is already in use.");
-  const existing = await getStoreRecord("swell_discounts", id);
-  await saveStoreRecord("swell_discounts", id, {
+  const existing = await getStoreRecord("store_discounts", id);
+  await saveStoreRecord("store_discounts", id, {
     ...(existing?.payload ?? {}),
     id,
     code,
@@ -309,9 +309,9 @@ export async function saveDiscountAction(formData: FormData): Promise<void> {
 export async function archiveDiscountAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = readText(formData, "id", 100);
-  const discount = await getStoreRecord("swell_discounts", id);
+  const discount = await getStoreRecord("store_discounts", id);
   if (!discount) throw new Error("Discount was not found.");
-  await saveStoreRecord("swell_discounts", id, {
+  await saveStoreRecord("store_discounts", id, {
     ...discount.payload,
     active: false,
     date_updated: new Date().toISOString(),

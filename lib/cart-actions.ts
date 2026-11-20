@@ -5,7 +5,7 @@ import {
   getFirstImageUrl,
   getSelectedVariantPrice,
   isNaturalGemstoneSelection,
-} from "@/lib/swell";
+} from "@/lib/catalog";
 import { getJewelryProductBySlug } from "@/lib/storefront-data";
 import type { LocalCartItem } from "@/lib/cart-view";
 import { phoneCountryCodes } from "@/lib/phone-country-codes";

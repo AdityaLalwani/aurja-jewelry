@@ -17,13 +17,13 @@ export async function getAdminDashboard() {
     low_stock: string;
   }>(
     `SELECT
-       (SELECT count(*)::text FROM swell_products) AS products,
-       (SELECT count(*)::text FROM swell_categories) AS categories,
-       (SELECT count(*)::text FROM swell_customers) AS customers,
-       (SELECT count(*)::text FROM swell_orders) AS orders,
-       (SELECT count(*)::text FROM swell_discounts
+       (SELECT count(*)::text FROM store_products) AS products,
+       (SELECT count(*)::text FROM store_categories) AS categories,
+       (SELECT count(*)::text FROM store_customers) AS customers,
+       (SELECT count(*)::text FROM store_orders) AS orders,
+       (SELECT count(*)::text FROM store_discounts
         WHERE COALESCE(payload ->> 'active', 'true') NOT IN ('false', '0')) AS discounts,
-       (SELECT count(*)::text FROM swell_products
+       (SELECT count(*)::text FROM store_products
         WHERE COALESCE(payload ->> 'active', 'true') NOT IN ('false', '0')
           AND CASE WHEN payload ->> 'stock_level' ~ '^-?[0-9]+$'
                    THEN (payload ->> 'stock_level')::int
@@ -52,22 +52,22 @@ export async function getAdminCategories() {
 export async function getAdminCustomers(search = "") {
   const term = search.trim();
   const rows = await queryNeon<{
-    swell_id: string;
+    store_id: string;
     payload: Record<string, unknown>;
     cart: unknown[];
     wishlist: string[];
     orders: Array<Record<string, unknown>>;
   }>(
-    `SELECT c.swell_id, c.payload,
+    `SELECT c.store_id, c.payload,
             COALESCE(a.cart, '[]'::jsonb) AS cart,
             COALESCE(a.wishlist, '[]'::jsonb) AS wishlist,
             COALESCE(o.orders, '[]'::jsonb) AS orders
-     FROM swell_customers c
-     LEFT JOIN store_customer_activity a ON a.customer_id = c.swell_id
+     FROM store_customers c
+     LEFT JOIN store_customer_activity a ON a.customer_id = c.store_id
      LEFT JOIN LATERAL (
        SELECT jsonb_agg(
          jsonb_build_object(
-           'id', swell_id,
+           'id', store_id,
            'number', COALESCE(payload ->> 'number', payload ->> 'order_number'),
            'status', payload ->> 'status',
            'created_at', COALESCE(payload ->> 'date_created', payload ->> 'created_at'),
@@ -75,17 +75,17 @@ export async function getAdminCustomers(search = "") {
            'type', payload ->> 'type'
          ) ORDER BY imported_at DESC
        ) AS orders
-       FROM swell_orders
+       FROM store_orders
        WHERE lower(payload ->> 'email') = lower(c.payload ->> 'email')
-          OR payload ->> 'account_id' = c.swell_id
+          OR payload ->> 'account_id' = c.store_id
      ) o ON true
      WHERE $1 = '' OR c.payload::text ILIKE $2
      ORDER BY c.imported_at DESC
      LIMIT 200`,
     [term, `%${term}%`],
   );
-  return rows.map(({ swell_id, payload, cart, wishlist, orders }) => ({
-    id: swell_id,
+  return rows.map(({ store_id, payload, cart, wishlist, orders }) => ({
+    id: store_id,
     payload,
     cart,
     wishlist,
@@ -94,10 +94,10 @@ export async function getAdminCustomers(search = "") {
 }
 
 export async function getAdminOrders(search = "") {
-  return listStoreRecords("swell_orders", search, 200);
+  return listStoreRecords("store_orders", search, 200);
 }
 
 export async function getAdminDiscounts(search = "") {
-  return listStoreRecords("swell_discounts", search, 200);
+  return listStoreRecords("store_discounts", search, 200);
 }
 

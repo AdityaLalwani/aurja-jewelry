@@ -5,7 +5,7 @@ import "./globals.css";
 import { site } from "@/lib/site";
 import { StoreProvider } from "@/components/StoreProvider";
 import { SiteHeader } from "@/components/SiteHeader";
-import type { StoreCategory } from "@/lib/swell";
+import type { StoreCategory } from "@/lib/catalog";
 import { headers } from "next/headers";
 import { CookiePreferences } from "@/components/CookiePreferences";
 import { getSessionAccountId } from "@/lib/session";
