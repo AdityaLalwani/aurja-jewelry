@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { allProfileSlugs, site } from "@/lib/site";
-import { getJewelryProductSlugs, getStoreCategories } from "@/lib/swell";
+import { getJewelryProductSlugs, getStoreCategories } from "@/lib/storefront-data";
 
 const staticRoutes = [
   "",
@@ -14,10 +14,10 @@ const staticRoutes = [
   "/refund-policy",
   "/size-guide",
   "/terms-and-conditions",
-  "/quotation",
-  "/vmof",
   "/warranty-registration",
 ];
+
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [productSlugs, categories] = await Promise.all([

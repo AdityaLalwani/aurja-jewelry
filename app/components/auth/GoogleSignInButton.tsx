@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "@firebase/auth";
 import { useState } from "react";
-import { firebaseAuth } from "@/lib/firebase-client";
 
 class SignInRequestError extends Error {}
 
@@ -44,9 +39,16 @@ export default function GoogleSignInButton({
     setPending(true);
 
     try {
+      const [{ GoogleAuthProvider, signInWithPopup }, { firebaseAuth }] =
+        await Promise.all([
+          import("@firebase/auth"),
+          import("@/lib/firebase-client"),
+        ]);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
       const credential = await signInWithPopup(
         firebaseAuth,
-        createGoogleProvider(),
+        provider,
       );
       const idToken = await credential.user.getIdToken();
       const response = await fetch("/api/auth/session", {
@@ -131,10 +133,4 @@ export default function GoogleSignInButton({
       ) : null}
     </div>
   );
-}
-
-function createGoogleProvider() {
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
-  return provider;
 }

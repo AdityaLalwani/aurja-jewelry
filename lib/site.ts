@@ -7,8 +7,8 @@
 export const site = {
   name: "AURJA",
   tagline: "Shaped for Stories",
-  /** Public website URL — used in vCards and on the bio page footer. TODO: set the real domain. */
-  url: "https://aurja.co.in",
+  /** Canonical public website URL used across metadata and generated links. */
+  url: "https://www.aurja.co.in",
   logo: "/logo.jpeg",
   /** Instagram handle, without the @ — used for profile links across the site. */
   instagram: "aurja.co",

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, type MouseEvent, type TouchEvent } from "react";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProduct } from "@/lib/catalog";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 
 type ShopTheLookProduct = {
@@ -216,6 +216,7 @@ export function ShopTheLookCarousel({
                   loader={imageKitLoader}
                   alt={activeProduct.product.name}
                   fill
+                  loading="eager"
                   sizes="(max-width: 639px) 64px, 225px"
                   className="object-contain transition-transform duration-500 group-hover:scale-105"
                 />

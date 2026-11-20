@@ -2,15 +2,10 @@ import type { Metadata } from "next";
 import { Jost, Playfair_Display } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import { BEST_SELLER_SKUS, site } from "@/lib/site";
+import { site } from "@/lib/site";
 import { StoreProvider } from "@/components/StoreProvider";
 import { SiteHeader } from "@/components/SiteHeader";
-import { Suspense } from "react";
-import {
-  getJewelryProductsBySkus,
-  getStoreCategories,
-  type StoreCategory,
-} from "@/lib/swell";
+import type { StoreCategory } from "@/lib/catalog";
 import { headers } from "next/headers";
 import { CookiePreferences } from "@/components/CookiePreferences";
 import { getSessionAccountId } from "@/lib/session";
@@ -28,32 +23,6 @@ const FALLBACK_NAVIGATION_CATEGORIES: StoreCategory[] = [
   { id: "necklaces", name: "Necklaces", slug: "necklaces", parentId: null },
   { id: "men", name: "Men", slug: "men", parentId: null },
 ];
-
-async function getNavigationCategories(): Promise<StoreCategory[]> {
-  const categories = await getStoreCategories();
-  if (categories.length > 0) return categories;
-
-  return FALLBACK_NAVIGATION_CATEGORIES;
-}
-
-async function StoreHeader({
-  isAuthenticated,
-}: {
-  isAuthenticated: boolean;
-}) {
-  const [categories, bestSellerProducts] = await Promise.all([
-    getNavigationCategories(),
-    getJewelryProductsBySkus(BEST_SELLER_SKUS),
-  ]);
-
-  return (
-    <SiteHeader
-      categories={categories}
-      bestSellers={bestSellerProducts.map(({ product }) => product)}
-      isAuthenticated={isAuthenticated}
-    />
-  );
-}
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -134,17 +103,10 @@ export default async function RootLayout({
           detectCurrencyFromBrowser={!country}
           accountId={accountId}
         >
-          <Suspense
-            fallback={
-              <SiteHeader
-                categories={FALLBACK_NAVIGATION_CATEGORIES}
-                bestSellers={[]}
-                isAuthenticated={accountId !== null}
-              />
-            }
-          >
-            <StoreHeader isAuthenticated={accountId !== null} />
-          </Suspense>
+          <SiteHeader
+            categories={FALLBACK_NAVIGATION_CATEGORIES}
+            isAuthenticated={accountId !== null}
+          />
           <LoginPrompt isAuthenticated={accountId !== null} />
           {modal}
           {children}

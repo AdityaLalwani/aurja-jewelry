@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CartItemControls } from "@/components/CartItemControls";
 import { CartEnquiryForm } from "@/components/CartEnquiryForm";
-import { useStore } from "@/components/StoreProvider";
+import { formatInrPrice, useStore } from "@/components/StoreProvider";
 import { WishlistButton } from "@/components/WishlistButton";
 import type { LocalCartItem } from "@/lib/cart-view";
 import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
@@ -16,7 +16,10 @@ interface CartContactDetails {
 }
 
 function formatDisplayAmount(amount: number, currency: "INR" | "USD") {
-  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+  if (currency === "INR") {
+    return formatInrPrice(amount);
+  }
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,

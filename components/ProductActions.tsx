@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatPrice, useStore } from "@/components/StoreProvider";
 import { addToCartAction } from "@/lib/cart-actions";
 import { WishlistButton } from "@/components/WishlistButton";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProduct } from "@/lib/catalog";
 
 type DetailRow = {
   label: string;

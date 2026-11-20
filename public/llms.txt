@@ -1,0 +1,28 @@
+# AURJA
+
+> AURJA is a fine jewelry brand and online store based in Surat, India.
+
+## Shop
+
+- [Shop all jewelry](https://www.aurja.co.in/products): Browse the jewelry catalog.
+- [Rings](https://www.aurja.co.in/products?category=rings)
+- [Earrings](https://www.aurja.co.in/products?category=earrings)
+- [Pendants](https://www.aurja.co.in/products?category=pendants)
+- [Bracelets](https://www.aurja.co.in/products?category=bracelets)
+- [Necklaces](https://www.aurja.co.in/products?category=necklaces)
+- [Silver](https://www.aurja.co.in/products?category=silver)
+
+## About and help
+
+- [Our story](https://www.aurja.co.in/story)
+- [Frequently asked questions](https://www.aurja.co.in/faq)
+- [Jewelry care guide](https://www.aurja.co.in/care-guide)
+- [Size guide](https://www.aurja.co.in/size-guide)
+- [Refund policy](https://www.aurja.co.in/refund-policy)
+- [Terms and conditions](https://www.aurja.co.in/terms-and-conditions)
+- [Privacy policy](https://www.aurja.co.in/privacy-policy)
+
+## Machine-readable resources
+
+- [Product and category sitemap](https://www.aurja.co.in/sitemap.xml)
+- [Agentic Resource Discovery manifest](https://www.aurja.co.in/.well-known/ard.json)

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { useHydrationSafeWishlistSlugs } from "@/components/StoreProvider";
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProduct } from "@/lib/catalog";
 import { loadJewelryProductsBySlugs } from "@/lib/product-actions";
 
 export function WishlistContent() {

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import EmailOtpForm from "@/app/components/auth/EmailOtpForm";
 import GoogleSignInButton from "@/app/components/auth/GoogleSignInButton";
+
+export const metadata: Metadata = {
+  title: "Create an account",
+  description: "Create an AURJA account to discover and shop fine jewelry.",
+};
 
 export default function SignupPage() {
   return (

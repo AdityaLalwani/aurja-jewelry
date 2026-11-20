@@ -9,14 +9,18 @@ import {
   ChevronDownIcon,
   ClipboardListIcon,
 } from "@/app/components/icons";
-import { formatPrice, useStore } from "@/components/StoreProvider";
+import {
+  formatInrPrice,
+  formatPrice,
+  useStore,
+} from "@/components/StoreProvider";
 import {
   getDefaultVariantSelections,
   getProductOptionValuePrice,
   getSelectedVariantPrice,
   isNaturalGemstoneSelection,
   type JewelryProduct,
-} from "@/lib/swell";
+} from "@/lib/catalog";
 
 const ProductEnquiryDialog = lazy(() =>
   import("@/components/ProductEnquiryDialog").then((module) => ({
@@ -243,7 +247,7 @@ export function ProductVariantSelector({
                           !(isNaturalGemstone && isMetalOption) ? (
                             <span className="ml-2 text-xs opacity-80">
                               {currency === "INR"
-                                ? `₹${new Intl.NumberFormat("en-IN").format(getProductOptionValuePrice(value, "INR"))}`
+                                ? formatInrPrice(getProductOptionValuePrice(value, "INR"))
                                 : `$${new Intl.NumberFormat("en-US").format(getProductOptionValuePrice(value, "USD"))}`}
                             </span>
                           ) : null}

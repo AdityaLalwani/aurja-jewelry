@@ -1,4 +1,4 @@
-import type { JewelryProduct } from "@/lib/swell";
+import type { JewelryProduct } from "@/lib/catalog";
 
 export interface LocalCartItem {
   id: string;

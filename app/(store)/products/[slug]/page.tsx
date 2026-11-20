@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductGallery } from "@/components/ProductGallery";
+import { ProductPageScrollReset } from "@/components/ProductPageScrollReset";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
-import { getJewelryProductBySlug } from "@/lib/swell";
+import { getJewelryProductBySlug } from "@/lib/storefront-data";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -108,6 +109,7 @@ export default async function ProductPage(props: ProductPageProps) {
   ];
   return (
     <>
+      <ProductPageScrollReset />
       <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-56 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10 lg:pb-0">
         <nav
           aria-label="Breadcrumb"

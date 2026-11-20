@@ -3,8 +3,8 @@
 import {
   getJewelryProductBySlug,
   getJewelryProductPage,
-} from "@/lib/swell";
-import type { JewelryProduct } from "@/lib/swell";
+} from "@/lib/storefront-data";
+import type { JewelryProduct } from "@/lib/catalog";
 
 export async function loadJewelryProductsForFilters(
   categorySlug: string | undefined,

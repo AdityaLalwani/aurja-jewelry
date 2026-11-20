@@ -1,0 +1,134 @@
+{
+  "product": {
+    "id": "aurja-example-ring",
+    "name": "Aurja Classic Stone Ring",
+    "slug": "aurja-classic-stone-ring",
+    "sku": "AUR-EX-001",
+    "active": true,
+    "description": "A sample ring product with selectable metal finishes.",
+    "price": 0,
+    "price_inr": 0,
+    "stock_level": 5,
+    "images": [
+      {
+        "file": {
+          "url": "https://images.example.com/aurja-classic-stone-ring.jpg"
+        }
+      }
+    ],
+    "options": [
+      {
+        "id": "metal",
+        "name": "Metal",
+        "values": [
+          {
+            "id": "metal-925-silver",
+            "name": "925 Silver",
+            "price": 0,
+            "price_inr": 0,
+            "active": true
+          },
+          {
+            "id": "metal-9k-gold",
+            "name": "9K Gold",
+            "price": 0,
+            "price_inr": 0,
+            "active": true
+          },
+          {
+            "id": "metal-14k-gold",
+            "name": "14K Gold",
+            "price": 0,
+            "price_inr": 0,
+            "active": true
+          },
+          {
+            "id": "metal-18k-gold",
+            "name": "18K Gold",
+            "price": 0,
+            "price_inr": 0,
+            "active": true
+          }
+        ]
+      }
+    ],
+    "attributes": {
+      "metal_type": "Gold",
+      "metal_weight_gms": 2.5,
+      "gemstone_type": "Lab Grown Diamond",
+      "diamond_carat": 0.25,
+      "diamond_clarity": "VS",
+      "price_usd": 0,
+      "price_breakup": {
+        "nwsilver": 2.4,
+        "nw9k": 2.1,
+        "nw14k": 2.35,
+        "nw18k": 2.5,
+        "silverlabour": 180,
+        "goldlabour": 250,
+        "Stonecost": 1200
+      }
+    },
+    "content": {
+      "collection": "Everyday"
+    }
+  },
+  "variants": [
+    {
+      "id": "aurja-example-ring-925-silver",
+      "parent_id": "aurja-example-ring",
+      "sku": "AUR-EX-001-925S",
+      "name": "925 Silver",
+      "active": true,
+      "option_value_ids": ["metal-925-silver"],
+      "selected_options": {
+        "Metal": "925 Silver"
+      },
+      "price": 0,
+      "price_inr": 0,
+      "stock_level": 2
+    },
+    {
+      "id": "aurja-example-ring-9k-gold",
+      "parent_id": "aurja-example-ring",
+      "sku": "AUR-EX-001-9K",
+      "name": "9K Gold",
+      "active": true,
+      "option_value_ids": ["metal-9k-gold"],
+      "selected_options": {
+        "Metal": "9K Gold"
+      },
+      "price": 0,
+      "price_inr": 0,
+      "stock_level": 1
+    },
+    {
+      "id": "aurja-example-ring-14k-gold",
+      "parent_id": "aurja-example-ring",
+      "sku": "AUR-EX-001-14K",
+      "name": "14K Gold",
+      "active": true,
+      "option_value_ids": ["metal-14k-gold"],
+      "selected_options": {
+        "Metal": "14K Gold"
+      },
+      "price": 0,
+      "price_inr": 0,
+      "stock_level": 1
+    },
+    {
+      "id": "aurja-example-ring-18k-gold",
+      "parent_id": "aurja-example-ring",
+      "sku": "AUR-EX-001-18K",
+      "name": "18K Gold",
+      "active": true,
+      "option_value_ids": ["metal-18k-gold"],
+      "selected_options": {
+        "Metal": "18K Gold"
+      },
+      "price": 0,
+      "price_inr": 0,
+      "stock_level": 1
+    }
+  ]
+}

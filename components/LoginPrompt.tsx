@@ -18,7 +18,8 @@ export function LoginPrompt({
       hasPrompted.current ||
       pathname === "/login" ||
       pathname === "/signup" ||
-      pathname === "/profile"
+      pathname === "/profile" ||
+      pathname.startsWith("/admin")
     ) {
       return;
     }
