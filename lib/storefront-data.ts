@@ -55,6 +55,74 @@ export async function getJewelryProducts(
   return result.products;
 }
 
+export async function getJewelryProductRecommendations(
+  product: JewelryProduct,
+  limit = 4,
+): Promise<JewelryProduct[]> {
+  const products = await getJewelryProducts();
+  const matchFields: Array<{
+    key: keyof JewelryProduct["attributes"];
+    weight: number;
+  }> = [
+    { key: "product_category", weight: 10 },
+    { key: "jewelry_type", weight: 8 },
+    { key: "collection", weight: 6 },
+    { key: "gemstone_type", weight: 4 },
+    { key: "stone_shape", weight: 3 },
+    { key: "occasion", weight: 2 },
+    { key: "setting_type", weight: 2 },
+    { key: "metal_type", weight: 1 },
+    { key: "shop_for", weight: 1 },
+  ];
+  const normalize = (value: string | undefined) => {
+    const normalized = value?.trim().toLowerCase();
+    return normalized && !["none", "n/a", "not applicable"].includes(normalized)
+      ? normalized
+      : undefined;
+  };
+  const productNameWords = new Set(
+    product.name
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(
+        (word) =>
+          word.length > 2 &&
+          !["gold", "diamond", "jewelry", "jewellery", "ring", "rings"].includes(
+            word,
+          ),
+      ),
+  );
+  const scoredProducts = products
+    .filter((candidate) => candidate.slug !== product.slug)
+    .map((candidate, index) => {
+      const score = matchFields.reduce((total, { key, weight }) => {
+        const productValue = product.attributes[key];
+        const candidateValue = candidate.attributes[key];
+        return typeof productValue === "string" &&
+          normalize(productValue) === normalize(
+            typeof candidateValue === "string" ? candidateValue : undefined,
+          ) &&
+          normalize(productValue)
+          ? total + weight
+          : total;
+      }, 0);
+      const sharedNameWords = candidate.name
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((word) => productNameWords.has(word)).length;
+
+      return { product: candidate, score: score + sharedNameWords, index };
+    })
+    .sort(
+      (first, second) =>
+        second.score - first.score || first.index - second.index,
+    );
+
+  return scoredProducts
+    .slice(0, Math.max(0, limit))
+    .map(({ product: recommendation }) => recommendation);
+}
+
 export async function searchJewelryProducts(
   query: string,
 ): Promise<JewelryProduct[]> {

@@ -4,8 +4,15 @@ import { notFound } from "next/navigation";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductPageScrollReset } from "@/components/ProductPageScrollReset";
 import { ProductVariantSelector } from "@/components/ProductVariantSelector";
+import {
+  ExploreSimilarDesigns,
+  YouMayAlsoLike,
+} from "@/components/YouMayAlsoLike";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
-import { getJewelryProductBySlug } from "@/lib/storefront-data";
+import {
+  getJewelryProductBySlug,
+  getJewelryProductRecommendations,
+} from "@/lib/storefront-data";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -66,6 +73,7 @@ export default async function ProductPage(props: ProductPageProps) {
     notFound();
   }
 
+  const recommendedProducts = await getJewelryProductRecommendations(product, 8);
   const { attributes } = product;
   const description = product.description
     ?.replace(/<\/p>\s*<p\b[^>]*>/gi, "\n\n")
@@ -110,7 +118,7 @@ export default async function ProductPage(props: ProductPageProps) {
   return (
     <>
       <ProductPageScrollReset />
-      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-56 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10 lg:pb-0">
+      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-0 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10">
         <nav
           aria-label="Breadcrumb"
           className="mb-7 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-neutral-500"
@@ -150,6 +158,8 @@ export default async function ProductPage(props: ProductPageProps) {
           </div>
         </div>
       </div>
+      <YouMayAlsoLike products={recommendedProducts.slice(0, 4)} />
+      <ExploreSimilarDesigns products={recommendedProducts.slice(4, 8)} />
       <SiteFooter />
     </>
   );

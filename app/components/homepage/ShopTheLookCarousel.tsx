@@ -214,7 +214,7 @@ export function ShopTheLookCarousel({
                 <Image
                   src={normalizeImageSource(activeProduct.product.images[0])}
                   loader={imageKitLoader}
-                  alt={activeProduct.product.name}
+                  alt=""
                   fill
                   loading="eager"
                   sizes="(max-width: 639px) 64px, 225px"

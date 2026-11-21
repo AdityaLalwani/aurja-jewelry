@@ -208,6 +208,7 @@ export function InstagramSection() {
                   href={postUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`View Instagram post ${index + 1} of ${posts.length}`}
                 >
                   <InstagramIcon className="h-8 w-8" />
                   View this post on Instagram

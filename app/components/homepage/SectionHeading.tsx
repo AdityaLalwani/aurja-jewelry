@@ -38,7 +38,7 @@ export function SectionHeading({
       </div>
       {description ? (
         <p
-          className={`mt-5 text-sm leading-relaxed text-stone-500 ${
+          className={`mt-5 text-sm leading-relaxed text-stone-600 ${
             centered ? "mx-auto max-w-xl" : ""
           }`}
         >

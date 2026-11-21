@@ -19,7 +19,7 @@ export function CurrencySelector() {
           onClick={() => setCurrency(code)}
           className={`rounded-full px-3 py-1.5 text-xs font-medium tracking-wide transition-colors sm:px-4 ${
             currency === code
-              ? "bg-gold text-white"
+              ? "bg-gold text-kajal"
               : "text-neutral-600 hover:text-neutral-900"
           }`}
         >
