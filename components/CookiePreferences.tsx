@@ -89,7 +89,7 @@ export function CookiePreferences() {
       {preferencesChecked && !preferences ? (
         <aside
           aria-label="Cookie preferences"
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-[#faf7f2] px-5 py-5 shadow-[0_-12px_40px_rgba(41,37,36,0.12)] sm:px-8"
+          className="fixed inset-x-0 bottom-0 z-[60] border-t border-stone-200 bg-[#faf7f2] px-5 py-5 shadow-[0_-12px_40px_rgba(41,37,36,0.12)] sm:px-8"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-2xl">
@@ -135,7 +135,7 @@ export function CookiePreferences() {
 
       {settingsOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-stone-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setSettingsOpen(false);
