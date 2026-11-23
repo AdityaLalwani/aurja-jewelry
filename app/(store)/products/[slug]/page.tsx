@@ -118,7 +118,7 @@ export default async function ProductPage(props: ProductPageProps) {
   return (
     <>
       <ProductPageScrollReset />
-      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-0 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10">
+      <div className="mx-auto w-full max-w-[1500px] px-4 pb-0 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10">
         <nav
           aria-label="Breadcrumb"
           className="mb-7 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-neutral-500"
@@ -149,7 +149,7 @@ export default async function ProductPage(props: ProductPageProps) {
             />
           </div>
 
-          <div className="min-w-0 flex flex-col gap-8 pb-0 pt-2 lg:min-h-0 lg:overflow-y-auto lg:pb-56">
+          <div className="min-w-0 flex flex-col gap-8 pb-0 pt-2 lg:min-h-0 lg:overflow-y-auto lg:pb-24">
             <ProductVariantSelector
               product={product}
               description={description}
