@@ -9,9 +9,15 @@ import { SectionHeading } from "./components/homepage/SectionHeading";
 import { InstagramSection } from "./components/homepage/InstagramSection";
 import { VisitTeaser } from "./components/homepage/VisitTeaser";
 import { SiteFooter } from "./components/homepage/SiteFooter";
+import { JsonLd } from "@/components/JsonLd";
 
 export const metadata: Metadata = {
-  description: `${site.name} — ${site.tagline}. Discover fine jewelry thoughtfully crafted in Surat, India.`,
+  title: "AURJA | Diamond & Gold Jewellery in Surat, India",
+  description:
+    "Shop certified diamond and hallmarked gold jewellery handcrafted in Surat. Rings, earrings, pendants, bracelets and custom designs. Visit our atelier at Surat Diamond Bourse.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 function ShopTheLookFallback() {
@@ -38,8 +44,40 @@ function ShopTheLookFallback() {
 }
 
 export default function HomePage() {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": ["Organization", "LocalBusiness", "JewelryStore"],
+    "@id": `${site.url}/#organization`,
+    name: "AURJA",
+    url: site.url,
+    logo: `${site.url}${site.logo}`,
+    image: `${site.url}/intro.webp`,
+    telephone: `+${site.contact.whatsapp}`,
+    email: site.contact.email,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Surat Diamond Bourse",
+      addressLocality: "Surat",
+      addressRegion: "Gujarat",
+      addressCountry: "IN",
+    },
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      description: "Private viewings by appointment",
+    },
+    sameAs: [`https://instagram.com/${site.instagram}`],
+  };
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${site.url}/#website`,
+    name: "AURJA",
+    url: site.url,
+  };
+
   return (
     <>
+      <JsonLd data={[organizationSchema, websiteSchema]} />
       <main className="home-page">
         <Hero />
         <CategoryGrid />

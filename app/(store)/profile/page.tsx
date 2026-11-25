@@ -5,6 +5,7 @@ import { ProfileForm } from "@/components/ProfileForm";
 
 export const metadata = {
   title: "Your Account — Aurja",
+  robots: { index: false, follow: false },
 };
 
 export default async function ProfilePage() {
