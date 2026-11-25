@@ -443,7 +443,7 @@ export function SiteHeader({
                           </span>
                         ) : (
                           <Link
-                            href={`/products?category=${category.slug}`}
+                            href={`/${category.slug}`}
                             onClick={() => setMobileMenuOpen(false)}
                             className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                           >
@@ -460,7 +460,7 @@ export function SiteHeader({
                             {subcategories.map((subcategory) => (
                               <li key={subcategory.id}>
                                 <Link
-                                  href={`/products?category=${subcategory.slug}`}
+                                  href={`/${subcategory.slug}`}
                                   onClick={() => setMobileMenuOpen(false)}
                                   className="text-sm text-neutral-600 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                                 >

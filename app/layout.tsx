@@ -46,9 +46,12 @@ export const metadata: Metadata = {
     default: `${site.name} — ${site.tagline}`,
     template: `%s | ${site.name}`,
   },
-  description: `${site.name} — ${site.tagline}. Crafted jewelry, made to be treasured.`,
+  description:
+    "Shop certified diamond and hallmarked gold jewellery handcrafted in Surat. Rings, earrings, pendants, bracelets and custom designs.",
   applicationName: site.name,
-  keywords: ["fine jewelry", "handcrafted jewelry", "gold jewelry", "diamond jewelry"],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: `${site.name} — ${site.tagline}`,
     description: "Fine jewelry designed for meaningful rituals, milestones, and everyday stories.",

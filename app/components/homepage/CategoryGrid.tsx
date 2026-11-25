@@ -19,7 +19,7 @@ export function CategoryGrid() {
         {categories.items.map((category) => (
           <Link
             key={category.slug}
-            href={`/products?category=${category.slug}`}
+            href={`/${category.slug}`}
             aria-label={`Shop ${category.name}`}
             className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/60 focus-visible:ring-offset-4"
           >

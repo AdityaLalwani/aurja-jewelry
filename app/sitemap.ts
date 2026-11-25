@@ -15,9 +15,8 @@ const staticRoutes = [
   "/size-guide",
   "/terms-and-conditions",
   "/warranty-registration",
+  "/visit-us",
 ];
-
-export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [productSlugs, categories] = await Promise.all([
@@ -27,9 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes = [
     ...staticRoutes,
     ...allProfileSlugs().map((slug) => `/${slug}`),
-    ...categories.map(
-      (category) => `/products?category=${encodeURIComponent(category.slug)}`,
-    ),
+    ...categories.map((category) => `/${encodeURIComponent(category.slug)}`),
     ...productSlugs.map((slug) => `/products/${encodeURIComponent(slug)}`),
   ];
 

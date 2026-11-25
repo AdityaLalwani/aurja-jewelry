@@ -365,7 +365,7 @@ function SearchInput() {
             {SEARCH_CATEGORIES.map((category) => (
               <Link
                 key={category.slug}
-                href={`/products?category=${category.slug}`}
+                href={`/${category.slug}`}
                 aria-label={`Shop ${category.name}`}
                 className="group flex w-[88px] shrink-0 snap-start flex-col items-center rounded-lg text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-4 sm:w-auto"
               >

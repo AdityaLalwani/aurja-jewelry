@@ -4,13 +4,13 @@ import { SiteFooter } from "@/app/components/homepage/SiteFooter";
 import { getJewelryProductPage, getStoreCategories } from "@/lib/storefront-data";
 
 type ProductsPageProps = {
-  searchParams: Promise<{ category?: string; page?: string }>;
+  searchParams: Promise<{ category?: string; page?: string; sort?: string }>;
 };
 
 export async function generateMetadata({
   searchParams,
 }: ProductsPageProps): Promise<Metadata> {
-  const { category: categorySlug } = await searchParams;
+  const { category: categorySlug, page: pageParam, sort } = await searchParams;
   const category = categorySlug
     ? (await getStoreCategories()).find((item) => item.slug === categorySlug)
     : undefined;
@@ -21,18 +21,16 @@ export async function generateMetadata({
     category?.meta_description?.trim() ||
     category?.description ||
     "Discover handcrafted gold and diamond jewelry designed to be treasured for a lifetime.";
-  const keywords = category?.meta_keywords
-    ?.split(/[,|]/)
-    .map((keyword) => keyword.trim())
-    .filter(Boolean);
-
   return {
     title: category?.meta_title?.trim() ? { absolute: title } : title,
     description,
-    ...(keywords?.length ? { keywords } : {}),
+    robots:
+      sort || (Number(pageParam ?? "1") > 1)
+        ? { index: false, follow: false }
+        : undefined,
     alternates: {
       canonical: categorySlug
-        ? `/products?category=${encodeURIComponent(categorySlug)}`
+        ? `/${encodeURIComponent(categorySlug)}`
         : "/products",
     },
   };

@@ -6,6 +6,7 @@ import GoogleSignInButton from "@/app/components/auth/GoogleSignInButton";
 export const metadata: Metadata = {
   title: "Create an account",
   description: "Create an AURJA account to discover and shop fine jewelry.",
+  robots: { index: false, follow: false },
 };
 
 export default function SignupPage() {

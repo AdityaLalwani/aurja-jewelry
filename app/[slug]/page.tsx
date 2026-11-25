@@ -12,9 +12,101 @@ import {
   MailIcon,
   MapPinIcon,
 } from "../components/icons";
+import { ProductGrid } from "@/components/ProductGrid";
+import { getJewelryProductPage, getStoreCategories } from "@/lib/storefront-data";
+import { SiteFooter } from "@/app/components/homepage/SiteFooter";
 
-export function generateStaticParams() {
-  return allProfileSlugs().map((slug) => ({ slug }));
+const CATEGORY_SEO: Record<
+  string,
+  { title: string; description: string; h1: string; intro: string; faqs: Array<{ question: string; answer: string }> }
+> = {
+  rings: {
+    title: "Diamond Rings Online India",
+    description: "Shop diamond rings online in India: solitaire rings, gold bands and elegant designs, handcrafted and certified in Surat.",
+    h1: "Diamond Rings Online India",
+    intro: "Discover AURJA diamond and gold rings handcrafted in Surat for proposals, weddings and everyday milestones. Explore solitaire rings, refined bands and contemporary stackable designs in hallmark-quality gold. Every piece is selected for balance, comfort and lasting beauty, with detailed specifications and secure delivery across India.",
+    faqs: [
+      { question: "Do AURJA rings come with certification?", answer: "Applicable diamonds and metals are supplied with relevant quality documentation and specifications. Please review the individual product details for exact certification." },
+      { question: "Can I find ring sizes in India?", answer: "Available ring sizes vary by design and are shown on each product page. Use our size guide or contact the atelier for help." },
+      { question: "Do you offer custom ring designs?", answer: "Yes. AURJA can discuss bespoke diamond and gold ring designs through our custom-design consultation." },
+    ],
+  },
+  earrings: {
+    title: "Diamond Earrings Online India",
+    description: "Shop diamond earrings online in India, including certified studs, drops and hoops handcrafted in Surat.",
+    h1: "Diamond Earrings Online India",
+    intro: "Explore diamond and gold earrings designed for effortless everyday wear and memorable occasions. The collection includes diamond studs, graceful drops and modern hoops crafted in Surat. Detailed metal, stone and size information helps you compare each pair, while hallmarking and diamond certification provide added confidence.",
+    faqs: [
+      { question: "Are the earrings suitable for daily wear?", answer: "Many lightweight designs suit regular wear. Check the specifications and follow the care instructions for the chosen pair." },
+      { question: "Do you sell certified diamond studs?", answer: "Applicable diamond earrings include certification details on their product pages." },
+      { question: "Can you help choose earrings for a gift?", answer: "Our team can help compare styles, metals and budgets. Contact us by WhatsApp for a personal recommendation." },
+    ],
+  },
+  pendants: {
+    title: "Diamond Pendants Online India",
+    description: "Discover diamond pendants and gold pendants online in India, thoughtfully handcrafted in Surat.",
+    h1: "Diamond Pendants Online India",
+    intro: "Find delicate diamond and gold pendants made to bring meaning to everyday jewellery. This collection includes modern charms, solitaire designs and keepsake pendants crafted with attention to proportion and finish. Browse metal purity, stone details and chain compatibility before choosing a piece for yourself or gifting it to someone special.",
+    faqs: [
+      { question: "Are chains included with pendants?", answer: "Chain inclusion varies by product. The product page specifies whether a chain is included." },
+      { question: "Can pendants be customised?", answer: "Selected designs may be adapted through a bespoke consultation with the Surat atelier." },
+      { question: "How should I care for a diamond pendant?", answer: "Store it separately, avoid harsh chemicals and clean gently with a soft cloth and mild soap solution." },
+    ],
+  },
+  bracelets: {
+    title: "Gold Bracelets Online India",
+    description: "Shop gold bracelets online in India, including kadas, diamond bracelets and contemporary chains.",
+    h1: "Gold Bracelets Online India",
+    intro: "Browse hallmarked gold bracelets and diamond bracelets for refined everyday styling or celebrations. Discover slim chains, elegant kadas and statement cuffs crafted in Surat. Compare weight, metal purity, closure type and size details on each product page to find a comfortable, lasting addition to your jewellery wardrobe.",
+    faqs: [
+      { question: "How do I choose the right bracelet size?", answer: "Measure around the wrist and allow comfortable movement. Product size details and our size guide provide further guidance." },
+      { question: "Do you offer gold kadas?", answer: "Available gold kadas are listed in this category. Sign in or contact the atelier if you need help locating a specific style." },
+      { question: "Are gold bracelets hallmarked?", answer: "Applicable pieces use hallmarked gold and product specifications are shown on the individual listing." },
+    ],
+  },
+  necklaces: {
+    title: "Diamond Necklaces Online India",
+    description: "Shop diamond necklaces online in India, with chokers, gold chains and statement designs.",
+    h1: "Diamond Necklaces Online India",
+    intro: "Explore diamond and gold necklaces created to elevate weddings, celebrations and everyday wardrobes. From delicate chains and chokers to standout gemstone pieces, each design reflects careful proportion and craftsmanship in Surat. Review length, weight, metal and stone details to choose a necklace that suits your neckline and occasion.",
+    faqs: [
+      { question: "Can I choose a necklace length?", answer: "Available lengths are listed on each product. If a size is not shown, contact the atelier for made-to-order options." },
+      { question: "Do you offer diamond chokers?", answer: "Diamond chokers may be available according to current stock. Use this category to browse the latest collection." },
+      { question: "How are necklaces delivered?", answer: "Orders are packed securely and shipped with available delivery and tracking information provided during purchase." },
+    ],
+  },
+  men: {
+    title: "Men's Gold Jewellery India",
+    description: "Discover men's gold jewellery in India, including kadas, chains and contemporary diamond pieces.",
+    h1: "Men's Gold Jewellery India",
+    intro: "Discover men's gold jewellery with a confident, understated character. AURJA offers kadas, chains and considered diamond designs created for daily wear and milestone gifting. Each piece is presented with metal, weight and size specifications where available, helping you select jewellery that balances durability, comfort and personal style.",
+    faqs: [
+      { question: "What men's jewellery is available?", answer: "The collection includes kadas, chains and selected diamond or gemstone pieces. Availability changes with the current range." },
+      { question: "Can men's jewellery be customised?", answer: "Custom size, finish and design options may be discussed with the Surat atelier." },
+      { question: "Do you ship men's jewellery across India?", answer: "Delivery availability and timelines are confirmed during checkout or enquiry." },
+    ],
+  },
+  silver: {
+    title: "Sterling Silver Jewellery India",
+    description: "Shop sterling silver jewellery in India, including silver rings and pendants with modern finishes.",
+    h1: "Sterling Silver Jewellery India",
+    intro: "Shop versatile sterling silver jewellery for considered everyday styling. The AURJA silver collection includes rings, pendants and other modern pieces selected for finish and comfort. Check the product specifications for silver purity, stone details and dimensions, and follow the care guide to preserve shine and prevent tarnish.",
+    faqs: [
+      { question: "Is the jewellery made from sterling silver?", answer: "Applicable products are identified as sterling silver in their specifications." },
+      { question: "How do I prevent silver tarnish?", answer: "Keep silver dry, store it in a soft pouch and avoid perfumes, chlorine and harsh cleaning chemicals." },
+      { question: "Can silver jewellery be returned?", answer: "Returns follow the published refund policy and must meet the stated eligibility conditions." },
+    ],
+  },
+};
+
+export async function generateStaticParams() {
+  const categories = await getStoreCategories();
+  return [
+    ...allProfileSlugs().map((slug) => ({ slug })),
+    ...categories
+      .filter((category) => CATEGORY_SEO[category.slug])
+      .map((category) => ({ slug: category.slug })),
+  ];
 }
 
 export async function generateMetadata({
@@ -22,6 +114,23 @@ export async function generateMetadata({
 }: PageProps<"/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const profile = getProfile(slug);
+  const category = await getStoreCategories().then((items) =>
+    items.find((item) => item.slug === slug),
+  );
+  const seo = CATEGORY_SEO[slug];
+  if (!profile && seo) {
+    return {
+      title: seo.title,
+      description: seo.description,
+      alternates: { canonical: `/${slug}` },
+      openGraph: {
+        title: seo.title,
+        description: seo.description,
+        type: "website",
+        url: `/${slug}`,
+      },
+    };
+  }
   if (!profile) return {};
 
   return {
@@ -42,6 +151,75 @@ type Action = {
 export default async function BioPage({ params }: PageProps<"/[slug]">) {
   const { slug } = await params;
   const profile = getProfile(slug);
+  const seo = CATEGORY_SEO[slug];
+
+  if (seo) {
+    const category = (await getStoreCategories()).find(
+      (item) => item.slug === slug,
+    );
+    const productPage = await getJewelryProductPage(category?.slug ?? slug, 1);
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: seo.faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.answer,
+        },
+      })),
+    };
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: `${site.url}/` },
+        { "@type": "ListItem", position: 2, name: seo.h1, item: `${site.url}/${slug}` },
+      ],
+    };
+
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+        <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-20 pt-8 sm:px-6 lg:px-10">
+          <nav aria-label="Breadcrumb" className="mb-7 flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-neutral-500">
+            <Link href="/" className="transition-colors hover:text-gold-link">Home</Link>
+            <span className="text-neutral-300">&gt;</span>
+            <span className="text-neutral-700">{seo.h1}</span>
+          </nav>
+          <header className="mb-7 max-w-3xl">
+            <h1 className="font-display text-3xl leading-tight text-neutral-900 sm:text-4xl">{seo.h1}</h1>
+            <p className="mt-4 text-sm leading-7 text-neutral-600 sm:text-base">{seo.intro}</p>
+          </header>
+          <ProductGrid
+            key={slug}
+            products={productPage.products}
+            total={productPage.total}
+            initialPage={1}
+            hasMore={productPage.hasMore}
+            categorySlug={slug}
+          />
+          <section className="mx-auto mt-16 max-w-3xl border-t border-neutral-200 pt-10">
+            <h2 className="font-display text-2xl text-neutral-900">Frequently asked questions</h2>
+            <div className="mt-6 divide-y divide-neutral-200 border-y border-neutral-200">
+              {seo.faqs.map((faq) => (
+                <details key={faq.question} className="group py-5">
+                  <summary className="cursor-pointer list-none font-medium text-neutral-800">
+                    {faq.question}
+                  </summary>
+                  <p className="mt-3 text-sm leading-6 text-neutral-600">{faq.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
+
   if (!profile) notFound();
 
   const vcardHref = `/api/vcard/${profile.slug}`;

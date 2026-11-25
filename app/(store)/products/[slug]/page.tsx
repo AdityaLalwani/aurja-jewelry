@@ -13,6 +13,8 @@ import {
   getJewelryProductBySlug,
   getJewelryProductRecommendations,
 } from "@/lib/storefront-data";
+import { JsonLd } from "@/components/JsonLd";
+import { site } from "@/lib/site";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -30,19 +32,14 @@ export async function generateMetadata(
       .replace(/<\/?p\b[^>]*>/gi, "")
       .replace(/<[^>]+>/g, "")
       .trim()
-      .slice(0, 160);
+      .slice(0, 150);
   const title =
     product?.meta_title?.trim() ||
-    (product ? `${product.name} — Aurja` : "Piece not found — Aurja");
-  const keywords = product?.meta_keywords
-    ?.split(/[,|]/)
-    .map((keyword) => keyword.trim())
-    .filter(Boolean);
+    (product ? `${product.name} | AURJA` : "Piece not found | AURJA");
 
   return {
     title: { absolute: title },
     ...(description ? { description } : {}),
-    ...(keywords?.length ? { keywords } : {}),
     ...(product
       ? {
           alternates: { canonical: `/products/${product.slug}` },
@@ -115,8 +112,38 @@ export default async function ProductPage(props: ProductPageProps) {
       ? [{ label: "Setting type", value: attributes.setting_type }]
       : []),
   ];
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: description || product.meta_description || product.name,
+    image: product.images,
+    sku: product.sku,
+    brand: { "@type": "Brand", name: "AURJA" },
+    category: attributes.product_category,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "INR",
+      price: product.price_inr,
+      availability:
+        (product.stock_level ?? 0) > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      url: `${site.url}/products/${product.slug}`,
+    },
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${site.url}/` },
+      { "@type": "ListItem", position: 2, name: "Products", item: `${site.url}/products` },
+      { "@type": "ListItem", position: 3, name: product.name, item: `${site.url}/products/${product.slug}` },
+    ],
+  };
   return (
     <>
+      <JsonLd data={[productSchema, breadcrumbSchema]} />
       <ProductPageScrollReset />
       <div className="mx-auto w-full max-w-[1500px] px-4 pb-0 pt-8 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:px-10">
         <nav
