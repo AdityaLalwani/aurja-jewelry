@@ -14,6 +14,18 @@ import { imageKitLoader, normalizeImageSource } from "@/lib/imagekit";
 const ICON_LINK_CLASS =
   "relative rounded-full border border-neutral-300 p-1.5 text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 sm:p-2";
 
+const TRADE_MENU_LINKS = [
+  { label: "Wholesale", href: "/wholesale" },
+  { label: "Manufacturing", href: "/manufacturing" },
+  { label: "Private label", href: "/private-label" },
+  { label: "Custom jewellery", href: "/custom-jewellery-manufacturing" },
+  { label: "Manufacturing process", href: "/manufacturing-process" },
+  { label: "Export", href: "/export" },
+  { label: "Trade catalogue", href: "/trade-catalogue" },
+  { label: "Quality & certifications", href: "/quality-certifications" },
+  { label: "About AURJA", href: "/about" },
+];
+
 type HeaderProduct = Pick<JewelryProduct, "name" | "slug" | "images">;
 
 type NavigationData = {
@@ -58,9 +70,11 @@ function isNavigationData(value: unknown): value is NavigationData {
 export function SiteHeader({
   categories,
   isAuthenticated,
+  isIndiaStorefront,
 }: {
   categories: StoreCategory[];
   isAuthenticated: boolean;
+  isIndiaStorefront: boolean;
 }) {
   const { cartCount } = useStore();
   const wishlistSlugs = useHydrationSafeWishlistSlugs();
@@ -71,7 +85,9 @@ export function SiteHeader({
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(
     null,
   );
-  const [navigationCategories, setNavigationCategories] = useState(categories);
+  const [navigationCategories, setNavigationCategories] = useState(
+    isIndiaStorefront ? categories : [],
+  );
   const [navigationBestSellers, setNavigationBestSellers] =
     useState<HeaderProduct[]>([]);
   const [navigationLoaded, setNavigationLoaded] = useState(false);
@@ -87,6 +103,10 @@ export function SiteHeader({
   );
 
   async function loadNavigation() {
+    if (!isIndiaStorefront) {
+      setNavigationLoaded(true);
+      return;
+    }
     if (navigationLoaded || navigationRequest.current) return;
     const controller = new AbortController();
     navigationRequest.current = controller;
@@ -150,7 +170,9 @@ export function SiteHeader({
     <>
       {!isHomePage && (
         <div className="bg-stone-950 px-4 py-2 text-center text-[10px] font-medium uppercase tracking-[0.2em] text-amber-100 sm:text-xs">
-          Fine jewelry, shaped for stories
+          {isIndiaStorefront
+            ? "Fine jewelry, shaped for stories"
+            : "Jewellery manufacturing for jewellers and brands"}
         </div>
       )}
       <header
@@ -229,84 +251,102 @@ export function SiteHeader({
           </Link>
 
           <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
-            <Link href="/search" aria-label="Search" className={iconLinkClass}>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="h-4 w-4 sm:h-5 sm:w-5"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-            </Link>
-
             <Link
-              href="/profile"
-              aria-label="Profile"
-              className={`${iconLinkClass} hidden sm:inline-flex`}
+              href={isIndiaStorefront ? "/wholesale" : "/request-quote"}
+              className={`hidden rounded-full px-3 py-2 text-[10px] font-medium uppercase tracking-[0.14em] transition-colors lg:inline-flex ${
+                overVideo
+                  ? "text-white hover:bg-white/10"
+                  : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
+              }`}
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="h-4 w-4 sm:h-5 sm:w-5"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />
-              </svg>
+              {isIndiaStorefront ? "For Jewellers" : "Request a Quote"}
             </Link>
+            {isIndiaStorefront ? (
+              <Link href="/search" aria-label="Search" className={iconLinkClass}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+              </Link>
+            ) : null}
 
-            <Link
-              href="/wishlist"
-              aria-label={`Wishlist, ${wishlistSlugs.length} item${wishlistSlugs.length === 1 ? "" : "s"}`}
-              className={`${iconLinkClass} hidden sm:inline-flex`}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="h-4 w-4 sm:h-5 sm:w-5"
-                aria-hidden="true"
+            {isIndiaStorefront ? (
+              <Link
+                href="/profile"
+                aria-label="Profile"
+                className={`${iconLinkClass} hidden sm:inline-flex`}
               >
-                <path d="M12 20.5c-5.5-4-8.5-7-8.5-10.5a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2c0 3.5-3 6.5-8.5 10.5z" />
-              </svg>
-              {wishlistSlugs.length > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
-                  {wishlistSlugs.length}
-                </span>
-              )}
-            </Link>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />
+                </svg>
+              </Link>
+            ) : null}
 
-            <Link
-              href="/cart"
-              aria-label={`Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
-              className={iconLinkClass}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="h-4 w-4 sm:h-5 sm:w-5"
-                aria-hidden="true"
+            {isIndiaStorefront ? (
+              <Link
+                href="/wishlist"
+                aria-label={`Wishlist, ${wishlistSlugs.length} item${wishlistSlugs.length === 1 ? "" : "s"}`}
+                className={`${iconLinkClass} hidden sm:inline-flex`}
               >
-                <path d="M3 4h2l2.2 10.8a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
-                <path d="M8 11h11.7" />
-                <circle cx="10" cy="20" r="1" />
-                <circle cx="18" cy="20" r="1" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  aria-hidden="true"
+                >
+                  <path d="M12 20.5c-5.5-4-8.5-7-8.5-10.5a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2c0 3.5-3 6.5-8.5 10.5z" />
+                </svg>
+                {wishlistSlugs.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
+                    {wishlistSlugs.length}
+                  </span>
+                )}
+              </Link>
+            ) : null}
+
+            {isIndiaStorefront ? (
+              <Link
+                href="/cart"
+                aria-label={`Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
+                className={iconLinkClass}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  aria-hidden="true"
+                >
+                  <path d="M3 4h2l2.2 10.8a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
+                  <path d="M8 11h11.7" />
+                  <circle cx="10" cy="20" r="1" />
+                  <circle cx="18" cy="20" r="1" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            ) : null}
           </div>
         </div>
       </header>
@@ -332,17 +372,18 @@ export function SiteHeader({
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Shop Aurja"
+          aria-label={isIndiaStorefront ? "Shop Aurja" : "Trade services"}
           className={`absolute inset-y-0 left-0 flex w-full sm:max-w-md flex-col overflow-y-auto bg-cream px-5 pb-8 pt-3 shadow-2xl transition-transform duration-300 ease-out sm:px-8 ${
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="flex h-14 items-center justify-between gap-2 border-b border-neutral-200">
             <span className="font-display text-sm font-medium uppercase tracking-[0.25em] text-neutral-900">
-              Shop Aurja
+              {isIndiaStorefront ? "Shop Aurja" : "Trade services"}
             </span>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 sm:hidden">
+              {isIndiaStorefront ? (
+                <div className="flex items-center gap-2 sm:hidden">
                 <Link
                   href={isAuthenticated ? "/profile" : "/signup"}
                   onClick={() => setMobileMenuOpen(false)}
@@ -372,7 +413,8 @@ export function SiteHeader({
                     </span>
                   )}
                 </Link>
-              </div>
+                </div>
+              ) : null}
               <button
                 type="button"
                 aria-label="Close menu"
@@ -395,12 +437,17 @@ export function SiteHeader({
 
           <div className="grid gap-6 py-6">
             <div>
-              <nav aria-label="Shop categories">
+              <nav
+                aria-label={
+                  isIndiaStorefront ? "Shop categories" : "Trade services"
+                }
+              >
                 <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-500">
-                  Explore
+                  {isIndiaStorefront ? "Explore" : "For jewellers and brands"}
                 </p>
                 <ul className="divide-y divide-neutral-200">
-                  {topLevelCategories.map((category) => {
+                  {isIndiaStorefront
+                    ? topLevelCategories.map((category) => {
                     const subcategories = navigationCategories.filter(
                       (subcategory) =>
                         subcategory.parentId === category.id,
@@ -472,30 +519,55 @@ export function SiteHeader({
                         )}
                       </li>
                     );
-                  })}
-                  <li className="py-3">
-                    <Link
-                      href="/story"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-                    >
-                      Aurja Story
-                    </Link>
-                  </li>
-                  <li className="py-3">
-                    <Link
-                      href="/custom-design"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-                    >
-                      Customization
-                    </Link>
-                  </li>
+                    })
+                    : TRADE_MENU_LINKS.map((link) => (
+                        <li key={link.href} className="py-3">
+                          <Link
+                            href={link.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                          >
+                            {link.label}
+                          </Link>
+                        </li>
+                      ))}
+                  {isIndiaStorefront ? (
+                    <>
+                      <li className="py-3">
+                        <Link
+                          href="/story"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        >
+                          Aurja Story
+                        </Link>
+                      </li>
+                      <li className="py-3">
+                        <Link
+                          href="/custom-design"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        >
+                          Customization
+                        </Link>
+                      </li>
+                      <li className="py-3">
+                        <Link
+                          href="/wholesale"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block py-1 font-display text-xl uppercase tracking-[0.04em] text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        >
+                          For Jewellers and Brands
+                        </Link>
+                      </li>
+                    </>
+                  ) : null}
                 </ul>
               </nav>
             </div>
 
-            <section aria-labelledby="menu-best-sellers">
+            {isIndiaStorefront ? (
+              <section aria-labelledby="menu-best-sellers">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
                   <p
@@ -554,7 +626,28 @@ export function SiteHeader({
                   </li>
                 ))}
               </ul>
-            </section>
+              </section>
+            ) : (
+              <section className="border border-stone-300 bg-white p-5">
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-amber-700">
+                  Start a conversation
+                </p>
+                <h2 className="mt-2 font-display text-xl text-stone-900">
+                  Have a jewellery brief?
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-stone-600">
+                  Share your design, quantity and market requirements with our
+                  team.
+                </p>
+                <Link
+                  href="/request-quote"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-stone-900 px-6 text-xs font-medium uppercase tracking-[0.15em] text-white transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/60"
+                >
+                  Request a quote
+                </Link>
+              </section>
+            )}
           </div>
         </div>
       </div>

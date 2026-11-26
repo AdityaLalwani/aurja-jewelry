@@ -3,8 +3,18 @@ import { home } from "@/lib/site";
 import { ChevronDownIcon } from "../icons";
 import { HeroVideo } from "./HeroVideo";
 
-export function Hero() {
+export function Hero({
+  isIndiaStorefront,
+}: {
+  isIndiaStorefront: boolean;
+}) {
   const { hero } = home;
+  const primaryCta = isIndiaStorefront
+    ? hero.primaryCta
+    : { label: "Explore manufacturing", href: "/manufacturing" };
+  const secondaryCta = isIndiaStorefront
+    ? hero.secondaryCta
+    : { label: "Request a quote", href: "/request-quote" };
 
   return (
     <section
@@ -25,51 +35,57 @@ export function Hero() {
       <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-24 pt-36 sm:px-10 sm:pb-28 lg:px-12">
         <div className="max-w-2xl motion-safe:animate-fade-up">
           <p className="text-xs font-medium uppercase tracking-[0.28em] text-amber-100 sm:text-sm">
-            {hero.tagline}
+            {isIndiaStorefront ? hero.tagline : "For jewellers and brands"}
           </p>
           <h1 className="mt-5 font-display text-5xl font-medium leading-[0.98] tracking-[-0.035em] text-white sm:text-7xl lg:text-8xl">
-            {hero.constantWord}
-            <span className="hero-tagline-rotator mt-2 block font-display text-3xl font-normal italic tracking-normal text-amber-100 sm:text-5xl lg:text-6xl">
-              <span aria-hidden="true" className="hero-tagline-rotator__phrase">
-                For every moment,
+            {isIndiaStorefront ? hero.constantWord : "Jewellery"}
+            {isIndiaStorefront ? (
+              <span className="hero-tagline-rotator mt-2 block font-display text-3xl font-normal italic tracking-normal text-amber-100 sm:text-5xl lg:text-6xl">
+                <span aria-hidden="true" className="hero-tagline-rotator__phrase">
+                  For every moment,
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="hero-tagline-rotator__phrase hero-tagline-rotator__phrase--second"
+                >
+                  For every milestone,
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="hero-tagline-rotator__phrase hero-tagline-rotator__phrase--third"
+                >
+                  For everything in between.
+                </span>
+                <span className="sr-only">{hero.srText}</span>
               </span>
-              <span
-                aria-hidden="true"
-                className="hero-tagline-rotator__phrase hero-tagline-rotator__phrase--second"
-              >
-                For every milestone,
+            ) : (
+              <span className="mt-2 block font-display text-3xl font-normal italic tracking-normal text-amber-100 sm:text-5xl lg:text-6xl">
+                Manufacturing partner
               </span>
-              <span
-                aria-hidden="true"
-                className="hero-tagline-rotator__phrase hero-tagline-rotator__phrase--third"
-              >
-                For everything in between.
-              </span>
-              <span className="sr-only">
-                For every moment, for every milestone, for everything in between.
-              </span>
-            </span>
+            )}
           </h1>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link
-              href={hero.primaryCta.href}
+              href={primaryCta.href}
               className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-medium tracking-wide text-stone-900 transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
             >
-              {hero.primaryCta.label}
+              {primaryCta.label}
             </Link>
             <Link
-              href={hero.secondaryCta.href}
+              href={secondaryCta.href}
               className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 px-8 text-sm font-medium tracking-wide text-white transition-colors hover:border-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              {hero.secondaryCta.label}
+              {secondaryCta.label}
             </Link>
           </div>
         </div>
       </div>
 
       <a
-        href="#collection"
-        aria-label="Scroll to shop by category"
+        href={isIndiaStorefront ? "#collection" : "#trade-services"}
+        aria-label={
+          isIndiaStorefront ? "Scroll to shop by category" : "Explore trade services"
+        }
         className="absolute bottom-7 left-1/2 z-10 -translate-x-1/2 text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
       >
         <ChevronDownIcon aria-hidden className="h-6 w-6 motion-safe:animate-pulse" />

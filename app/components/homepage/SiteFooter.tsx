@@ -93,7 +93,7 @@ export function SiteFooter() {
 
           <div aria-hidden className="my-8 h-px bg-gradient-to-r from-transparent via-amber-200/30 to-transparent" />
 
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-5">
             {footer.linkColumns.map((column) => (
               <div key={column.heading}>
                 <h3 className="text-[0.7rem] font-medium uppercase tracking-[0.28em] text-amber-100/80">
@@ -114,6 +114,10 @@ export function SiteFooter() {
               </div>
             ))}
           </div>
+          <p className="mt-8 text-xs leading-5 text-stone-400">
+            AURJA is registered with GJEPC (Registration No.
+            {" "}GJEPC/1030/7000108638/AM/I).
+          </p>
         </div>
 
         <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 text-xs text-stone-400 sm:flex-row sm:px-6">

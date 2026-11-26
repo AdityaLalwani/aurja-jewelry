@@ -211,6 +211,7 @@ export const home: HomeConfig = {
   },
   nav: [
     { label: "Collection", href: "/products" },
+    { label: "For Jewellers", href: "/wholesale" },
     { label: "Our Story", href: "/story" },
     { label: "Blogs", href: "/blogs" },
     { label: "Contact", href: "/#visit" },
@@ -349,6 +350,16 @@ export const home: HomeConfig = {
             label: "Instagram",
             href: `https://instagram.com/${site.instagram}`,
           },
+        ],
+      },
+      {
+        heading: "For Trade",
+        links: [
+          { label: "Wholesale", href: "/wholesale" },
+          { label: "Manufacturing", href: "/manufacturing" },
+          { label: "Private Label", href: "/private-label" },
+          { label: "Trade Catalogue", href: "/trade-catalogue" },
+          { label: "Request a Quote", href: "/request-quote" },
         ],
       },
       {

@@ -4,6 +4,7 @@ import {
   searchJewelryProducts,
 } from "@/lib/storefront-data";
 import type { JewelryProductCard } from "@/lib/catalog";
+import { isIndiaStorefront } from "@/lib/storefront-region";
 
 export const dynamic = "force-dynamic";
 const searchCacheHeaders = {
@@ -14,6 +15,13 @@ export async function GET(request: Request) {
   const query = new URL(request.url).searchParams.get("q")?.trim() ?? "";
   if (query.length > 120) {
     return Response.json({ error: "Search query is too long." }, { status: 400 });
+  }
+
+  if (!isIndiaStorefront(request.headers)) {
+    return Response.json(
+      { products: [], popularProducts: [] },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
   }
 
   if (!query) {

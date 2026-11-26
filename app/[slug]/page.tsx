@@ -15,6 +15,8 @@ import {
 import { ProductGrid } from "@/components/ProductGrid";
 import { getJewelryProductPage, getStoreCategories } from "@/lib/storefront-data";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
+import { StoreAvailabilityNotice } from "@/components/StoreAvailabilityNotice";
+import { canViewProductCatalog } from "@/lib/storefront-region";
 
 const CATEGORY_SEO: Record<
   string,
@@ -114,9 +116,11 @@ export async function generateMetadata({
 }: PageProps<"/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const profile = getProfile(slug);
-  const category = await getStoreCategories().then((items) =>
-    items.find((item) => item.slug === slug),
-  );
+  const canShowProducts = await canViewProductCatalog();
+  if (!canShowProducts && CATEGORY_SEO[slug]) {
+    return { robots: { index: false, follow: false } };
+  }
+
   const seo = CATEGORY_SEO[slug];
   if (!profile && seo) {
     return {
@@ -152,12 +156,16 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
   const { slug } = await params;
   const profile = getProfile(slug);
   const seo = CATEGORY_SEO[slug];
+  const canShowProducts = await canViewProductCatalog();
 
   if (seo) {
-    const category = (await getStoreCategories()).find(
-      (item) => item.slug === slug,
-    );
-    const productPage = await getJewelryProductPage(category?.slug ?? slug, 1);
+    const productPage = canShowProducts
+      ? await getJewelryProductPage(
+          (await getStoreCategories()).find((item) => item.slug === slug)
+            ?.slug ?? slug,
+          1,
+        )
+      : null;
     const faqSchema = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -193,14 +201,18 @@ export default async function BioPage({ params }: PageProps<"/[slug]">) {
             <h1 className="font-display text-3xl leading-tight text-neutral-900 sm:text-4xl">{seo.h1}</h1>
             <p className="mt-4 text-sm leading-7 text-neutral-600 sm:text-base">{seo.intro}</p>
           </header>
-          <ProductGrid
-            key={slug}
-            products={productPage.products}
-            total={productPage.total}
-            initialPage={1}
-            hasMore={productPage.hasMore}
-            categorySlug={slug}
-          />
+          {productPage ? (
+            <ProductGrid
+              key={slug}
+              products={productPage.products}
+              total={productPage.total}
+              initialPage={1}
+              hasMore={productPage.hasMore}
+              categorySlug={slug}
+            />
+          ) : (
+            <StoreAvailabilityNotice />
+          )}
           <section className="mx-auto mt-16 max-w-3xl border-t border-neutral-200 pt-10">
             <h2 className="font-display text-2xl text-neutral-900">Frequently asked questions</h2>
             <div className="mt-6 divide-y divide-neutral-200 border-y border-neutral-200">

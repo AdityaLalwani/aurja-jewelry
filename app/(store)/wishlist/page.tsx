@@ -1,4 +1,6 @@
 import { WishlistContent } from "@/components/WishlistContent";
+import { StoreAvailabilityNotice } from "@/components/StoreAvailabilityNotice";
+import { getIsIndiaStorefront } from "@/lib/storefront-region";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -6,6 +8,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function WishlistPage() {
-  return <WishlistContent />;
+export default async function WishlistPage() {
+  return (await getIsIndiaStorefront()) ? (
+    <WishlistContent />
+  ) : (
+    <StoreAvailabilityNotice />
+  );
 }

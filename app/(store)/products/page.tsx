@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ProductGrid } from "@/components/ProductGrid";
 import { SiteFooter } from "@/app/components/homepage/SiteFooter";
 import { getJewelryProductPage, getStoreCategories } from "@/lib/storefront-data";
+import { StoreAvailabilityNotice } from "@/components/StoreAvailabilityNotice";
+import { canViewProductCatalog } from "@/lib/storefront-region";
 
 type ProductsPageProps = {
   searchParams: Promise<{ category?: string; page?: string; sort?: string }>;
@@ -39,6 +41,15 @@ export async function generateMetadata({
 export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
+  if (!(await canViewProductCatalog())) {
+    return (
+      <>
+        <StoreAvailabilityNotice />
+        <SiteFooter />
+      </>
+    );
+  }
+
   const { category, page: pageParam } = await searchParams;
   const requestedPage = Number(pageParam ?? "1");
   const page =

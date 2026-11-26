@@ -1,4 +1,6 @@
 import { SearchExperience } from "@/components/SearchExperience";
+import { StoreAvailabilityNotice } from "@/components/StoreAvailabilityNotice";
+import { getIsIndiaStorefront } from "@/lib/storefront-region";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -6,7 +8,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function SearchPage() {
+export default async function SearchPage() {
+  const isIndiaStorefront = await getIsIndiaStorefront();
+
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20 pt-10 sm:px-6">
       <div className="text-center">
@@ -18,7 +22,7 @@ export default function SearchPage() {
         </h1>
       </div>
 
-      <SearchExperience />
+      {isIndiaStorefront ? <SearchExperience /> : <StoreAvailabilityNotice />}
     </div>
   );
 }

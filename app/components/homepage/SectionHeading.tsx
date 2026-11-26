@@ -4,6 +4,7 @@ type SectionHeadingProps = {
   description?: string;
   /** Left-aligned for split sections; centered (default) for stacked ones. */
   align?: "left" | "center";
+  tone?: "default" | "inverse";
 };
 
 /**
@@ -15,15 +16,25 @@ export function SectionHeading({
   title,
   description,
   align = "center",
+  tone = "default",
 }: SectionHeadingProps) {
   const centered = align === "center";
+  const inverse = tone === "inverse";
 
   return (
     <div className={centered ? "mx-auto max-w-2xl text-center" : "max-w-xl"}>
-      <p className="text-xs font-medium uppercase tracking-[0.3em] text-amber-700">
+      <p
+        className={`text-xs font-medium uppercase tracking-[0.3em] ${
+          inverse ? "text-amber-300" : "text-amber-700"
+        }`}
+      >
         {eyebrow}
       </p>
-      <h2 className="mt-3 font-display text-2xl font-medium text-stone-900 sm:text-4xl">
+      <h2
+        className={`mt-3 font-display text-2xl font-medium sm:text-4xl ${
+          inverse ? "text-white" : "text-stone-900"
+        }`}
+      >
         {title}
       </h2>
       <div
@@ -32,13 +43,23 @@ export function SectionHeading({
           centered ? "mx-auto w-full max-w-xs" : "w-28"
         }`}
       >
-        <span className="h-px flex-1 bg-stone-300" />
-        <span className="h-1.5 w-1.5 rotate-45 bg-amber-600" />
-        <span className="h-px flex-1 bg-stone-300" />
+        <span
+          className={`h-px flex-1 ${inverse ? "bg-white/25" : "bg-stone-300"}`}
+        />
+        <span
+          className={`h-1.5 w-1.5 rotate-45 ${
+            inverse ? "bg-amber-300" : "bg-amber-600"
+          }`}
+        />
+        <span
+          className={`h-px flex-1 ${inverse ? "bg-white/25" : "bg-stone-300"}`}
+        />
       </div>
       {description ? (
         <p
-          className={`mt-5 text-sm leading-relaxed text-stone-600 ${
+          className={`mt-5 text-sm leading-relaxed ${
+            inverse ? "text-stone-300" : "text-stone-600"
+          } ${
             centered ? "mx-auto max-w-xl" : ""
           }`}
         >

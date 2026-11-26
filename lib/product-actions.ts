@@ -5,6 +5,7 @@ import {
   getJewelryProductPage,
 } from "@/lib/storefront-data";
 import type { JewelryProduct } from "@/lib/catalog";
+import { getIsIndiaStorefront } from "@/lib/storefront-region";
 
 export async function loadJewelryProductsForFilters(
   categorySlug: string | undefined,
@@ -15,6 +16,8 @@ export async function loadJewelryProductsForFilters(
   ) {
     throw new Error("Invalid product category request.");
   }
+
+  if (!(await getIsIndiaStorefront())) return [];
 
   const products: JewelryProduct[] = [];
   for (let page = 1; page <= 1000; page += 1) {
@@ -37,6 +40,8 @@ export async function loadJewelryProductsBySlugs(
     throw new Error("Invalid wishlist product request.");
   }
 
+  if (!(await getIsIndiaStorefront())) return [];
+
   const uniqueSlugs = [...new Set(slugs.filter(Boolean))];
   const products = await Promise.all(
     uniqueSlugs.map((slug) => getJewelryProductBySlug(slug)),
@@ -58,6 +63,10 @@ export async function loadMoreJewelryProducts(
     page > 1000
   ) {
     throw new Error("Invalid product page request.");
+  }
+
+  if (!(await getIsIndiaStorefront())) {
+    return { products: [], total: 0, page, hasMore: false };
   }
 
   return getJewelryProductPage(categorySlug, page, 24);

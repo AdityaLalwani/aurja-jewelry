@@ -3,14 +3,20 @@ import {
   getJewelryProductsBySkus,
   getStoreCategories,
 } from "@/lib/storefront-data";
+import { isIndiaStorefront } from "@/lib/storefront-region";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const [categories, bestSellerProducts] = await Promise.all([
-    getStoreCategories(),
-    getJewelryProductsBySkus(BEST_SELLER_SKUS),
-  ]);
+export async function GET(request: Request) {
+  if (!isIndiaStorefront(request.headers)) {
+    return Response.json(
+      { categories: [], bestSellers: [] },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
+  const categories = await getStoreCategories();
+  const bestSellerProducts = await getJewelryProductsBySkus(BEST_SELLER_SKUS);
 
   return Response.json(
     {

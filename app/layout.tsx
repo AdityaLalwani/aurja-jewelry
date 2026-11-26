@@ -14,6 +14,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { AnalyticsConsent } from "@/components/AnalyticsConsent";
+import { isIndiaStorefront } from "@/lib/storefront-region";
 
 const FALLBACK_NAVIGATION_CATEGORIES: StoreCategory[] = [
   { id: "rings", name: "Rings", slug: "rings", parentId: null },
@@ -91,6 +92,7 @@ export default async function RootLayout({
     requestHeaders.get("x-vercel-ip-country") ??
     requestHeaders.get("cf-ipcountry") ??
     requestHeaders.get("cloudfront-viewer-country");
+  const showRetailStorefront = isIndiaStorefront(requestHeaders);
   const initialCurrency = country?.toUpperCase() === "IN" ? "INR" : "USD";
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
@@ -109,6 +111,7 @@ export default async function RootLayout({
           <SiteHeader
             categories={FALLBACK_NAVIGATION_CATEGORIES}
             isAuthenticated={accountId !== null}
+            isIndiaStorefront={showRetailStorefront}
           />
           <LoginPrompt isAuthenticated={accountId !== null} />
           {modal}

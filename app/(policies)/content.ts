@@ -218,9 +218,9 @@ export const termsAndConditions: InformationDocument = {
 
 export const frequentlyAskedQuestions: InformationDocument = {
   eyebrow: "A few helpful answers",
-  title: "Frequently Asked Questions",
+  title: "Jewellery and Trade FAQs",
   intro:
-    "Need a hand with a piece, a size or a custom idea? Start here, or contact our atelier if you would like help with something specific.",
+    "Find answers about AURJA jewellery, custom work and trade manufacturing. Contact our atelier if you need help with a specific requirement.",
   questions: [
     {
       question: "Can you create jewelry from my design?",
@@ -255,6 +255,41 @@ export const frequentlyAskedQuestions: InformationDocument = {
     {
       question: "How can I contact AURJA?",
       answer: `Email ${site.contact.email} or WhatsApp us at +${site.contact.whatsapp}.`,
+    },
+    {
+      question: "Does AURJA have a fixed minimum order quantity for trade orders?",
+      answer:
+        "No. AURJA has no fixed minimum order quantity. Order quantities, sample requirements and lead times are discussed and agreed for each customer requirement after the designs and specifications have been reviewed.",
+    },
+    {
+      question: "Does AURJA offer private-label and OEM jewellery manufacturing?",
+      answer:
+        "Yes. AURJA works with jewellers, showrooms and jewellery brands on private-label and OEM diamond jewellery. Share your brief, materials, quantities and target market so the team can review the scope and confirm what can be offered for your project.",
+    },
+    {
+      question: "Does AURJA work with natural and lab-grown diamonds?",
+      answer:
+        "AURJA makes jewellery with both natural and lab-grown diamonds. Lab-grown diamond jewellery is clearly identified as laboratory-grown on the certificate and invoice. Diamond type and specifications are confirmed for each piece and order.",
+    },
+    {
+      question: "Which gold purities can trade buyers request?",
+      answer:
+        "AURJA works with 9K, 10K, 14K and 18K gold. The suitable purity and any hallmarking arrangements are confirmed for the design and destination market. Gold purity is declared on the certificate and invoice.",
+    },
+    {
+      question: "How long do samples and production take?",
+      answer:
+        "Sample and production timelines depend on the design, materials, quantities and approvals. AURJA confirms a timeline after reviewing the individual requirement; no generic lead-time range is promised.",
+    },
+    {
+      question: "How are international shipping and payment terms arranged?",
+      answer:
+        "AURJA ships worldwide on terms agreed for each order. Shipping method, courier, incoterms and documents depend on destination and availability. Payment terms are agreed with the customer in a written agreement before the order is confirmed.",
+    },
+    {
+      question: "What certification and hallmarking information is available?",
+      answer:
+        "Diamonds are graded by IGI; the report number is listed with each piece. Other labs can be arranged for international markets. Gold purity is declared on the certificate and invoice, and hallmarking is arranged as required by the destination market.",
     },
   ],
   action: {

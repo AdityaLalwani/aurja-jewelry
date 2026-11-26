@@ -44,9 +44,7 @@ function getPool(): Pool {
     connectionTimeoutMillis: 10_000,
   });
 
-  if (process.env.NODE_ENV !== "production") {
-    globalForNeon.neonPool = pool;
-  }
+  globalForNeon.neonPool = pool;
   return pool;
 }
 

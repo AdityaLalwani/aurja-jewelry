@@ -15,6 +15,7 @@ import {
 } from "@/lib/storefront-data";
 import { JsonLd } from "@/components/JsonLd";
 import { site } from "@/lib/site";
+import { canViewProductCatalog } from "@/lib/storefront-region";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -23,6 +24,10 @@ type ProductPageProps = {
 export async function generateMetadata(
   props: ProductPageProps,
 ): Promise<Metadata> {
+  if (!(await canViewProductCatalog())) {
+    return { title: "Product unavailable | AURJA", robots: { index: false } };
+  }
+
   const { slug } = await props.params;
   const product = await getJewelryProductBySlug(slug);
   const description =
@@ -63,6 +68,10 @@ export async function generateMetadata(
 }
 
 export default async function ProductPage(props: ProductPageProps) {
+  if (!(await canViewProductCatalog())) {
+    notFound();
+  }
+
   const { slug } = await props.params;
   const product = await getJewelryProductBySlug(slug);
 
